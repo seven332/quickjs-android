@@ -18,7 +18,7 @@ set(BN_FLAGS -DCONFIG_BIGNUM)
 
 set(QJS_LIB_SOURCES
         patched/quickjs.c
-        quickjs/libregexp.c
+        patched/libregexp.c
         quickjs/libunicode.c
         quickjs/cutils.c
         quickjs/quickjs-libc.c

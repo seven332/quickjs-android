@@ -1,5 +1,18 @@
+diff --git a/libregexp.c b/libregexp.c
+index 65f0d1b6..61177efa 100644
+--- a/libregexp.c
++++ b/libregexp.c
+@@ -2407,7 +2407,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                 for(;;) {
+                     res = lre_exec_backtrack(s, capture, stack, stack_len,
+                                              pc1, cptr, TRUE);
+-                    if (res < 0)
++                    if (res == -1)
+                         return res;
+                     if (!res)
+                         break;
 diff --git a/quickjs.c b/quickjs.c
-index 9606455c..967851fd 100644
+index 9606455c..78c61318 100644
 --- a/quickjs.c
 +++ b/quickjs.c
 @@ -10046,13 +10046,15 @@ static char *i64toa(char *buf_end, int64_t n, unsigned int base)
