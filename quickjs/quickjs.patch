@@ -1,12 +1,12 @@
 diff --git a/quickjs.c b/quickjs.c
-index 9606455c..7c8be544 100644
+index 9606455c..967851fd 100644
 --- a/quickjs.c
 +++ b/quickjs.c
 @@ -10046,13 +10046,15 @@ static char *i64toa(char *buf_end, int64_t n, unsigned int base)
      return q;
  }
  
-+extern void js_e_string(double d, int n_digits, int round_mode, char *buf, int buf_size);
++extern void js_e_string(double d, int n_digits, int rounding_mode, char *buf, int buf_size);
 +
  /* buf1 contains the printf result */
  static void js_ecvt1(double d, int n_digits, int *decpt, int *sign, char *buf,
@@ -19,3 +19,20 @@ index 9606455c..7c8be544 100644
      if (rounding_mode != FE_TONEAREST)
          fesetround(FE_TONEAREST);
      *sign = (buf1[0] == '-');
+@@ -10130,13 +10132,15 @@ static int js_ecvt(double d, int n_digits, int *decpt, int *sign, char *buf,
+     return n_digits;
+ }
+ 
++extern int js_f_string(double d, int n_digits, int rounding_mode, char *buf, int buf_size);
++
+ static int js_fcvt1(char *buf, int buf_size, double d, int n_digits,
+                     int rounding_mode)
+ {
+     int n;
+     if (rounding_mode != FE_TONEAREST)
+         fesetround(rounding_mode);
+-    n = snprintf(buf, buf_size, "%.*f", n_digits, d);
++    n = js_f_string(d, n_digits, rounding_mode, buf, buf_size);
+     if (rounding_mode != FE_TONEAREST)
+         fesetround(FE_TONEAREST);
+     assert(n < buf_size);

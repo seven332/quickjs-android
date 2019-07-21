@@ -120,3 +120,65 @@ void js_e_string(double d, int n_digits, int rounding_mode, char *buf, int buf_s
         js_e_string_by_hand(d, n_digits, buf, buf_size);
     }
 }
+
+static int js_f_string_zero(int sign, int n_digits, char *buf, int buf_size) {
+    // Check length
+    int length = sign + 1 + (n_digits > 0) + n_digits;
+    if (buf_size <= length) {
+        if (buf_size > 0) {
+            buf[0] = '\0';
+        }
+        return 0;
+    }
+
+    if (sign) {
+        *buf++ = '-';
+    }
+    *buf++ = '0';
+    if (n_digits > 0) {
+        *buf++ = (char) '.';
+        while (--n_digits >= 0) {
+            *buf++ = '0';
+        }
+    }
+    *buf = '\0';
+
+    return length;
+}
+
+static int js_f_string_by_hand(double d, int n_digits, char *buf, int buf_size) {
+    if (n_digits < 0) {
+        n_digits = 6;
+    }
+
+    long long new_int = (long long) rint(multiply_pow10(d, n_digits));
+
+    if (new_int == 0) {
+        return js_f_string_zero(signbit(d), n_digits, buf, buf_size);
+    }
+
+    if (n_digits == 0) {
+        return snprintf(buf, buf_size, "%lld", new_int);
+    } else {
+        int n = snprintf(buf, buf_size, "%0*lld.", n_digits + (new_int < 0 ? 2 : 1), new_int);
+        for (int i = n - 2; i > 0 && i > n - 2 - n_digits; --i) {
+            buf[i + 1] = buf[i];
+            if (i == n - 1 - n_digits) {
+                buf[i] = '.';
+            }
+        }
+        return n;
+    }
+}
+
+static int js_f_string_tonearest(double d, int n_digits, char *buf, int buf_size) {
+    return snprintf(buf, buf_size, "%.*f", n_digits, d);
+}
+
+int js_f_string(double d, int n_digits, int rounding_mode, char *buf, int buf_size) {
+    if (rounding_mode == FE_TONEAREST) {
+        return js_f_string_tonearest(d, n_digits, buf, buf_size);
+    } else {
+        return js_f_string_by_hand(d, n_digits, buf, buf_size);
+    }
+}
