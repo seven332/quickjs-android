@@ -20,6 +20,7 @@ static unsigned int base_two_digits(unsigned int x) {
     return x ? 32 - __builtin_clz(x) : 0;
 }
 
+// https://stackoverflow.com/a/25934909
 static int eel(int x) {
     static const unsigned char guess[33] = {
             0, 0, 0, 0, 1, 1, 1, 2, 2, 2,
