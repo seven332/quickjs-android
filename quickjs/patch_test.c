@@ -4,35 +4,35 @@
 
 #include "patch.h"
 
-const char *round_mode_str(int round_mode) {
-    if (round_mode == FE_UPWARD) {
+const char *rounding_mode_str(int rounding_mode) {
+    if (rounding_mode == FE_UPWARD) {
         return "FE_UPWARD";
-    } else if (round_mode == FE_DOWNWARD) {
+    } else if (rounding_mode == FE_DOWNWARD) {
         return "FE_DOWNWARD";
-    } else if (round_mode == FE_TOWARDZERO) {
+    } else if (rounding_mode == FE_TOWARDZERO) {
         return "FE_TOWARDZERO";
-    } else if (round_mode == FE_TONEAREST) {
+    } else if (rounding_mode == FE_TONEAREST) {
         return "FE_TONEAREST";
     } else {
         return "UNKNOWN";
     }
 }
 
-int test_js_e_string_line(const char *except, int round_mode, double d, int n_digits) {
+int test_js_e_string_line(const char *except, int rounding_mode, double d, int n_digits) {
     const int buf_size = 128;
     char buf[buf_size];
 
-    int origin_round_mode = fegetround();
-    fesetround(round_mode);
+    int origin_rounding_mode = fegetround();
+    fesetround(rounding_mode);
 
-    js_e_string(d, n_digits, round_mode, buf, buf_size);
+    js_e_string(d, n_digits, rounding_mode, buf, buf_size);
 
-    fesetround(origin_round_mode);
+    fesetround(origin_rounding_mode);
 
     if (strcmp(except, buf) == 0) {
         return 0;
     } else {
-        printf("round_mode = %s, d = %lf, n_digits = %d\n", round_mode_str(round_mode), d, n_digits);
+        printf("rounding_mode = %s, d = %lf, n_digits = %d\n", rounding_mode_str(rounding_mode), d, n_digits);
         printf("except = %s\n", except);
         printf("actual = %s\n", buf);
         return 1;
