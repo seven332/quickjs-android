@@ -1,0 +1,21 @@
+diff --git a/quickjs.c b/quickjs.c
+index 9606455c..7c8be544 100644
+--- a/quickjs.c
++++ b/quickjs.c
+@@ -10046,13 +10046,15 @@ static char *i64toa(char *buf_end, int64_t n, unsigned int base)
+     return q;
+ }
+ 
++extern void js_e_string(double d, int n_digits, int round_mode, char *buf, int buf_size);
++
+ /* buf1 contains the printf result */
+ static void js_ecvt1(double d, int n_digits, int *decpt, int *sign, char *buf,
+                      int rounding_mode, char *buf1, int buf1_size)
+ {
+     if (rounding_mode != FE_TONEAREST)
+         fesetround(rounding_mode);
+-    snprintf(buf1, buf1_size, "%+.*e", n_digits - 1, d);
++    js_e_string(d, n_digits, rounding_mode, buf1, buf1_size);
+     if (rounding_mode != FE_TONEAREST)
+         fesetround(FE_TONEAREST);
+     *sign = (buf1[0] == '-');

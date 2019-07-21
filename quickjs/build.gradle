@@ -14,5 +14,8 @@
  * limitations under the License.
  */
 
-include ':quickjs'
-include ':android-test'
+task patchQuickJS(type: com.hippo.quickjs.android.PatchTask) {
+    from = [file("${projectDir}/quickjs/quickjs.c")]
+    to = file("${projectDir}/patched")
+    patch = file("${projectDir}/quickjs.patch")
+}

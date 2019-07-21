@@ -14,5 +14,11 @@
  * limitations under the License.
  */
 
-include ':quickjs'
-include ':android-test'
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation 'com.cloudbees:diff4j:1.3'
+    implementation 'commons-io:commons-io:2.6'
+}

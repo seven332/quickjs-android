@@ -17,6 +17,7 @@
 package com.hippo.quickjs.android.test
 
 import android.content.Context
+import com.getkeepsafe.relinker.ReLinker
 import net.lingala.zip4j.core.ZipFile
 import java.io.File
 import java.io.IOException
@@ -88,6 +89,12 @@ class Tester(
     }
   }
 
+  private fun ensureExecutable() {
+    ReLinker.loadLibrary(context, "patch_test")
+    ReLinker.loadLibrary(context, "qjs")
+    ReLinker.loadLibrary(context, "qjsbn")
+  }
+
   private fun runTest(name: String, executable: String, vararg parameters: String) {
     printer.print("********************************")
     printer.print("** ${++testNumber}. $name")
@@ -98,12 +105,16 @@ class Tester(
     printer.print("exit code: $code")
   }
 
+  private fun testPatch() {
+    runTest("patch test", "patch_test")
+  }
+
   private fun runJsTest(executable: String, parameter: String, file: String) {
     val name = "$executable $parameter $file"
     runTest(name, executable, parameter, File(assetsDir, file).path)
   }
 
-  private fun jsTest() {
+  private fun testJs() {
     runJsTest("qjs", "", "tests/test_closure.js")
     runJsTest("qjs", "", "tests/test_op.js")
     runJsTest("qjs", "", "tests/test_builtin.js")
@@ -121,8 +132,12 @@ class Tester(
     thread {
       try {
         ensureAssetFiles()
-        jsTest()
+        ensureExecutable()
+
+        testPatch()
+        testJs()
       } catch (e: Throwable) {
+        e.printStackTrace()
         printer.print("Test interrupted")
         printer.print(e.message ?: e.javaClass.name)
         return@thread
@@ -132,7 +147,7 @@ class Tester(
 
   private fun run(executable: String, vararg parameters: String): Int {
     val nativeDir = context.applicationInfo.nativeLibraryDir
-    val executableFile = File(nativeDir, "$executable.so")
+    val executableFile = File(nativeDir, "lib$executable.so")
     val command = "${executableFile.path} ${parameters.joinToString(" ")}"
 
     val process = Runtime.getRuntime().exec(command)
