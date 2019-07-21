@@ -17,6 +17,7 @@
 package com.hippo.quickjs.android.test
 
 import android.content.Context
+import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -82,8 +83,10 @@ class LogView(context: Context) : ListView(context), MultiPrinter {
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
       var view = convertView as? TextView
       if (view == null) {
-        view = TextView(context)
-        view.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        view = TextView(context).apply {
+          typeface = Typeface.MONOSPACE
+          layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
       }
       view.text = messages[position]
       return view
