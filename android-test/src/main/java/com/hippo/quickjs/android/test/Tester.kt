@@ -18,6 +18,8 @@ package com.hippo.quickjs.android.test
 
 import android.content.Context
 import com.getkeepsafe.relinker.ReLinker
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import net.lingala.zip4j.core.ZipFile
 import java.io.File
 import java.io.IOException
@@ -163,17 +165,27 @@ class Tester(
     }
   }
 
-  private fun run(executable: String, parameter: String): Int {
+  private fun run(executable: String, parameter: String): Int = runBlocking {
     val nativeDir = context.applicationInfo.nativeLibraryDir
     val executableFile = File(nativeDir, "lib$executable.so")
     val command = "${executableFile.path} $parameter"
 
+    val processChannel = Channel<Process>()
+
+    (GlobalScope + Dispatchers.IO).launch {
+      val process = processChannel.receive()
+      process.inputStream.reader().buffered().forEachLine { printer.print(it) }
+    }
+
+    (GlobalScope + Dispatchers.IO).launch {
+      val process = processChannel.receive()
+      process.errorStream.reader().buffered().forEachLine { printer.print(it) }
+    }
+
     val process = Runtime.getRuntime().exec(command, null, assetsDir)
-
-    process.inputStream.reader().buffered().forEachLine { printer.print(it) }
-    process.errorStream.reader().buffered().forEachLine { printer.print(it) }
-
-    return process.waitFor()
+    processChannel.send(process)
+    processChannel.send(process)
+    process.waitFor()
   }
 
   /**
