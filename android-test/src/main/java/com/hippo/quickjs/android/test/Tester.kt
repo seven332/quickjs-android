@@ -144,7 +144,6 @@ class Tester(
     runTest("qjsbn", "tests/test_loop.js")
     // tmpfile returns null
     runTest("qjsbn", "-m tests/test_std.js")
-    // Failed. Might be related to libbf
     runTest("qjsbn", "--qjscalc tests/test_bignum.js")
   }
 

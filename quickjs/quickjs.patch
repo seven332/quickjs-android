@@ -1,21 +1,8 @@
-diff --git a/libregexp.c b/libregexp.c
-index 65f0d1b6..61177efa 100644
---- a/libregexp.c
-+++ b/libregexp.c
-@@ -2407,7 +2407,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
-                 for(;;) {
-                     res = lre_exec_backtrack(s, capture, stack, stack_len,
-                                              pc1, cptr, TRUE);
--                    if (res < 0)
-+                    if (res == -1)
-                         return res;
-                     if (!res)
-                         break;
 diff --git a/quickjs.c b/quickjs.c
-index 9606455c..78c61318 100644
+index 8ee82f45..ba71e9c6 100644
 --- a/quickjs.c
 +++ b/quickjs.c
-@@ -10046,13 +10046,15 @@ static char *i64toa(char *buf_end, int64_t n, unsigned int base)
+@@ -10001,13 +10001,15 @@ static char *i64toa(char *buf_end, int64_t n, unsigned int base)
      return q;
  }
  
@@ -32,7 +19,7 @@ index 9606455c..78c61318 100644
      if (rounding_mode != FE_TONEAREST)
          fesetround(FE_TONEAREST);
      *sign = (buf1[0] == '-');
-@@ -10130,13 +10132,15 @@ static int js_ecvt(double d, int n_digits, int *decpt, int *sign, char *buf,
+@@ -10085,13 +10087,15 @@ static int js_ecvt(double d, int n_digits, int *decpt, int *sign, char *buf,
      return n_digits;
  }
  

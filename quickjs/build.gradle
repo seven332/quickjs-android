@@ -15,7 +15,7 @@
  */
 
 task patchQuickJS(type: com.hippo.quickjs.android.PatchTask) {
-    from = [file("${projectDir}/quickjs/quickjs.c"), file("${projectDir}/quickjs/libregexp.c")]
+    from = [file("${projectDir}/quickjs/quickjs.c")]
     to = file("${projectDir}/patched")
     patch = file("${projectDir}/quickjs.patch")
 }
