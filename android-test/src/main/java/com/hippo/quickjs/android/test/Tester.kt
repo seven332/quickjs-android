@@ -172,12 +172,12 @@ class Tester(
 
     val processChannel = Channel<Process>()
 
-    (GlobalScope + Dispatchers.IO).launch {
+    val job1 = (GlobalScope + Dispatchers.IO).launch {
       val process = processChannel.receive()
       process.inputStream.reader().buffered().forEachLine { printer.print(it) }
     }
 
-    (GlobalScope + Dispatchers.IO).launch {
+    val job2 = (GlobalScope + Dispatchers.IO).launch {
       val process = processChannel.receive()
       process.errorStream.reader().buffered().forEachLine { printer.print(it) }
     }
@@ -185,7 +185,12 @@ class Tester(
     val process = Runtime.getRuntime().exec(command, null, assetsDir)
     processChannel.send(process)
     processChannel.send(process)
-    process.waitFor()
+    val code = process.waitFor()
+
+    job1.join()
+    job2.join()
+
+    code
   }
 
   /**
