@@ -22,6 +22,7 @@ import net.lingala.zip4j.core.ZipFile
 import java.io.File
 import java.io.IOException
 import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 
 class Tester(
@@ -34,7 +35,9 @@ class Tester(
   private val assetsDir = File(context.filesDir, "testassets")
   private val tempFile = File(context.cacheDir, "testassets.zip")
 
+  @Volatile
   private var testNumber = 0
+  private val failedTests = ConcurrentLinkedQueue<String>()
 
   fun registerMessageQueuePrinter(messageQueuePrinter: MessageQueuePrinter) {
     printer.registerMessageQueuePrinter(messageQueuePrinter)
@@ -97,7 +100,12 @@ class Tester(
 
     val code = run(executable, parameter)
 
-    printer.print("exit code: $code")
+    if (code == 0) {
+      printer.print("PASSED")
+    } else {
+      printer.print("FAILED")
+      failedTests.add(name)
+    }
   }
 
   private fun runTest(executable: String, parameter: String) {
@@ -115,15 +123,15 @@ class Tester(
     runTest("qjs", "tests/test_builtin.js")
     runTest("qjs", "tests/test_loop.js")
     // tmpfile returns null
-    // runJsTest("qjs", "-m tests/test_std.js")
+    // runTest("qjs", "-m tests/test_std.js")
     runTest("qjsbn", "tests/test_closure.js")
     runTest("qjsbn", "tests/test_op.js")
     runTest("qjsbn", "tests/test_builtin.js")
     runTest("qjsbn", "tests/test_loop.js")
     // tmpfile returns null
-    // runJsTest("qjsbn", "-m tests/test_std.js")
+    // runTest("qjsbn", "-m tests/test_std.js")
     // Unknown error
-    // runJsTest("qjsbn", "--qjscalc tests/test_bignum.js")
+    // runTest("qjsbn", "--qjscalc tests/test_bignum.js")
   }
 
   fun start() {
@@ -135,6 +143,17 @@ class Tester(
         testPatch()
         test()
 
+        printer.print("********************************")
+        printer.print("********************************")
+        printer.print("********************************")
+        if (failedTests.isEmpty()) {
+          printer.print("All tests passed")
+        } else {
+          printer.print("${failedTests.size} tests failed")
+          failedTests.forEach {
+            printer.print(it)
+          }
+        }
       } catch (e: Throwable) {
         e.printStackTrace()
         printer.print("Test interrupted")
