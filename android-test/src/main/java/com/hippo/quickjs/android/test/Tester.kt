@@ -125,15 +125,41 @@ class Tester(
     runTest("qjs", "tests/test_builtin.js")
     runTest("qjs", "tests/test_loop.js")
     // tmpfile returns null
-    // runTest("qjs", "-m tests/test_std.js")
+    runTest("qjs", "-m tests/test_std.js")
     runTest("qjsbn", "tests/test_closure.js")
     runTest("qjsbn", "tests/test_op.js")
     runTest("qjsbn", "tests/test_builtin.js")
     runTest("qjsbn", "tests/test_loop.js")
     // tmpfile returns null
-    // runTest("qjsbn", "-m tests/test_std.js")
-    // Unknown error
-    // runTest("qjsbn", "--qjscalc tests/test_bignum.js")
+    runTest("qjsbn", "-m tests/test_std.js")
+    // Failed. Might be related to libbf
+    runTest("qjsbn", "--qjscalc tests/test_bignum.js")
+  }
+
+  private fun stats() {
+    runTest("qjs", "-qd")
+  }
+
+  private fun microbench() {
+    runTest("qjs", "tests/microbench.js")
+  }
+
+  private fun runTest262() {
+    runTest("run-test262", "-m -c test262o.conf")
+    runTest("run-test262", "-u -c test262o.conf")
+    runTest("run-test262", "-m -c test262.conf")
+    runTest("run-test262", "-m -c test262.conf -a")
+    runTest("run-test262", "-u -c test262.conf -a")
+    runTest("run-test262", "-m -c test262.conf -E -a")
+  }
+
+  private fun runTest262bn() {
+    runTest("run-test262-bn", "-m -c test262bn.conf")
+    runTest("run-test262-bn", "-m -c test262bn.conf -a")
+  }
+
+  private fun benchV8() {
+    runTest("qjs", "-d tests/bench-v8/combined.js")
   }
 
   fun start() {
@@ -144,6 +170,11 @@ class Tester(
 
         testPatch()
         test()
+        stats()
+        microbench()
+        runTest262()
+        runTest262bn()
+        benchV8()
 
         printer.print("********************************")
         printer.print("********************************")

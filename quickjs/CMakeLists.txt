@@ -43,16 +43,23 @@ set(QJSBN_SOURCES
         ${QJSBN_LIB_SOURCES}
 )
 
+# Camouflage executable files as shared libraries to make apk include them
+
 add_executable(patch_test patch_test.c patch.c)
-# Camouflage the executable as a shared library to make apk include it
 set_target_properties(patch_test PROPERTIES OUTPUT_NAME libpatch_test.so)
 
 add_executable(qjs ${QJS_SOURCES})
 target_compile_options(qjs PRIVATE ${COMMON_FLAGS})
-# Camouflage the executable as a shared library to make apk include it
 set_target_properties(qjs PROPERTIES OUTPUT_NAME libqjs.so)
 
 add_executable(qjsbn ${QJSBN_SOURCES})
 target_compile_options(qjsbn PRIVATE ${COMMON_FLAGS} ${BN_FLAGS})
-# Camouflage the executable as a shared library to make apk include it
 set_target_properties(qjsbn PROPERTIES OUTPUT_NAME libqjsbn.so)
+
+add_executable(run-test262 quickjs/run-test262.c ${QJS_LIB_SOURCES})
+target_compile_options(run-test262 PRIVATE ${COMMON_FLAGS})
+set_target_properties(run-test262 PROPERTIES OUTPUT_NAME librun-test262.so)
+
+add_executable(run-test262-bn quickjs/run-test262.c ${QJSBN_LIB_SOURCES})
+target_compile_options(run-test262-bn PRIVATE ${COMMON_FLAGS} ${BN_FLAGS})
+set_target_properties(run-test262-bn PROPERTIES OUTPUT_NAME librun-test262-bn.so)
