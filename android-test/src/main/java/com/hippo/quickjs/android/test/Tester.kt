@@ -17,6 +17,8 @@
 package com.hippo.quickjs.android.test
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.getkeepsafe.relinker.ReLinker
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -24,13 +26,14 @@ import net.lingala.zip4j.core.ZipFile
 import java.io.*
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.concurrent.thread
 
 class Tester(
   private val context: Context
 ) {
 
-  private val printer = MessageHolder()
+  private val logFile: File
+  private val logFileUri: Uri
+  private val printer: MessageHolder
 
   private val assetsNameFile = File(context.filesDir, "testassets.name")
   private val assetsDir = File(context.filesDir, "testassets")
@@ -39,6 +42,22 @@ class Tester(
   @Volatile
   private var testNumber = 0
   private val failedTests = ConcurrentLinkedQueue<String>()
+
+  init {
+    val logDir = File(context.filesDir, "logs")
+    logDir.mkdirs()
+
+    logFile = File(logDir, "log.txt")
+    logFileUri = Uri.Builder()
+      .scheme("content")
+      .authority("com.hippo.quickjs.android.test.fileprovider")
+      .appendPath("logs")
+      .appendPath("log.txt")
+      .build()
+    logFile.delete()
+
+    printer = MessageHolder(logFile)
+  }
 
   fun registerMessageQueuePrinter(messageQueuePrinter: MessageQueuePrinter) {
     printer.registerMessageQueuePrinter(messageQueuePrinter)
@@ -171,7 +190,7 @@ class Tester(
   }
 
   fun start() {
-    thread {
+    GlobalScope.launch {
       try {
         ensureAssetFiles()
         ensureExecutable()
@@ -195,7 +214,19 @@ class Tester(
         printer.print("********************************")
         printer.print("TEST INTERRUPT")
         printThrowable(e)
-        return@thread
+      }
+      printer.finish()
+
+      (this + Dispatchers.Main).launch {
+        val title = "Sharing Log File"
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = "text/plain"
+        intent.putExtra(Intent.EXTRA_STREAM, logFileUri)
+        intent.putExtra(Intent.EXTRA_SUBJECT, title)
+        intent.putExtra(Intent.EXTRA_TEXT, title)
+        val chooser = Intent.createChooser(intent, title)
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(chooser)
       }
     }
   }
@@ -231,9 +262,12 @@ class Tester(
   /**
    * MessageList cache messages and dispatch message to the last registered MultiPrinter.
    */
-  private class MessageHolder : MessagePrinter {
+  private class MessageHolder(
+    logFile: File
+  ) : MessagePrinter {
 
     private val messages = MessageQueue()
+    private val writer = logFile.writer()
 
     @Volatile
     private var weakMessageQueuePrinter: WeakReference<MessageQueuePrinter>? = null
@@ -248,6 +282,15 @@ class Tester(
     override fun print(message: String) {
       messages.add(message)
       weakMessageQueuePrinter?.get()?.print(message)
+      if (!message.endsWith("\u001B[K")) {
+        writer.write(message)
+        writer.write("\n")
+      }
+    }
+
+    fun finish() {
+      writer.flush()
+      writer.close()
     }
   }
 }
