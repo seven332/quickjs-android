@@ -17,7 +17,9 @@
 package com.hippo.quickjs.android.test
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -31,8 +33,21 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
 
   private val messages = MessageQueue()
 
+  val Int.dp: Int
+    get() {
+      val f = context.resources.displayMetrics.density * this
+      return (if (f >= 0) (f + 0.5f) else (f - 0.5f)).toInt()
+    }
+
+  val Int.sp: Float
+    get() = context.resources.displayMetrics.scaledDensity * this
+
   init {
     adapter = Adapter(context)
+    divider = null
+    selector = ColorDrawable(Color.TRANSPARENT)
+    clipToPadding = false
+    setPadding(4.dp, 4.dp, 4.dp, 4.dp)
   }
 
   @Volatile
@@ -85,6 +100,8 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
       if (view == null) {
         view = TextView(context).apply {
           typeface = Typeface.MONOSPACE
+          textSize = 14.0f
+          setLineSpacing(3.sp, 1.0f)
           layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
       }
