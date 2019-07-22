@@ -19,10 +19,10 @@ package com.hippo.quickjs.android.test
 import java.util.*
 
 class MessageQueue(
-  private val volume: Int = 1024
+  private val bufferSize: Int = 8192
 ) {
 
-  constructor(other: MessageQueue): this(other.volume) {
+  constructor(other: MessageQueue): this(other.bufferSize) {
     this.messages.addAll(other.messages)
   }
 
@@ -41,7 +41,7 @@ class MessageQueue(
       }
     }
 
-    while (messages.size >= volume) {
+    while (messages.size >= bufferSize) {
       messages.removeFirst()
     }
     messages.addLast(message)
