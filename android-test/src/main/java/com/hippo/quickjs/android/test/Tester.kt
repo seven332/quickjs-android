@@ -118,14 +118,8 @@ class Tester(
     printer.print("********************************")
     printer.print("** ${++testNumber}. $name")
     printer.print("********************************")
-
     val code = run(executable, parameter)
-
-    if (code == 0) {
-      printer.print("PASSED")
-    } else {
-      printer.print("FAILED")
-    }
+    printer.print("EXIT CODE: $code")
   }
 
   private fun runTest(executable: String, parameter: String) {
