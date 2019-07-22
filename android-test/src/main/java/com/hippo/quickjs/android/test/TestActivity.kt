@@ -18,6 +18,8 @@ package com.hippo.quickjs.android.test
 
 import android.app.Activity
 import android.os.Bundle
+import android.view.Menu
+import android.widget.Toast
 
 class TestActivity : Activity() {
 
@@ -29,6 +31,21 @@ class TestActivity : Activity() {
     logView = LogView(this)
     setContentView(logView)
     (application as App).tester.registerMessageQueuePrinter(logView)
+  }
+
+  override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menu?.add("Send Log File")?.apply {
+      setOnMenuItemClickListener {
+        val tester = (application as App).tester
+        if (tester.isFinished) {
+          tester.shareLogFile()
+        } else {
+          Toast.makeText(this@TestActivity, "The test is not finished", Toast.LENGTH_SHORT).show()
+        }
+        true
+      }
+    }
+    return true
   }
 
   override fun onDestroy() {

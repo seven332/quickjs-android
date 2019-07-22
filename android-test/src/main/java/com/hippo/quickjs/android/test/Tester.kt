@@ -25,7 +25,6 @@ import kotlinx.coroutines.channels.Channel
 import net.lingala.zip4j.core.ZipFile
 import java.io.*
 import java.lang.ref.WeakReference
-import java.util.concurrent.ConcurrentLinkedQueue
 
 class Tester(
   private val context: Context
@@ -41,7 +40,9 @@ class Tester(
 
   @Volatile
   private var testNumber = 0
-  private val failedTests = ConcurrentLinkedQueue<String>()
+
+  var isFinished: Boolean = false
+    private set
 
   init {
     val logDir = File(context.filesDir, "logs")
@@ -124,7 +125,6 @@ class Tester(
       printer.print("PASSED")
     } else {
       printer.print("FAILED")
-      failedTests.add(name)
     }
   }
 
@@ -218,17 +218,22 @@ class Tester(
       printer.finish()
 
       (this + Dispatchers.Main).launch {
-        val title = "Sharing Log File"
-        val intent = Intent(Intent.ACTION_SEND)
-        intent.type = "text/plain"
-        intent.putExtra(Intent.EXTRA_STREAM, logFileUri)
-        intent.putExtra(Intent.EXTRA_SUBJECT, title)
-        intent.putExtra(Intent.EXTRA_TEXT, title)
-        val chooser = Intent.createChooser(intent, title)
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
+        isFinished = true
+        shareLogFile()
       }
     }
+  }
+
+  fun shareLogFile() {
+    val title = "Send Log File"
+    val intent = Intent(Intent.ACTION_SEND)
+    intent.type = "text/plain"
+    intent.putExtra(Intent.EXTRA_STREAM, logFileUri)
+    intent.putExtra(Intent.EXTRA_SUBJECT, title)
+    intent.putExtra(Intent.EXTRA_TEXT, title)
+    val chooser = Intent.createChooser(intent, title)
+    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    context.startActivity(chooser)
   }
 
   private fun run(executable: String, parameter: String): Int = runBlocking {
