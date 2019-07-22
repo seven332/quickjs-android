@@ -28,7 +28,7 @@ class TestActivity : Activity() {
 
     logView = LogView(this)
     setContentView(logView)
-    (application as App).tester.registerMultiPrinter(logView)
+    (application as App).tester.registerMessageQueuePrinter(logView)
   }
 
   override fun onDestroy() {

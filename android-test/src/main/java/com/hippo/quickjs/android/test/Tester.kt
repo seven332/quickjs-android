@@ -22,18 +22,13 @@ import net.lingala.zip4j.core.ZipFile
 import java.io.File
 import java.io.IOException
 import java.lang.ref.WeakReference
-import java.util.*
 import kotlin.concurrent.thread
 
 class Tester(
   private val context: Context
 ) {
 
-  companion object {
-    const val MAX_MESSAGE_VOLUME = 1000
-  }
-
-  private val printer = MessageList(MAX_MESSAGE_VOLUME)
+  private val printer = MessageHolder()
 
   private val assetsNameFile = File(context.filesDir, "testassets.name")
   private val assetsDir = File(context.filesDir, "testassets")
@@ -41,8 +36,8 @@ class Tester(
 
   private var testNumber = 0
 
-  fun registerMultiPrinter(multiPrinter: MultiPrinter) {
-    printer.registerMultiPrinter(multiPrinter)
+  fun registerMessageQueuePrinter(messageQueuePrinter: MessageQueuePrinter) {
+    printer.registerMessageQueuePrinter(messageQueuePrinter)
   }
 
   private fun ensureAssetFiles() {
@@ -95,40 +90,40 @@ class Tester(
     ReLinker.loadLibrary(context, "qjsbn")
   }
 
-  private fun runTest(name: String, executable: String, vararg parameters: String) {
+  private fun runTest(name: String, executable: String, parameter: String) {
     printer.print("********************************")
     printer.print("** ${++testNumber}. $name")
     printer.print("********************************")
 
-    val code = run(executable, *parameters)
+    val code = run(executable, parameter)
 
     printer.print("exit code: $code")
   }
 
+  private fun runTest(executable: String, parameter: String) {
+    val name = "$executable $parameter"
+    runTest(name, executable, parameter)
+  }
+
   private fun testPatch() {
-    runTest("patch test", "patch_test")
+    runTest("patch_test", "")
   }
 
-  private fun runJsTest(executable: String, parameter: String, file: String) {
-    val name = "$executable $parameter $file"
-    runTest(name, executable, parameter, File(assetsDir, file).path)
-  }
-
-  private fun testJs() {
-    runJsTest("qjs", "", "tests/test_closure.js")
-    runJsTest("qjs", "", "tests/test_op.js")
-    runJsTest("qjs", "", "tests/test_builtin.js")
-    runJsTest("qjs", "", "tests/test_loop.js")
+  private fun test() {
+    runTest("qjs", "tests/test_closure.js")
+    runTest("qjs", "tests/test_op.js")
+    runTest("qjs", "tests/test_builtin.js")
+    runTest("qjs", "tests/test_loop.js")
     // tmpfile returns null
-    // runJsTest("qjs", "-m", "tests/test_std.js")
-    runJsTest("qjsbn", "", "tests/test_closure.js")
-    runJsTest("qjsbn", "", "tests/test_op.js")
-    runJsTest("qjsbn", "", "tests/test_builtin.js")
-    runJsTest("qjsbn", "", "tests/test_loop.js")
+    // runJsTest("qjs", "-m tests/test_std.js")
+    runTest("qjsbn", "tests/test_closure.js")
+    runTest("qjsbn", "tests/test_op.js")
+    runTest("qjsbn", "tests/test_builtin.js")
+    runTest("qjsbn", "tests/test_loop.js")
     // tmpfile returns null
-    // runJsTest("qjsbn", "-m", "tests/test_std.js")
+    // runJsTest("qjsbn", "-m tests/test_std.js")
     // Unknown error
-    // runJsTest("qjsbn", "--qjscalc", "tests/test_bignum.js")
+    // runJsTest("qjsbn", "--qjscalc tests/test_bignum.js")
   }
 
   fun start() {
@@ -138,7 +133,8 @@ class Tester(
         ensureExecutable()
 
         testPatch()
-        testJs()
+        test()
+
       } catch (e: Throwable) {
         e.printStackTrace()
         printer.print("Test interrupted")
@@ -148,12 +144,12 @@ class Tester(
     }
   }
 
-  private fun run(executable: String, vararg parameters: String): Int {
+  private fun run(executable: String, parameter: String): Int {
     val nativeDir = context.applicationInfo.nativeLibraryDir
     val executableFile = File(nativeDir, "lib$executable.so")
-    val command = "${executableFile.path} ${parameters.joinToString(" ")}"
+    val command = "${executableFile.path} $parameter"
 
-    val process = Runtime.getRuntime().exec(command)
+    val process = Runtime.getRuntime().exec(command, null, assetsDir)
 
     process.inputStream.reader().buffered().forEachLine { printer.print(it) }
     process.errorStream.reader().buffered().forEachLine { printer.print(it) }
@@ -164,34 +160,23 @@ class Tester(
   /**
    * MessageList cache messages and dispatch message to the last registered MultiPrinter.
    */
-  private class MessageList(private val volume: Int) : Printer {
+  private class MessageHolder : MessagePrinter {
 
-    init {
-      check(volume > 0) { "Invalid volume: $volume" }
-    }
-
-    private val messages = LinkedList<String>()
+    private val messages = MessageQueue()
 
     @Volatile
-    private var weakMultiPrinter: WeakReference<MultiPrinter>? = null
+    private var weakMessageQueuePrinter: WeakReference<MessageQueuePrinter>? = null
 
-    fun registerMultiPrinter(multiPrinter: MultiPrinter) {
-      synchronized(messages) {
-        messages.forEach {
-          multiPrinter.print(it)
-        }
-      }
-      weakMultiPrinter = WeakReference(multiPrinter)
+    @Synchronized
+    fun registerMessageQueuePrinter(messageQueuePrinter: MessageQueuePrinter) {
+      messageQueuePrinter.print(messages.copy())
+      weakMessageQueuePrinter = WeakReference(messageQueuePrinter)
     }
 
+    @Synchronized
     override fun print(message: String) {
-      synchronized(message) {
-        while (messages.size >= volume) {
-          messages.poll()
-        }
-        messages.offer(message)
-      }
-      weakMultiPrinter?.get()?.print(message)
+      messages.add(message)
+      weakMessageQueuePrinter?.get()?.print(message)
     }
   }
 }

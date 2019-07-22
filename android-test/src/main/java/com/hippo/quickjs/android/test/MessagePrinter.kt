@@ -16,10 +16,10 @@
 
 package com.hippo.quickjs.android.test
 
-interface Printer {
+interface MessagePrinter {
     fun print(message: String)
 }
 
-interface MultiPrinter : Printer {
-    fun print(messages: List<String>)
+interface MessageQueuePrinter : MessagePrinter {
+    fun print(messages: MessageQueue)
 }

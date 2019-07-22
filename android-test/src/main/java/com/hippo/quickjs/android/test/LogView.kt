@@ -23,15 +23,13 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.TextView
-import java.util.*
 
 /**
  * LogView display lots of messages.
  */
-class LogView(context: Context) : ListView(context), MultiPrinter {
+class LogView(context: Context) : ListView(context), MessageQueuePrinter {
 
-  private val volume = 1000
-  private val messages = LinkedList<String>()
+  private val messages = MessageQueue()
 
   init {
     adapter = Adapter(context)
@@ -44,34 +42,33 @@ class LogView(context: Context) : ListView(context), MultiPrinter {
     isClosed = true
   }
 
-  private fun pushMessage(message: String) {
-    while (messages.size >= volume) {
-      messages.poll()
-    }
-    messages.offer(message)
-  }
-
   private fun onCatchNewMessages() {
     (adapter as BaseAdapter).notifyDataSetChanged()
     setSelection(adapter.count - 1)
   }
 
-  override fun print(message: String) {
+  private fun postIfNotClosed(block: () -> Unit) {
     if (!isClosed) {
       post {
         if (!isClosed) {
-          pushMessage(message)
-          onCatchNewMessages()
+          block()
         }
       }
     }
   }
 
-  override fun print(messages: List<String>) {
+  override fun print(message: String) {
+    postIfNotClosed {
+      messages.add(message)
+      onCatchNewMessages()
+    }
+  }
+
+  override fun print(messages: MessageQueue) {
     if (!isClosed) {
       post {
         if (!isClosed) {
-          messages.forEach { pushMessage(it) }
+          this.messages.addAll(messages)
           onCatchNewMessages()
         }
       }
@@ -92,7 +89,9 @@ class LogView(context: Context) : ListView(context), MultiPrinter {
       return view
     }
 
-    override fun getItem(position: Int): Any = messages[position]
+    override fun getItem(position: Int): Any = messages[position].let {
+      if (it.endsWith("\u001B[K")) it.substring(0, it.length - 3) else it
+    }
 
     override fun getItemId(position: Int): Long = position.toLong()
 
