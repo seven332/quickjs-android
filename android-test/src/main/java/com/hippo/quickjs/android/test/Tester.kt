@@ -21,8 +21,7 @@ import com.getkeepsafe.relinker.ReLinker
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import net.lingala.zip4j.core.ZipFile
-import java.io.File
-import java.io.IOException
+import java.io.*
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
@@ -162,6 +161,15 @@ class Tester(
     runTest("qjs", "-d tests/bench-v8/combined.js")
   }
 
+  private fun printThrowable(e: Throwable) {
+    val baos = ByteArrayOutputStream()
+    PrintWriter(baos).apply {
+      e.printStackTrace(this)
+      flush()
+    }
+    ByteArrayInputStream(baos.toByteArray()).reader().buffered().forEachLine { printer.print(it) }
+  }
+
   fun start() {
     thread {
       try {
@@ -179,18 +187,14 @@ class Tester(
         printer.print("********************************")
         printer.print("********************************")
         printer.print("********************************")
-        if (failedTests.isEmpty()) {
-          printer.print("All tests passed")
-        } else {
-          printer.print("${failedTests.size} tests failed")
-          failedTests.forEach {
-            printer.print(it)
-          }
-        }
+        printer.print("TEST COMPLETE")
       } catch (e: Throwable) {
         e.printStackTrace()
-        printer.print("Test interrupted")
-        printer.print(e.message ?: e.javaClass.name)
+        printer.print("********************************")
+        printer.print("********************************")
+        printer.print("********************************")
+        printer.print("TEST INTERRUPT")
+        printThrowable(e)
         return@thread
       }
     }
