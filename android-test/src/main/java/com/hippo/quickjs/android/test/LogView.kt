@@ -77,6 +77,9 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
 
   inner class Adapter(private val context: Context): BaseAdapter() {
 
+    private fun fixMessage(message: String) =
+      if (message.endsWith("\u001B[K")) message.substring(0, message.length - 3) else message
+
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
       var view = convertView as? TextView
       if (view == null) {
@@ -85,13 +88,11 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
           layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
       }
-      view.text = messages[position]
+      view.text = fixMessage(messages[position])
       return view
     }
 
-    override fun getItem(position: Int): Any = messages[position].let {
-      if (it.endsWith("\u001B[K")) it.substring(0, it.length - 3) else it
-    }
+    override fun getItem(position: Int): Any = messages[position]
 
     override fun getItemId(position: Int): Long = position.toLong()
 
