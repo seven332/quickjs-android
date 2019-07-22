@@ -8,3 +8,4 @@ build
 .externalNativeBuild
 testassets
 patched
+release.keystore

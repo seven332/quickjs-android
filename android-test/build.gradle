@@ -39,22 +39,29 @@ android {
         main.assets.srcDirs += 'testassets'
     }
 
+    def hasReleaseKey = rootProject.file('release.keystore').exists()
+
+    if (hasReleaseKey) {
+        signingConfigs {
+            release {
+                def properties = new Properties()
+                properties.load(rootProject.file('local.properties').newDataInputStream())
+                storeFile file(properties.getProperty('RELEASE_STORE_PATH'))
+                storePassword properties.getProperty('RELEASE_STORE_PASSWORD')
+                keyAlias properties.getProperty('RELEASE_KEY_ALIAS')
+                keyPassword properties.getProperty('RELEASE_KEY_PASSWORD')
+            }
+        }
+    }
+
     buildTypes {
         release {
             debuggable false
             jniDebuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-
-            Properties properties = new Properties()
-            properties.load(project.rootProject.file('local.properties').newDataInputStream())
-            if (properties.hasProperty('RELEASE_STORE_PATH')) {
-                signingConfig {
-                    storeFile file(properties.getProperty('RELEASE_STORE_PATH'))
-                    storePassword properties.getProperty('RELEASE_STORE_PASSWORD')
-                    keyAlias properties.getProperty('RELEASE_KEY_ALIAS')
-                    keyPassword properties.getProperty('RELEASE_KEY_PASSWORD')
-                }
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
             }
         }
     }
