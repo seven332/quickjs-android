@@ -64,6 +64,8 @@ public class PatchTask extends DefaultTask {
 
   @TaskAction
   public void run() throws IOException, PatchException {
+    FileUtils.deleteDirectory(to);
+
     FileUtils.forceMkdir(to);
     for (File f : from) {
       FileUtils.copyFileToDirectory(f, to);
