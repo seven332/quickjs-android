@@ -33,6 +33,12 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
 
   private val messages = MessageQueue()
 
+  @Volatile
+  private var isClosed = false
+
+  private var pendingLastVisiblePosition = 0
+  private var lastVisibleBottomShows = true
+
   val Int.dp: Int
     get() {
       val f = context.resources.displayMetrics.density * this
@@ -50,16 +56,8 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
     setPadding(4.dp, 4.dp, 4.dp, 4.dp)
   }
 
-  @Volatile
-  var isClosed = false
-
   fun close() {
     isClosed = true
-  }
-
-  private fun onCatchNewMessages() {
-    (adapter as BaseAdapter).notifyDataSetChanged()
-    setSelection(adapter.count - 1)
   }
 
   private fun postIfNotClosed(block: () -> Unit) {
@@ -72,20 +70,35 @@ class LogView(context: Context) : ListView(context), MessageQueuePrinter {
     }
   }
 
+  private inline fun catchNewMessages(block: () -> Unit) {
+    val scrollToBottom = pendingLastVisiblePosition == adapter.count - 1 && lastVisibleBottomShows
+    block()
+    (adapter as BaseAdapter).notifyDataSetChanged()
+    if (scrollToBottom) {
+      setSelection(adapter.count - 1)
+      pendingLastVisiblePosition = adapter.count - 1
+      lastVisibleBottomShows = true
+    }
+  }
+
+  override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+    super.onScrollChanged(l, t, oldl, oldt)
+    pendingLastVisiblePosition = lastVisiblePosition
+    lastVisibleBottomShows = if (childCount > 0) getChildAt(childCount - 1).bottom <= height - paddingBottom else true
+  }
+
   override fun print(message: String) {
     postIfNotClosed {
-      messages.add(message)
-      onCatchNewMessages()
+      catchNewMessages {
+        messages.add(message)
+      }
     }
   }
 
   override fun print(messages: MessageQueue) {
-    if (!isClosed) {
-      post {
-        if (!isClosed) {
-          this.messages.addAll(messages)
-          onCatchNewMessages()
-        }
+    postIfNotClosed {
+      catchNewMessages {
+        this.messages.addAll(messages)
       }
     }
   }
