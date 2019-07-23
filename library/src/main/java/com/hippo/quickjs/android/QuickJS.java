@@ -14,5 +14,19 @@
  * limitations under the License.
  */
 
-include ':android-test'
-include ':library'
+package com.hippo.quickjs.android;
+
+class QuickJS {
+
+  static {
+    System.loadLibrary("quickjs-android");
+  }
+
+  static native long createRuntime();
+  static native void destroyRuntime(long runtime);
+
+  static native long createContext(long runtime);
+  static native void destroyContext(long context);
+
+  static native Object evaluate(long context, String sourceCode, String fileName, int flags);
+}

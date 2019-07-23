@@ -14,5 +14,25 @@
  * limitations under the License.
  */
 
-include ':android-test'
-include ':library'
+package com.hippo.quickjs.android.test;
+
+import androidx.test.runner.AndroidJUnit4;
+import com.hippo.quickjs.android.JSContext;
+import com.hippo.quickjs.android.JSRuntime;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertEquals;
+
+@RunWith(AndroidJUnit4.class)
+public class JSContextTest {
+
+  @Test
+  public void test() {
+    try (JSRuntime runtime = JSRuntime.create()) {
+      try (JSContext context = runtime.createContext()) {
+        assertEquals(null, context.evaluate("1", "unknown.js", 0));
+      }
+    }
+  }
+}

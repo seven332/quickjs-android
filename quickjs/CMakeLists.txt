@@ -16,13 +16,17 @@ set(COMMON_FLAGS -D_GNU_SOURCE -DCONFIG_VERSION=\"${CONFIG_VERSION}\" -DCONFIG_C
 
 set(BN_FLAGS -DCONFIG_BIGNUM)
 
-set(QJS_LIB_SOURCES
+set(QUICKJS_LIB_SOURCES
         quickjs/quickjs.c
         quickjs/libregexp.c
         quickjs/libunicode.c
         quickjs/cutils.c
-        quickjs/quickjs-libc.c
         patch.c
+)
+
+set(QJS_LIB_SOURCES
+        quickjs/quickjs-libc.c
+        ${QUICKJS_LIB_SOURCES}
 )
 
 set(QJSBN_LIB_SOURCES
@@ -60,3 +64,7 @@ set_target_properties(run-test262 PROPERTIES OUTPUT_NAME librun-test262.so)
 add_executable(run-test262-bn quickjs/run-test262.c ${QJSBN_LIB_SOURCES})
 target_compile_options(run-test262-bn PRIVATE ${COMMON_FLAGS} ${BN_FLAGS})
 set_target_properties(run-test262-bn PROPERTIES OUTPUT_NAME librun-test262-bn.so)
+
+add_library(quickjs STATIC ${QUICKJS_LIB_SOURCES})
+target_compile_options(quickjs PRIVATE ${COMMON_FLAGS})
+target_include_directories(quickjs PUBLIC quickjs)

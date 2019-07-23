@@ -14,5 +14,11 @@
  * limitations under the License.
  */
 
-include ':android-test'
-include ':library'
+package com.hippo.quickjs.android;
+
+public class QuickJSException extends RuntimeException {
+
+  public QuickJSException(String detailMessage) {
+    super(detailMessage);
+  }
+}
