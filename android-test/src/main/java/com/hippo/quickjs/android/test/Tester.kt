@@ -109,7 +109,6 @@ class Tester(
   }
 
   private fun ensureExecutable() {
-    ReLinker.loadLibrary(context, "patch_test")
     ReLinker.loadLibrary(context, "qjs")
     ReLinker.loadLibrary(context, "qjsbn")
   }
@@ -125,10 +124,6 @@ class Tester(
   private fun runTest(executable: String, parameter: String) {
     val name = "$executable $parameter"
     runTest(name, executable, parameter)
-  }
-
-  private fun testPatch() {
-    runTest("patch_test", "")
   }
 
   private fun test() {
@@ -188,7 +183,6 @@ class Tester(
         ensureAssetFiles()
         ensureExecutable()
 
-        testPatch()
         test()
         stats()
         microbench()

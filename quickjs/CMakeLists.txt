@@ -17,7 +17,7 @@ set(COMMON_FLAGS -D_GNU_SOURCE -DCONFIG_VERSION=\"${CONFIG_VERSION}\" -DCONFIG_C
 set(BN_FLAGS -DCONFIG_BIGNUM)
 
 set(QJS_LIB_SOURCES
-        patched/quickjs.c
+        quickjs/quickjs.c
         quickjs/libregexp.c
         quickjs/libunicode.c
         quickjs/cutils.c
@@ -44,9 +44,6 @@ set(QJSBN_SOURCES
 )
 
 # Camouflage executable files as shared libraries to make apk include them
-
-add_executable(patch_test patch_test.c patch.c)
-set_target_properties(patch_test PROPERTIES OUTPUT_NAME libpatch_test.so)
 
 add_executable(qjs ${QJS_SOURCES})
 target_compile_options(qjs PRIVATE ${COMMON_FLAGS})

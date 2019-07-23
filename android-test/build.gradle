@@ -97,8 +97,6 @@ task bundleTestAssets(type: Zip) {
 project.afterEvaluate {
     generateDebugAssets.dependsOn 'bundleTestAssets'
     generateReleaseAssets.dependsOn 'bundleTestAssets'
-    externalNativeBuildDebug.dependsOn ':quickjs:patchQuickJS'
-    externalNativeBuildRelease.dependsOn ':quickjs:patchQuickJS'
 }
 
 dependencies {
