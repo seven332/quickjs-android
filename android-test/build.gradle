@@ -23,7 +23,7 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        applicationId 'com.hippo.quickjs.android.test'
+        applicationId 'com.hippo.quickjs.test.android'
         minSdkVersion 17
         targetSdkVersion 28
         versionCode 1

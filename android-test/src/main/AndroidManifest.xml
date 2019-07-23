@@ -18,15 +18,15 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.hippo.quickjs.android.test">
+    package="com.hippo.quickjs.test.android">
 
     <application
-        android:name=".App"
+        android:name="com.hippo.quickjs.android.test.App"
         android:allowBackup="true"
         android:label="quickjs android test"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <activity android:name=".TestActivity">
+        <activity android:name="com.hippo.quickjs.android.test.TestActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
