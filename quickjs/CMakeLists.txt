@@ -21,7 +21,6 @@ set(QUICKJS_LIB_SOURCES
         quickjs/libregexp.c
         quickjs/libunicode.c
         quickjs/cutils.c
-        patch.c
 )
 
 set(QJS_LIB_SOURCES
