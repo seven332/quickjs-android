@@ -21,9 +21,11 @@ import java.io.Closeable;
 public class JSContext implements Closeable {
 
   private long context;
+  private NativeCleaner<JSValue> cleaner;
 
   JSContext(long context) {
     this.context = context;
+    this.cleaner = new JSValueCleaner();
   }
 
   private void checkClosed() {
@@ -32,31 +34,60 @@ public class JSContext implements Closeable {
     }
   }
 
-  public synchronized Object evaluate(String script, String fileName) {
-    checkClosed();
-    return evaluate_internal(script, fileName, QuickJS.EVAL_TYPE_GLOBAL, 0);
+  public synchronized <T> T evaluate(String script, String fileName, Class<T> returnType) {
+    return evaluate(script, fileName, QuickJS.EVAL_TYPE_GLOBAL, 0, returnType);
   }
 
-  public synchronized Object evaluate(String script, String fileName, int type, int flags) {
+  public synchronized <T> T evaluate(String script, String fileName, int type, int flags, Class<T> returnType) {
     checkClosed();
-    return evaluate_internal(script, fileName, type, flags);
-  }
 
-  private Object evaluate_internal(String script, String fileName, int type, int flags) {
     if (type != QuickJS.EVAL_TYPE_GLOBAL && type != QuickJS.EVAL_TYPE_MODULE) {
       throw new QuickJSException("Invalid type: " + type);
     }
     if ((flags & (~QuickJS.EVAL_FLAG_MASK)) != 0) {
       throw new QuickJSException("Invalid flags: " + flags);
     }
-    return QuickJS.evaluate(context, script, fileName, type | flags);
+
+    long value = QuickJS.evaluate(context, script, fileName, type | flags);
+
+    if (value == 0) {
+      throw new QuickJSException("Fail to evaluate the script");
+    }
+
+    JSValue jsValue = new JSValue(this, value);
+    cleaner.register(jsValue, value);
+
+    // Trigger cleaner
+    cleaner.clean();
+
+    // TODO convert the js value to return type
+    return null;
   }
 
+  synchronized void destroyValue(long value) {
+    checkClosed();
+    QuickJS.destroyValue(context, value);
+  }
+
+  synchronized int notRemovedJSValueCount() {
+    return cleaner.size();
+  }
+
+  @Override
   public synchronized void close() {
     if (context != 0) {
+      cleaner.forceClean();
       long contextToClose = context;
       context = 0;
       QuickJS.destroyContext(contextToClose);
+    }
+  }
+
+  private class JSValueCleaner extends NativeCleaner<JSValue> {
+
+    @Override
+    public void onRemove(long pointer) {
+      destroyValue(pointer);
     }
   }
 }

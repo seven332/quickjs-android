@@ -58,5 +58,7 @@ class QuickJS {
   static native long createContext(long runtime);
   static native void destroyContext(long context);
 
-  static native Object evaluate(long context, String sourceCode, String fileName, int flags);
+  static native void destroyValue(long context, long value);
+
+  static native long evaluate(long context, String sourceCode, String fileName, int flags);
 }

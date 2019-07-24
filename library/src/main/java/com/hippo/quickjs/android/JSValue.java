@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-package com.hippo.quickjs.android.test;
+package com.hippo.quickjs.android;
 
-import androidx.test.runner.AndroidJUnit4;
-import com.hippo.quickjs.android.JSContext;
-import com.hippo.quickjs.android.JSRuntime;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.io.Closeable;
 
-import static org.junit.Assert.assertEquals;
+class JSValue implements Closeable {
 
-@RunWith(AndroidJUnit4.class)
-public class JSContextTest {
+  private JSContext jsContext;
+  private long value;
 
-  @Test
-  public void test() {
-    try (JSRuntime runtime = JSRuntime.create()) {
-      try (JSContext context = runtime.createContext()) {
-        assertEquals(null, context.evaluate("1", "unknown.js"));
-      }
+  JSValue(JSContext jsContext, long value) {
+    this.jsContext = jsContext;
+    this.value = value;
+  }
+
+  @Override
+  public void close() {
+    if (value != 0) {
+      long valueToClose = value;
+      value = 0;
+      jsContext.destroyValue(valueToClose);
     }
   }
 }
