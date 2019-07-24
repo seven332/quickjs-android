@@ -32,9 +32,24 @@ public class JSContext implements Closeable {
     }
   }
 
-  public synchronized Object evaluate(String script, String fileName, int flags) {
+  public synchronized Object evaluate(String script, String fileName) {
     checkClosed();
-    return QuickJS.evaluate(context, script, fileName, flags);
+    return evaluate_internal(script, fileName, QuickJS.EVAL_TYPE_GLOBAL, 0);
+  }
+
+  public synchronized Object evaluate(String script, String fileName, int type, int flags) {
+    checkClosed();
+    return evaluate_internal(script, fileName, type, flags);
+  }
+
+  private Object evaluate_internal(String script, String fileName, int type, int flags) {
+    if (type != QuickJS.EVAL_TYPE_GLOBAL && type != QuickJS.EVAL_TYPE_MODULE) {
+      throw new QuickJSException("Invalid type: " + type);
+    }
+    if ((flags & (~QuickJS.EVAL_FLAG_MASK)) != 0) {
+      throw new QuickJSException("Invalid flags: " + flags);
+    }
+    return QuickJS.evaluate(context, script, fileName, type | flags);
   }
 
   public synchronized void close() {

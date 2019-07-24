@@ -31,7 +31,7 @@ public class JSContextTest {
   public void test() {
     try (JSRuntime runtime = JSRuntime.create()) {
       try (JSContext context = runtime.createContext()) {
-        assertEquals(null, context.evaluate("1", "unknown.js", 0));
+        assertEquals(null, context.evaluate("1", "unknown.js"));
       }
     }
   }

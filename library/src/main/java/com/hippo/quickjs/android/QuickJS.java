@@ -22,6 +22,36 @@ class QuickJS {
     System.loadLibrary("quickjs-android");
   }
 
+  /**
+   * Global code.
+   */
+  public static final int EVAL_TYPE_GLOBAL = 0 << 0;
+
+  /**
+   * Module code.
+   */
+  public static final int EVAL_TYPE_MODULE = 1 << 0;
+
+  /**
+   * Skip first line beginning with '#!'.
+   */
+  public static final int EVAL_FLAG_SHEBANG = 1 << 2;
+
+  /**
+   * Force 'strict' mode.
+   */
+  public static final int EVAL_FLAG_STRICT = 1 << 3;
+
+  /**
+   * Force 'strip' mode.
+   *
+   * Remove the debug information (including the source code
+   * of the functions) to save memory.
+   */
+  public static final int EVAL_FLAG_STRIP = 1 << 4;
+
+  static final int EVAL_FLAG_MASK = 0b11100;
+
   static native long createRuntime();
   static native void destroyRuntime(long runtime);
 
