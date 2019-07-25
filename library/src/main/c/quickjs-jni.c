@@ -33,6 +33,66 @@ Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz,
     }
 }
 
+JNIEXPORT jint JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueTag(JNIEnv *env, jclass clazz, jlong value) {
+    JSValue *val = (JSValue *) value;
+    if (val == NULL) {
+        // TODO throw exception
+    }
+    return JS_VALUE_GET_NORM_TAG(*val);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueBoolean(JNIEnv *env, jclass clazz, jlong value) {
+    JSValue *val = (JSValue *) value;
+    if (val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_BOOL) {
+        // TODO throw exception
+    }
+    return (jboolean) (JS_VALUE_GET_BOOL(*val));
+}
+
+JNIEXPORT jint JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueInt(JNIEnv *env, jclass clazz, jlong value) {
+    JSValue *val = (JSValue *) value;
+    if (val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_INT) {
+        // TODO throw exception
+    }
+    return (jint) (JS_VALUE_GET_INT(*val));
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueDouble(JNIEnv *env, jclass clazz, jlong value) {
+    JSValue *val = (JSValue *) value;
+    if (val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_FLOAT64) {
+        // TODO throw exception
+    }
+    return (jdouble) JS_VALUE_GET_FLOAT64(*val);
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueString(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+    JSContext *ctx = (JSContext *) context;
+    JSValue *val = (JSValue *) value;
+    if (ctx == NULL || val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_STRING) {
+        // TODO throw exception
+    }
+
+    const char *str = JS_ToCString(ctx, *val);
+    if (str == NULL) {
+        // TODO throw exception
+    }
+
+    jstring j_str = (*env)->NewStringUTF(env, str);
+
+    JS_FreeCString(ctx, str);
+
+    if (j_str == NULL) {
+        // TODO throw exception
+    }
+
+    return j_str;
+}
+
 JNIEXPORT void JNICALL
 Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, jlong context, jlong value) {
     JSContext *ctx = (JSContext *) context;

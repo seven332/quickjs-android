@@ -34,7 +34,7 @@ public class JSContextTest {
         assertEquals(0, context.notRemovedJSValueCount());
 
         for (int i = 0; i < jsValueCount; i++) {
-          context.evaluate("1", "unknown.js", Object.class);
+          context.evaluate("1", "unknown.js", int.class);
         }
 
         assertEquals(jsValueCount, context.notRemovedJSValueCount());
@@ -42,7 +42,7 @@ public class JSContextTest {
         Runtime.getRuntime().gc();
         Runtime.getRuntime().gc();
 
-        context.evaluate("1", "unknown.js", Object.class);
+        context.evaluate("1", "unknown.js", int.class);
 
         assertEquals(1, context.notRemovedJSValueCount());
       }

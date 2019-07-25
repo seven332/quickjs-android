@@ -52,12 +52,27 @@ class QuickJS {
 
   static final int EVAL_FLAG_MASK = 0b11100;
 
+  static final int VALUE_TAG_SYMBOL = -8;
+  static final int VALUE_TAG_STRING = -7;
+  static final int VALUE_TAG_OBJECT = -1;
+  static final int VALUE_TAG_INT = 0;
+  static final int VALUE_TAG_BOOL = 1;
+  static final int VALUE_TAG_NULL = 2;
+  static final int VALUE_TAG_UNDEFINED = 3;
+  static final int VALUE_TAG_EXCEPTION = 6;
+  static final int VALUE_TAG_FLOAT64 = 7;
+
   static native long createRuntime();
   static native void destroyRuntime(long runtime);
 
   static native long createContext(long runtime);
   static native void destroyContext(long context);
 
+  static native int getValueTag(long value);
+  static native boolean getValueBoolean(long value);
+  static native int getValueInt(long value);
+  static native double getValueDouble(long value);
+  static native String getValueString(long context, long value);
   static native void destroyValue(long context, long value);
 
   static native long evaluate(long context, String sourceCode, String fileName, int flags);
