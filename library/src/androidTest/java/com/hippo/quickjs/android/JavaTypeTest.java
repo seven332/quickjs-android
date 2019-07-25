@@ -82,7 +82,7 @@ public class JavaTypeTest {
     try {
       JSContext.JavaType.from(Interface2.class);
       fail();
-    } catch (QuickJSException e) {
+    } catch (UnsupportedOperationException e) {
       assertEquals("fun1 is overloaded in interface com.hippo.quickjs.android.JavaTypeTest$Interface2", e.getMessage());
     }
   }

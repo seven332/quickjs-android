@@ -46,7 +46,7 @@ public class JSContext implements Closeable {
     if (tag == QuickJS.VALUE_TAG_BOOL) {
       return QuickJS.getValueBoolean(value);
     } else {
-      throw new QuickJSException("Invalid tag for boolean: " + tag);
+      throw new IllegalStateException("Invalid tag for boolean: " + tag);
     }
   }
 
@@ -54,7 +54,7 @@ public class JSContext implements Closeable {
     if (tag == QuickJS.VALUE_TAG_INT) {
       return QuickJS.getValueInt(value);
     } else {
-      throw new QuickJSException("Invalid tag for int: " + tag);
+      throw new IllegalStateException("Invalid tag for int: " + tag);
     }
   }
 
@@ -65,7 +65,7 @@ public class JSContext implements Closeable {
       // TODO throw exception if it has decimal part
       return (long) QuickJS.getValueDouble(value);
     } else {
-      throw new QuickJSException("Invalid tag for long: " + tag);
+      throw new IllegalStateException("Invalid tag for long: " + tag);
     }
   }
 
@@ -75,7 +75,7 @@ public class JSContext implements Closeable {
     } else if (tag == QuickJS.VALUE_TAG_FLOAT64) {
       return (float) QuickJS.getValueDouble(value);
     } else {
-      throw new QuickJSException("Invalid tag for float: " + tag);
+      throw new IllegalStateException("Invalid tag for float: " + tag);
     }
   }
 
@@ -85,7 +85,7 @@ public class JSContext implements Closeable {
     } else if (tag == QuickJS.VALUE_TAG_FLOAT64) {
       return QuickJS.getValueDouble(value);
     } else {
-      throw new QuickJSException("Invalid tag for double: " + tag);
+      throw new IllegalStateException("Invalid tag for double: " + tag);
     }
   }
 
@@ -93,7 +93,7 @@ public class JSContext implements Closeable {
     if (tag == QuickJS.VALUE_TAG_STRING) {
       return QuickJS.getValueString(context, value);
     } else {
-      throw new QuickJSException("Invalid tag for double: " + tag);
+      throw new IllegalStateException("Invalid tag for double: " + tag);
     }
   }
 
@@ -117,7 +117,7 @@ public class JSContext implements Closeable {
         if (javaType.nullable) {
           return null;
         } else {
-          throw new QuickJSException("Null and undefined are not accepted");
+          throw new IllegalStateException("Null and undefined are not accepted");
         }
       }
 
@@ -157,10 +157,10 @@ public class JSContext implements Closeable {
     cleaner.clean();
 
     if (type != QuickJS.EVAL_TYPE_GLOBAL && type != QuickJS.EVAL_TYPE_MODULE) {
-      throw new QuickJSException("Invalid type: " + type);
+      throw new IllegalArgumentException("Invalid type: " + type);
     }
     if ((flags & (~QuickJS.EVAL_FLAG_MASK)) != 0) {
-      throw new QuickJSException("Invalid flags: " + flags);
+      throw new IllegalArgumentException("Invalid flags: " + flags);
     }
 
     JavaType javaType = JavaType.from(returnType);
@@ -168,7 +168,7 @@ public class JSContext implements Closeable {
     long value = QuickJS.evaluate(context, script, fileName, type | flags);
 
     if (value == 0) {
-      throw new QuickJSException("Fail to evaluate the script");
+      throw new IllegalStateException("Fail to evaluate the script");
     }
 
     return valueToType(value, javaType);
@@ -230,7 +230,7 @@ public class JSContext implements Closeable {
             if (oldMethod != null) {
               // override or overload
               if (!Arrays.equals(method.getParameterTypes(), oldMethod.getParameterTypes())) {
-                throw new QuickJSException(method.getName() + " is overloaded in " + child);
+                throw new UnsupportedOperationException(method.getName() + " is overloaded in " + child);
               }
 
               Class<?> returnType = method.getReturnType();
@@ -251,7 +251,7 @@ public class JSContext implements Closeable {
         nullable = false;
         methods = null;
       } else {
-        throw new QuickJSException("Unsupported type: " + type);
+        throw new UnsupportedOperationException("Unsupported type: " + type);
       }
 
       return new JavaType(type, nullable, methods);

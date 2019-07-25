@@ -23,7 +23,7 @@ public class JSRuntime implements Closeable {
   public static JSRuntime create() {
     long runtime = QuickJS.createRuntime();
     if (runtime == 0) {
-      throw new QuickJSException("Cannot create JSRuntime instance");
+      throw new IllegalStateException("Cannot create JSRuntime instance");
     }
     return new JSRuntime(runtime);
   }
@@ -44,7 +44,7 @@ public class JSRuntime implements Closeable {
     checkClosed();
     long context = QuickJS.createContext(runtime);
     if (context == 0) {
-      throw new QuickJSException("Cannot create JSContext instance");
+      throw new IllegalStateException("Cannot create JSContext instance");
     }
     return new JSContext(context);
   }
