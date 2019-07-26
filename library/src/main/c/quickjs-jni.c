@@ -3,6 +3,8 @@
 #include <malloc.h>
 #include <string.h>
 
+#include "java-helper.h"
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
     return (jlong) JS_NewRuntime();
@@ -36,36 +38,37 @@ Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz,
 JNIEXPORT jint JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueTag(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
-    if (val == NULL) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, val, "Null JSValue pointer");
     return JS_VALUE_GET_NORM_TAG(*val);
 }
+
+#define CHECK_JS_TAG(VAL, TARGET, TYPE)                                                        \
+    int32_t __tag__ = JS_VALUE_GET_NORM_TAG(VAL);                                              \
+    if (__tag__ != (TARGET)) {                                                                 \
+        THROW_ILLEGAL_STATE_EXCEPTION(env, "Invalid JSValue tag for %s: %d", (TYPE), __tag__); \
+    }
 
 JNIEXPORT jboolean JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueBoolean(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
-    if (val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_BOOL) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, val, "Null JSValue pointer");
+    CHECK_JS_TAG(*val, JS_TAG_BOOL, "boolean");
     return (jboolean) (JS_VALUE_GET_BOOL(*val));
 }
 
 JNIEXPORT jint JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueInt(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
-    if (val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_INT) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, val, "Null JSValue pointer");
+    CHECK_JS_TAG(*val, JS_TAG_INT, "int");
     return (jint) (JS_VALUE_GET_INT(*val));
 }
 
 JNIEXPORT jdouble JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueDouble(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
-    if (val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_FLOAT64) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, val, "Null JSValue pointer");
+    CHECK_JS_TAG(*val, JS_TAG_FLOAT64, "float64");
     return (jdouble) JS_VALUE_GET_FLOAT64(*val);
 }
 
@@ -73,22 +76,18 @@ JNIEXPORT jstring JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueString(JNIEnv *env, jclass clazz, jlong context, jlong value) {
     JSContext *ctx = (JSContext *) context;
     JSValue *val = (JSValue *) value;
-    if (ctx == NULL || val == NULL || JS_VALUE_GET_NORM_TAG(*val) != JS_TAG_STRING) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, ctx, "Null JSContext pointer");
+    CHECK_NULL(env, val, "Null JSValue pointer");
+    CHECK_JS_TAG(*val, JS_TAG_STRING, "string");
 
     const char *str = JS_ToCString(ctx, *val);
-    if (str == NULL) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, str, "Out of memory");
 
     jstring j_str = (*env)->NewStringUTF(env, str);
 
     JS_FreeCString(ctx, str);
 
-    if (j_str == NULL) {
-        // TODO throw exception
-    }
+    CHECK_NULL(env, j_str, "Out of memory");
 
     return j_str;
 }
