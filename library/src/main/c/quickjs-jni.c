@@ -102,6 +102,48 @@ Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, j
     }
 }
 
+JNIEXPORT jobject JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getException(JNIEnv *env, jclass clazz, jlong context) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL(env, ctx, "Null JSContext pointer");
+
+    jclass js_exception_class = (*env)->FindClass(env, "com/hippo/quickjs/android/JSException");
+    CHECK_NULL(env, js_exception_class, "Can't find JSException");
+
+    jmethodID constructor_id = (*env)->GetMethodID(env, js_exception_class, "<init>", "(ZLjava/lang/String;Ljava/lang/String;)V");
+    CHECK_NULL(env, constructor_id, "Can't find JSException constructor");
+
+    const char *exception_str = NULL;
+    const char *stack_str = NULL;
+
+    JSValue exception = JS_GetException(ctx);
+    exception_str = JS_ToCString(ctx, exception);
+    jboolean is_error = (jboolean) JS_IsError(ctx, exception);
+    if (is_error) {
+        JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
+        if (!JS_IsUndefined(stack)) {
+            stack_str = JS_ToCString(ctx, stack);
+        }
+        JS_FreeValue(ctx, stack);
+    }
+    JS_FreeValue(ctx, exception);
+
+    jstring exception_j_str = (exception_str != NULL) ? (*env)->NewStringUTF(env, exception_str) : NULL;
+    jstring stack_j_str = (stack_str != NULL) ? (*env)->NewStringUTF(env, stack_str) : NULL;
+
+    if (exception_str != NULL) {
+        JS_FreeCString(ctx, exception_str);
+    }
+    if (stack_str != NULL) {
+        JS_FreeCString(ctx, stack_str);
+    }
+
+    jobject result = (*env)->NewObject(env, js_exception_class, constructor_id, is_error, exception_j_str, stack_j_str);
+    CHECK_NULL(env, result, "Can't create instance of JSException");
+
+    return result;
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
         jlong context, jstring source_code, jstring file_name, jint flags) {

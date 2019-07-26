@@ -201,4 +201,82 @@ public class QuickJSTest {
       assertEquals("Null JSContext pointer", e.getMessage());
     }
   }
+
+  @Test
+  public void testGetException() {
+    runJS("throw 1", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+
+        JSException jsException = QuickJS.getException(context);
+        assertFalse(jsException.isError());
+        assertEquals("1", jsException.getException());
+        assertNull(jsException.getStack());
+      }
+    });
+
+    runJS("throw new Error()", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+
+        JSException jsException = QuickJS.getException(context);
+        assertTrue(jsException.isError());
+        assertEquals("Error", jsException.getException());
+        assertEquals("    at <eval> (source.js)\n",jsException.getStack());
+      }
+    });
+
+    runJS("throw new Error()", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+
+        JSException jsException = QuickJS.getException(context);
+        assertTrue(jsException.isError());
+        assertEquals("Error", jsException.getException());
+        assertEquals("    at <eval> (source.js)\n",jsException.getStack());
+      }
+    });
+
+    runJS("(function() {\n" +
+        "    function f1() {\n" +
+        "        throw new Error()\n" +
+        "    }\n" +
+        "    function f2() {\n" +
+        "        f1()\n" +
+        "    }\n" +
+        "    function f3() {\n" +
+        "        f2()\n" +
+        "    }\n" +
+        "    f3()\n" +
+        "})()", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+
+        JSException jsException = QuickJS.getException(context);
+        assertTrue(jsException.isError());
+        assertEquals("Error", jsException.getException());
+        assertEquals("    at f1 (source.js:3)\n" +
+            "    at f2 (source.js:6)\n" +
+            "    at f3 (source.js:9)\n" +
+            "    at <anonymous> (source.js:11)\n" +
+            "    at <eval> (source.js:12)\n",jsException.getStack());
+      }
+    });
+
+    runJS("1", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertEquals(QuickJS.VALUE_TAG_INT, QuickJS.getValueTag(value));
+
+        JSException jsException = QuickJS.getException(context);
+        assertFalse(jsException.isError());
+        assertEquals("null", jsException.getException());
+        assertNull(jsException.getStack());
+      }
+    });
+  }
 }

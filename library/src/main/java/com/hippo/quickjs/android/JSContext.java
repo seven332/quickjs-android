@@ -113,6 +113,10 @@ public class JSContext implements Closeable {
     try {
       int tag = QuickJS.getValueTag(value);
 
+      if (tag == QuickJS.VALUE_TAG_EXCEPTION) {
+        throw new QuickJSException(QuickJS.getException(context));
+      }
+
       if (tag == QuickJS.VALUE_TAG_NULL || tag == QuickJS.VALUE_TAG_UNDEFINED) {
         if (javaType.nullable) {
           return null;

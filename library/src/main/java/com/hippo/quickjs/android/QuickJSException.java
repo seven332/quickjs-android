@@ -18,7 +18,13 @@ package com.hippo.quickjs.android;
 
 public class QuickJSException extends RuntimeException {
 
-  public QuickJSException(String detailMessage) {
-    super(detailMessage);
+  private JSException jsException;
+
+  QuickJSException(JSException jsException) {
+    super(jsException.toString());
+  }
+
+  public JSException getJSException() {
+    return jsException;
   }
 }
