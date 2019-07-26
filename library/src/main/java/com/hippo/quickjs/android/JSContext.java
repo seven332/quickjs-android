@@ -18,7 +18,10 @@ package com.hippo.quickjs.android;
 
 import java.io.Closeable;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 public class JSContext implements Closeable {
 
@@ -89,7 +92,7 @@ public class JSContext implements Closeable {
     }
   }
 
-  private String valueToString(long context, long value, int tag) {
+  private String valueToString(long value, int tag) {
     if (tag == QuickJS.VALUE_TAG_STRING) {
       return QuickJS.getValueString(context, value);
     } else {
@@ -137,7 +140,7 @@ public class JSContext implements Closeable {
       } else if (type == double.class || type == Double.class) {
         return (T) (Double) valueToDouble(value, tag);
       } else if (type == String.class) {
-        return (T) valueToString(context, value, tag);
+        return (T) valueToString(value, tag);
       } else {
         // TODO Interface
         //  Use Proxy to create a instance, add the native pointer to NativeCleaner
