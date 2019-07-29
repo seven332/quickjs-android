@@ -52,11 +52,13 @@ public class JSContext implements Closeable {
 
   private long pointer;
   private final TypeAdapter.Depot depot;
+  private final Object lock;
   private final NativeCleaner<JSValue> cleaner;
 
-  JSContext(long pointer, TypeAdapter.Depot depot) {
+  JSContext(long pointer, TypeAdapter.Depot depot, Object lock) {
     this.pointer = pointer;
     this.depot = depot;
+    this.lock = lock;
     this.cleaner = new JSValueCleaner();
   }
 
@@ -66,86 +68,102 @@ public class JSContext implements Closeable {
     }
   }
 
-  public synchronized <T> T evaluate(String script, String fileName, Class<T> clazz) {
+  public <T> T evaluate(String script, String fileName, Class<T> clazz) {
     return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, depot.<T>getAdapter(clazz));
   }
 
-  public synchronized <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
+  public <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
     return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, adapter);
   }
 
-  public synchronized <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
+  public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
     return evaluate(script, fileName, type, flags, depot.<T>getAdapter(clazz));
   }
 
-  public synchronized <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
-    checkClosed();
+  public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
+    synchronized (lock) {
+      checkClosed();
 
-    // Trigger cleaner
-    cleaner.clean();
+      // Trigger cleaner
+      cleaner.clean();
 
-    if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
-      throw new IllegalArgumentException("Invalid type: " + type);
+      if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
+        throw new IllegalArgumentException("Invalid type: " + type);
+      }
+      if ((flags & (~EVAL_FLAG_MASK)) != 0) {
+        throw new IllegalArgumentException("Invalid flags: " + flags);
+      }
+
+      long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
+
+      if (value == 0) {
+        throw new IllegalStateException("Fail to evaluate the script");
+      }
+
+      // Check js exception
+      if (QuickJS.getValueTag(value) == JSValue.VALUE_TAG_EXCEPTION) {
+        throw new JSEvaluationException(QuickJS.getException(pointer));
+      }
+
+      JSValue jsValue = new JSValue(value, this);
+      cleaner.register(jsValue, value);
+
+      return adapter.fromJSValue(jsValue);
     }
-    if ((flags & (~EVAL_FLAG_MASK)) != 0) {
-      throw new IllegalArgumentException("Invalid flags: " + flags);
-    }
-
-    long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
-
-    if (value == 0) {
-      throw new IllegalStateException("Fail to evaluate the script");
-    }
-
-    // Check js exception
-    if (QuickJS.getValueTag(value) == JSValue.VALUE_TAG_EXCEPTION) {
-      throw new JSEvaluationException(QuickJS.getException(pointer));
-    }
-
-    JSValue jsValue = new JSValue(value, this);
-    cleaner.register(jsValue, value);
-
-    return adapter.fromJSValue(jsValue);
   }
 
   int getValueTag(long value) {
-    checkClosed();
-    return QuickJS.getValueTag(value);
+    synchronized (lock) {
+      checkClosed();
+      return QuickJS.getValueTag(value);
+    }
   }
 
   boolean getValueBoolean(long value) {
-    checkClosed();
-    return QuickJS.getValueBoolean(value);
+    synchronized (lock) {
+      checkClosed();
+      return QuickJS.getValueBoolean(value);
+    }
   }
 
   int getValueInt(long value) {
-    checkClosed();
-    return QuickJS.getValueInt(value);
+    synchronized (lock) {
+      checkClosed();
+      return QuickJS.getValueInt(value);
+    }
   }
 
   double getValueDouble(long value) {
-    checkClosed();
-    return QuickJS.getValueDouble(value);
+    synchronized (lock) {
+      checkClosed();
+      return QuickJS.getValueDouble(value);
+    }
   }
 
   String getValueString(long value) {
-    checkClosed();
-    return QuickJS.getValueString(pointer, value);
+    synchronized (lock) {
+      checkClosed();
+      return QuickJS.getValueString(pointer, value);
+    }
   }
 
-  synchronized int getNotRemovedJSValueCount() {
-    return cleaner.size();
+  int getNotRemovedJSValueCount() {
+    synchronized (lock) {
+      return cleaner.size();
+    }
   }
 
   @Override
-  public synchronized void close() {
-    if (pointer != 0) {
-      // Destroy all JSValue
-      cleaner.forceClean();
-      // Destroy self
-      long contextToClose = pointer;
-      pointer = 0;
-      QuickJS.destroyContext(contextToClose);
+  public void close() {
+    synchronized (lock) {
+      if (pointer != 0) {
+        // Destroy all JSValue
+        cleaner.forceClean();
+        // Destroy self
+        long contextToClose = pointer;
+        pointer = 0;
+        QuickJS.destroyContext(contextToClose);
+      }
     }
   }
 
