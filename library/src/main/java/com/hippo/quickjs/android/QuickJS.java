@@ -16,51 +16,74 @@
 
 package com.hippo.quickjs.android;
 
-class QuickJS {
+import androidx.annotation.Nullable;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+class QuickJS implements TypeAdapter.Depot {
+
+  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(1);
+
+  static {
+    BUILT_IN_FACTORIES.add(StandardTypeAdapters.FACTORY);
+  }
+
+  private final List<TypeAdapter.Factory> factories;
+  private final Map<Type, TypeAdapter<?>> adapterCache;
+
+  private QuickJS(QuickJS.Builder builder) {
+    List<TypeAdapter.Factory> factories = new ArrayList<>(builder.factories.size() + BUILT_IN_FACTORIES.size());
+    factories.addAll(builder.factories);
+    factories.addAll(BUILT_IN_FACTORIES);
+    this.factories = Collections.unmodifiableList(factories);
+    this.adapterCache = new ConcurrentHashMap<>();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Nullable
+  @Override
+  public <T> TypeAdapter<T> getAdapter(Type type) {
+    TypeAdapter<?> adapter = adapterCache.get(type);
+    if (adapter != null) {
+      return (TypeAdapter<T>) adapter;
+    }
+
+    for (int i = 0, size = factories.size(); i < size; i++) {
+      adapter = factories.get(i).create(type);
+      if (adapter != null) {
+        adapterCache.put(type, adapter);
+        return (TypeAdapter<T>) adapter;
+      }
+    }
+
+    return null;
+  }
+
+  public JSRuntime createJSRuntime() {
+    long runtime = QuickJS.createRuntime();
+    if (runtime == 0) {
+      throw new IllegalStateException("Cannot create JSRuntime instance");
+    }
+    return new JSRuntime(runtime, this);
+  }
+
+  public static class Builder {
+
+    private List<TypeAdapter.Factory> factories = new ArrayList<>();
+
+    public QuickJS build() {
+      return new QuickJS(this);
+    }
+  }
 
   static {
     System.loadLibrary("quickjs-android");
   }
-
-  /**
-   * Global code.
-   */
-  public static final int EVAL_TYPE_GLOBAL = 0 << 0;
-
-  /**
-   * Module code.
-   */
-  public static final int EVAL_TYPE_MODULE = 1 << 0;
-
-  /**
-   * Skip first line beginning with '#!'.
-   */
-  public static final int EVAL_FLAG_SHEBANG = 1 << 2;
-
-  /**
-   * Force 'strict' mode.
-   */
-  public static final int EVAL_FLAG_STRICT = 1 << 3;
-
-  /**
-   * Force 'strip' mode.
-   *
-   * Remove the debug information (including the source code
-   * of the functions) to save memory.
-   */
-  public static final int EVAL_FLAG_STRIP = 1 << 4;
-
-  static final int EVAL_FLAG_MASK = 0b11100;
-
-  static final int VALUE_TAG_SYMBOL = -8;
-  static final int VALUE_TAG_STRING = -7;
-  static final int VALUE_TAG_OBJECT = -1;
-  static final int VALUE_TAG_INT = 0;
-  static final int VALUE_TAG_BOOL = 1;
-  static final int VALUE_TAG_NULL = 2;
-  static final int VALUE_TAG_UNDEFINED = 3;
-  static final int VALUE_TAG_EXCEPTION = 6;
-  static final int VALUE_TAG_FLOAT64 = 7;
 
   static native long createRuntime();
   static native void destroyRuntime(long runtime);

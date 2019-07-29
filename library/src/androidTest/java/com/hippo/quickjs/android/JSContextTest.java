@@ -16,35 +16,34 @@
 
 package com.hippo.quickjs.android;
 
-import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(AndroidJUnit4.class)
 public class JSContextTest {
 
   @Test
   public void testJSValueGC() {
-    try (JSRuntime runtime = JSRuntime.create()) {
-      try (JSContext context = runtime.createContext()) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
         int jsValueCount = 3;
 
-        assertEquals(0, context.notRemovedJSValueCount());
+        assertEquals(0, context.getNotRemovedJSValueCount());
 
         for (int i = 0; i < jsValueCount; i++) {
           context.evaluate("1", "unknown.js", int.class);
         }
 
-        assertEquals(jsValueCount, context.notRemovedJSValueCount());
+        assertEquals(jsValueCount, context.getNotRemovedJSValueCount());
 
         Runtime.getRuntime().gc();
         Runtime.getRuntime().gc();
 
         context.evaluate("1", "unknown.js", int.class);
 
-        assertEquals(1, context.notRemovedJSValueCount());
+        assertEquals(1, context.getNotRemovedJSValueCount());
       }
     }
   }

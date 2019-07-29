@@ -89,7 +89,7 @@ public class QuickJSTest {
         try {
           QuickJS.getValueBoolean(value);
           fail();
-        } catch (IllegalStateException e) {
+        } catch (JSDataException e) {
           assertEquals("Invalid JSValue tag for boolean: 0", e.getMessage());
         }
       }
@@ -118,7 +118,7 @@ public class QuickJSTest {
         try {
           QuickJS.getValueInt(value);
           fail();
-        } catch (IllegalStateException e) {
+        } catch (JSDataException e) {
           assertEquals("Invalid JSValue tag for int: 7", e.getMessage());
         }
       }
@@ -147,8 +147,8 @@ public class QuickJSTest {
         try {
           QuickJS.getValueDouble(value);
           fail();
-        } catch (IllegalStateException e) {
-          assertEquals("Invalid JSValue tag for float64: 0", e.getMessage());
+        } catch (JSDataException e) {
+          assertEquals("Invalid JSValue tag for double: 0", e.getMessage());
         }
       }
     });
@@ -176,7 +176,7 @@ public class QuickJSTest {
         try {
           QuickJS.getValueString(context, value);
           fail();
-        } catch (IllegalStateException e) {
+        } catch (JSDataException e) {
           assertEquals("Invalid JSValue tag for string: 0", e.getMessage());
         }
       }
@@ -207,7 +207,7 @@ public class QuickJSTest {
     runJS("throw 1", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertFalse(jsException.isError());
@@ -219,7 +219,7 @@ public class QuickJSTest {
     runJS("throw new Error()", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
@@ -231,7 +231,7 @@ public class QuickJSTest {
     runJS("throw new Error()", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
@@ -254,7 +254,7 @@ public class QuickJSTest {
         "})()", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(QuickJS.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
@@ -270,7 +270,7 @@ public class QuickJSTest {
     runJS("1", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(QuickJS.VALUE_TAG_INT, QuickJS.getValueTag(value));
+        assertEquals(JSValue.VALUE_TAG_INT, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertFalse(jsException.isError());

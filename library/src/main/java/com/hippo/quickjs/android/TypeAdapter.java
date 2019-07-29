@@ -16,15 +16,23 @@
 
 package com.hippo.quickjs.android;
 
-public class QuickJSException extends RuntimeException {
+import androidx.annotation.Nullable;
 
-  private JSException jsException;
+import java.lang.reflect.Type;
 
-  QuickJSException(JSException jsException) {
-    super(jsException.toString());
+public abstract class TypeAdapter<T> {
+
+  public abstract JSValue toJSValue(T value);
+
+  public abstract T fromJSValue(JSValue value);
+
+  public interface Factory {
+    @Nullable
+    TypeAdapter<?> create(Type type);
   }
 
-  public JSException getJSException() {
-    return jsException;
+  public interface Depot {
+    @Nullable
+    <T> TypeAdapter<T> getAdapter(Type type);
   }
 }

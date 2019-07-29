@@ -17,185 +17,134 @@
 package com.hippo.quickjs.android;
 
 import java.io.Closeable;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
 
 public class JSContext implements Closeable {
 
-  private static final Class<?>[] PRIMITIVE_CLASSES =
-      { boolean.class, int.class, long.class, float.class, double.class };
+  /**
+   * Global code.
+   */
+  public static final int EVAL_TYPE_GLOBAL = 0 << 0;
 
-  private static final Class<?>[] OBJECT_CLASSES =
-      { Boolean.class, Integer.class, Long.class, Float.class, Double.class, String.class };
+  /**
+   * Module code.
+   */
+  public static final int EVAL_TYPE_MODULE = 1 << 0;
 
-  private long context;
-  private NativeCleaner<JSValue> cleaner;
+  /**
+   * Skip first line beginning with '#!'.
+   */
+  public static final int EVAL_FLAG_SHEBANG = 1 << 2;
 
-  JSContext(long context) {
-    this.context = context;
+  /**
+   * Force 'strict' mode.
+   */
+  public static final int EVAL_FLAG_STRICT = 1 << 3;
+
+  /**
+   * Force 'strip' mode.
+   *
+   * Remove the debug information (including the source code
+   * of the functions) to save memory.
+   */
+  public static final int EVAL_FLAG_STRIP = 1 << 4;
+
+  private static final int EVAL_FLAG_MASK = 0b11100;
+
+  private long pointer;
+  private final TypeAdapter.Depot depot;
+  private final NativeCleaner<JSValue> cleaner;
+
+  JSContext(long pointer, TypeAdapter.Depot depot) {
+    this.pointer = pointer;
+    this.depot = depot;
     this.cleaner = new JSValueCleaner();
   }
 
   private void checkClosed() {
-    if (context == 0) {
+    if (pointer == 0) {
       throw new IllegalStateException("The JSContext is closed");
     }
   }
 
-  private boolean valueToBoolean(long value, int tag) {
-    if (tag == QuickJS.VALUE_TAG_BOOL) {
-      return QuickJS.getValueBoolean(value);
-    } else {
-      throw new IllegalStateException("Invalid tag for boolean: " + tag);
-    }
+  public synchronized <T> T evaluate(String script, String fileName, Class<T> clazz) {
+    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, depot.<T>getAdapter(clazz));
   }
 
-  private int valueToInt(long value, int tag) {
-    if (tag == QuickJS.VALUE_TAG_INT) {
-      return QuickJS.getValueInt(value);
-    } else {
-      throw new IllegalStateException("Invalid tag for int: " + tag);
-    }
+  public synchronized <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
+    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, adapter);
   }
 
-  private long valueToLong(long value, int tag) {
-    if (tag == QuickJS.VALUE_TAG_INT) {
-      return QuickJS.getValueInt(value);
-    } else if (tag == QuickJS.VALUE_TAG_FLOAT64) {
-      // TODO throw exception if it has decimal part
-      return (long) QuickJS.getValueDouble(value);
-    } else {
-      throw new IllegalStateException("Invalid tag for long: " + tag);
-    }
+  public synchronized <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
+    return evaluate(script, fileName, type, flags, depot.<T>getAdapter(clazz));
   }
 
-  private float valueToFloat(long value, int tag) {
-    if (tag == QuickJS.VALUE_TAG_INT) {
-      return (float) QuickJS.getValueInt(value);
-    } else if (tag == QuickJS.VALUE_TAG_FLOAT64) {
-      return (float) QuickJS.getValueDouble(value);
-    } else {
-      throw new IllegalStateException("Invalid tag for float: " + tag);
-    }
-  }
-
-  private double valueToDouble(long value, int tag) {
-    if (tag == QuickJS.VALUE_TAG_INT) {
-      return (double) QuickJS.getValueInt(value);
-    } else if (tag == QuickJS.VALUE_TAG_FLOAT64) {
-      return QuickJS.getValueDouble(value);
-    } else {
-      throw new IllegalStateException("Invalid tag for double: " + tag);
-    }
-  }
-
-  private String valueToString(long value, int tag) {
-    if (tag == QuickJS.VALUE_TAG_STRING) {
-      return QuickJS.getValueString(context, value);
-    } else {
-      throw new IllegalStateException("Invalid tag for double: " + tag);
-    }
-  }
-
-  private static <T> boolean contains(T[] array, T element) {
-    for (T t : array) {
-      if (t == element) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @SuppressWarnings("unchecked")
-  private <T> T valueToType(long value, JavaType javaType) {
-    boolean toDestroyValue = true;
-
-    try {
-      int tag = QuickJS.getValueTag(value);
-
-      if (tag == QuickJS.VALUE_TAG_EXCEPTION) {
-        throw new QuickJSException(QuickJS.getException(context));
-      }
-
-      if (tag == QuickJS.VALUE_TAG_NULL || tag == QuickJS.VALUE_TAG_UNDEFINED) {
-        if (javaType.nullable) {
-          return null;
-        } else {
-          throw new IllegalStateException("Null and undefined are not accepted");
-        }
-      }
-
-      Class<?> type = javaType.type;
-      if (type == boolean.class || type == Boolean.class) {
-        return (T) (Boolean) valueToBoolean(value, tag);
-      } else if (type == int.class || type == Integer.class) {
-        return (T) (Integer) valueToInt(value, tag);
-      } else if (type == long.class || type == Long.class) {
-        return (T) (Long) valueToLong(value, tag);
-      } else if (type == float.class || type == Float.class) {
-        return (T) (Float) valueToFloat(value, tag);
-      } else if (type == double.class || type == Double.class) {
-        return (T) (Double) valueToDouble(value, tag);
-      } else if (type == String.class) {
-        return (T) valueToString(value, tag);
-      } else {
-        // TODO Interface
-        //  Use Proxy to create a instance, add the native pointer to NativeCleaner
-        return null;
-      }
-    } finally {
-      if (toDestroyValue) {
-        QuickJS.destroyValue(context, value);
-      }
-    }
-  }
-
-  public synchronized <T> T evaluate(String script, String fileName, Class<T> returnType) {
-    return evaluate(script, fileName, QuickJS.EVAL_TYPE_GLOBAL, 0, returnType);
-  }
-
-  public synchronized <T> T evaluate(String script, String fileName, int type, int flags, Class<T> returnType) {
+  public synchronized <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
     checkClosed();
 
     // Trigger cleaner
     cleaner.clean();
 
-    if (type != QuickJS.EVAL_TYPE_GLOBAL && type != QuickJS.EVAL_TYPE_MODULE) {
+    if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
       throw new IllegalArgumentException("Invalid type: " + type);
     }
-    if ((flags & (~QuickJS.EVAL_FLAG_MASK)) != 0) {
+    if ((flags & (~EVAL_FLAG_MASK)) != 0) {
       throw new IllegalArgumentException("Invalid flags: " + flags);
     }
 
-    JavaType javaType = JavaType.from(returnType);
-
-    long value = QuickJS.evaluate(context, script, fileName, type | flags);
+    long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
 
     if (value == 0) {
       throw new IllegalStateException("Fail to evaluate the script");
     }
 
-    return valueToType(value, javaType);
+    // Check js exception
+    if (QuickJS.getValueTag(value) == JSValue.VALUE_TAG_EXCEPTION) {
+      throw new JSEvaluationException(QuickJS.getException(pointer));
+    }
+
+    JSValue jsValue = new JSValue(value, this);
+    cleaner.register(jsValue, value);
+
+    return adapter.fromJSValue(jsValue);
   }
 
-  synchronized void destroyValue(long value) {
+  int getValueTag(long value) {
     checkClosed();
-    QuickJS.destroyValue(context, value);
+    return QuickJS.getValueTag(value);
   }
 
-  synchronized int notRemovedJSValueCount() {
+  boolean getValueBoolean(long value) {
+    checkClosed();
+    return QuickJS.getValueBoolean(value);
+  }
+
+  int getValueInt(long value) {
+    checkClosed();
+    return QuickJS.getValueInt(value);
+  }
+
+  double getValueDouble(long value) {
+    checkClosed();
+    return QuickJS.getValueDouble(value);
+  }
+
+  String getValueString(long value) {
+    checkClosed();
+    return QuickJS.getValueString(pointer, value);
+  }
+
+  synchronized int getNotRemovedJSValueCount() {
     return cleaner.size();
   }
 
   @Override
   public synchronized void close() {
-    if (context != 0) {
+    if (pointer != 0) {
+      // Destroy all JSValue
       cleaner.forceClean();
-      long contextToClose = context;
-      context = 0;
+      // Destroy self
+      long contextToClose = pointer;
+      pointer = 0;
       QuickJS.destroyContext(contextToClose);
     }
   }
@@ -204,64 +153,7 @@ public class JSContext implements Closeable {
 
     @Override
     public void onRemove(long pointer) {
-      destroyValue(pointer);
-    }
-  }
-
-  static class JavaType {
-
-    final Class<?> type;
-    final boolean nullable;
-    final Map<String, Method> methods;
-
-    JavaType(Class<?> type, boolean nullable, Map<String, Method> methods) {
-      this.type = type;
-      this.nullable = nullable;
-      this.methods = methods;
-    }
-
-    static JavaType from(Class<?> type) {
-      boolean nullable;
-      Map<String, Method> methods;
-
-      if (type.isInterface()) {
-        nullable = true;
-        methods = new HashMap<>();
-        LinkedList<Class<?>> interfaces = new LinkedList<>();
-        interfaces.add(type);
-
-        while (!interfaces.isEmpty()) {
-          Class<?> child = interfaces.pollFirst();
-          for (Method method : child.getMethods()) {
-            Method oldMethod = methods.get(method.getName());
-            if (oldMethod != null) {
-              // override or overload
-              if (!Arrays.equals(method.getParameterTypes(), oldMethod.getParameterTypes())) {
-                throw new UnsupportedOperationException(method.getName() + " is overloaded in " + child);
-              }
-
-              Class<?> returnType = method.getReturnType();
-              Class<?> oldReturnType = oldMethod.getReturnType();
-              if (returnType != oldReturnType && oldReturnType.isAssignableFrom(returnType)) {
-                // returnType extends oldReturnType
-                methods.put(method.getName(), method);
-              }
-            } else {
-              methods.put(method.getName(), method);
-            }
-          }
-        }
-      } else if (contains(OBJECT_CLASSES, type)) {
-        nullable = true;
-        methods = null;
-      } else if (contains(PRIMITIVE_CLASSES, type)) {
-        nullable = false;
-        methods = null;
-      } else {
-        throw new UnsupportedOperationException("Unsupported type: " + type);
-      }
-
-      return new JavaType(type, nullable, methods);
+      QuickJS.destroyValue(JSContext.this.pointer, pointer);
     }
   }
 }

@@ -4,6 +4,7 @@
 #include <jni.h>
 
 #define CLASS_NAME_ILLEGAL_STATE_EXCEPTION "java/lang/IllegalStateException"
+#define CLASS_NAME_JS_DATA_EXCEPTION "com/hippo/quickjs/android/JSDataException"
 
 #define THROW_EXCEPTION(ENV, EXCEPTION_NAME, ...)                               \
     do {                                                                        \
@@ -13,6 +14,9 @@
 
 #define THROW_ILLEGAL_STATE_EXCEPTION(ENV, ...)                                 \
     THROW_EXCEPTION(ENV, CLASS_NAME_ILLEGAL_STATE_EXCEPTION, __VA_ARGS__)
+
+#define THROW_JS_DATA_EXCEPTION(ENV, ...)                                       \
+    THROW_EXCEPTION(ENV, CLASS_NAME_JS_DATA_EXCEPTION, __VA_ARGS__)
 
 #define CHECK_NULL(ENV, POINTER, MESSAGE)                                       \
     if ((POINTER) == NULL) {                                                    \

@@ -45,7 +45,7 @@ Java_com_hippo_quickjs_android_QuickJS_getValueTag(JNIEnv *env, jclass clazz, jl
 #define CHECK_JS_TAG(VAL, TARGET, TYPE)                                                        \
     int32_t __tag__ = JS_VALUE_GET_NORM_TAG(VAL);                                              \
     if (__tag__ != (TARGET)) {                                                                 \
-        THROW_ILLEGAL_STATE_EXCEPTION(env, "Invalid JSValue tag for %s: %d", (TYPE), __tag__); \
+        THROW_JS_DATA_EXCEPTION(env, "Invalid JSValue tag for %s: %d", (TYPE), __tag__);       \
     }
 
 JNIEXPORT jboolean JNICALL
@@ -68,7 +68,7 @@ JNIEXPORT jdouble JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueDouble(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL(env, val, "Null JSValue pointer");
-    CHECK_JS_TAG(*val, JS_TAG_FLOAT64, "float64");
+    CHECK_JS_TAG(*val, JS_TAG_FLOAT64, "double");
     return (jdouble) JS_VALUE_GET_FLOAT64(*val);
 }
 

@@ -18,20 +18,16 @@ package com.hippo.quickjs.android;
 
 import java.io.Closeable;
 
+// TODO Share synchronize lock in JSContext, JSValue of the same JSRuntime
+// TODO Check all JSContext closed when closing JSRuntime
 public class JSRuntime implements Closeable {
 
-  public static JSRuntime create() {
-    long runtime = QuickJS.createRuntime();
-    if (runtime == 0) {
-      throw new IllegalStateException("Cannot create JSRuntime instance");
-    }
-    return new JSRuntime(runtime);
-  }
-
   private long runtime;
+  private final TypeAdapter.Depot depot;
 
-  private JSRuntime(long runtime) {
+  JSRuntime(long runtime, TypeAdapter.Depot depot) {
     this.runtime = runtime;
+    this.depot = depot;
   }
 
   private void checkClosed() {
@@ -40,13 +36,13 @@ public class JSRuntime implements Closeable {
     }
   }
 
-  public synchronized JSContext createContext() {
+  public synchronized JSContext createJSContext() {
     checkClosed();
     long context = QuickJS.createContext(runtime);
     if (context == 0) {
       throw new IllegalStateException("Cannot create JSContext instance");
     }
-    return new JSContext(context);
+    return new JSContext(context, depot);
   }
 
   @Override
