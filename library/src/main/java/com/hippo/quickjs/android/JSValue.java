@@ -44,6 +44,14 @@ public final class JSValue {
     return "Can't treat the JSValue as " + javaType + ", it's type is " + jsType;
   }
 
+  private String wrongNumberMessage(String javaType, int number) {
+    return "Can't treat the number as " + javaType + ": " + number;
+  }
+
+  private String wrongNumberMessage(String javaType, double number) {
+    return "Can't treat the number as " + javaType + ": " + number;
+  }
+
   public boolean getBoolean() {
     int type = getType();
     switch (type) {
@@ -54,7 +62,7 @@ public final class JSValue {
     }
   }
 
-  public int getInt() {
+  private int getInt(String javaType) {
     int type = getType();
     switch (type) {
       case TYPE_INT:
@@ -66,10 +74,76 @@ public final class JSValue {
         if (fPart == 0.0f) {
           return iPart;
         } else {
-          throw new JSDataException("Can't treat the number as int: " + value);
+          throw new JSDataException(wrongNumberMessage(javaType, value));
         }
       default:
-        throw new JSDataException(wrongTypeMessage("int", type));
+        throw new JSDataException(wrongTypeMessage(javaType, type));
+    }
+  }
+
+  private int getIntInRange(String javaType, int min, int max) {
+    int value = getInt(javaType);
+    if (min <= value && value <= max) {
+      return value;
+    } else {
+      throw new JSDataException(wrongNumberMessage(javaType, value));
+    }
+  }
+
+  public byte getByte() {
+    return (byte) getIntInRange("byte", Byte.MIN_VALUE, Byte.MAX_VALUE);
+  }
+
+  public char getChar() {
+    int type = getType();
+    switch (type) {
+      case TYPE_STRING:
+        String str = jsContext.getValueString(pointer);
+        if (str.length() != 1) {
+          throw new JSDataException("Can't treat the string as a char: \"" + str + "\"");
+        }
+        return str.charAt(0);
+      default:
+        throw new JSDataException(wrongTypeMessage("char", type));
+    }
+  }
+
+  public short getShort() {
+    return (short) getIntInRange("short", Short.MIN_VALUE, Short.MAX_VALUE);
+  }
+
+  public int getInt() {
+    return getInt("int");
+  }
+
+  public long getLong() {
+    int type = getType();
+    switch (type) {
+      case TYPE_INT:
+        return jsContext.getValueInt(pointer);
+      case TYPE_DOUBLE:
+        double value = jsContext.getValueDouble(pointer);
+        long iPart = (long) value;
+        double fPart = value - iPart;
+        if (fPart == 0.0f) {
+          return iPart;
+        } else {
+          throw new JSDataException(wrongNumberMessage("long", value));
+        }
+      default:
+        throw new JSDataException(wrongTypeMessage("long", type));
+    }
+  }
+
+  public float getFloat() {
+    int type = getType();
+    switch (type) {
+      case TYPE_INT:
+        return jsContext.getValueInt(pointer);
+      case TYPE_DOUBLE:
+        return (float) jsContext.getValueDouble(pointer);
+      default:
+        throw new JSDataException(wrongTypeMessage("float", type));
     }
   }
 
