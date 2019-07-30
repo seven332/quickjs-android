@@ -48,6 +48,7 @@ class QuickJS implements TypeAdapter.Depot {
   @Nullable
   @Override
   public <T> TypeAdapter<T> getAdapter(Type type) {
+    // TODO Create key from type to ensure the same type creates the same key
     TypeAdapter<?> adapter = adapterCache.get(type);
     if (adapter != null) {
       return (TypeAdapter<T>) adapter;
@@ -75,6 +76,25 @@ class QuickJS implements TypeAdapter.Depot {
   public static class Builder {
 
     private List<TypeAdapter.Factory> factories = new ArrayList<>();
+
+    public <T> Builder registerTypeAdapter(final Type type, final TypeAdapter<T> adapter) {
+      return registerTypeAdapterFactory(new TypeAdapter.Factory() {
+        @Nullable
+        @Override
+        public TypeAdapter<?> create(Type targetType) {
+          // TODO Use a custom function to compare type
+          if (type == targetType) {
+            return adapter;
+          }
+          return null;
+        }
+      });
+    }
+
+    public Builder registerTypeAdapterFactory(TypeAdapter.Factory factory) {
+      factories.add(factory);
+      return this;
+    }
 
     public QuickJS build() {
       return new QuickJS(this);
