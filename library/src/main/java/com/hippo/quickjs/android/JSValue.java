@@ -18,16 +18,15 @@ package com.hippo.quickjs.android;
 
 public final class JSValue {
 
-  public static final int VALUE_TAG_UNKNOWN = Integer.MIN_VALUE;
-  public static final int VALUE_TAG_SYMBOL = -8;
-  public static final int VALUE_TAG_STRING = -7;
-  public static final int VALUE_TAG_OBJECT = -1;
-  public static final int VALUE_TAG_INT = 0;
-  public static final int VALUE_TAG_BOOL = 1;
-  public static final int VALUE_TAG_NULL = 2;
-  public static final int VALUE_TAG_UNDEFINED = 3;
-  public static final int VALUE_TAG_EXCEPTION = 6;
-  public static final int VALUE_TAG_DOUBLE = 7;
+  public static final int TYPE_SYMBOL = -8;
+  public static final int TYPE_STRING = -7;
+  public static final int TYPE_OBJECT = -1;
+  public static final int TYPE_INT = 0;
+  public static final int TYPE_BOOLEAN = 1;
+  public static final int TYPE_NULL = 2;
+  public static final int TYPE_UNDEFINED = 3;
+  public static final int TYPE_EXCEPTION = 6;
+  public static final int TYPE_DOUBLE = 7;
 
   private final long pointer;
   private final JSContext jsContext;
@@ -37,38 +36,62 @@ public final class JSValue {
     this.jsContext = jsContext;
   }
 
-  public int getTag() {
+  public int getType() {
     return jsContext.getValueTag(pointer);
   }
 
+  private String wrongTypeMessage(String javaType, int jsType) {
+    return "Can't treat the JSValue as " + javaType + ", it's type is " + jsType;
+  }
+
   public boolean getBoolean() {
-    return jsContext.getValueBoolean(pointer);
+    int type = getType();
+    switch (type) {
+      case TYPE_BOOLEAN:
+        return jsContext.getValueBoolean(pointer);
+      default:
+        throw new JSDataException(wrongTypeMessage("boolean", type));
+    }
   }
 
   public int getInt() {
-    if (getTag() == VALUE_TAG_DOUBLE) {
-      double value = jsContext.getValueDouble(pointer);
-      int iPart = (int) value;
-      double fPart = value - iPart;
-      if (fPart == 0.0f) {
-        return iPart;
-      } else {
-        throw new JSDataException("Can treat number with decimal part as int: " + value);
-      }
-    } else {
-      return jsContext.getValueInt(pointer);
+    int type = getType();
+    switch (type) {
+      case TYPE_INT:
+        return jsContext.getValueInt(pointer);
+      case TYPE_DOUBLE:
+        double value = jsContext.getValueDouble(pointer);
+        int iPart = (int) value;
+        double fPart = value - iPart;
+        if (fPart == 0.0f) {
+          return iPart;
+        } else {
+          throw new JSDataException("Can't treat the number as int: " + value);
+        }
+      default:
+        throw new JSDataException(wrongTypeMessage("int", type));
     }
   }
 
   public double getDouble() {
-    if (getTag() == VALUE_TAG_INT) {
-      return jsContext.getValueInt(pointer);
-    } else {
-      return jsContext.getValueDouble(pointer);
+    int type = getType();
+    switch (type) {
+      case TYPE_INT:
+        return jsContext.getValueInt(pointer);
+      case TYPE_DOUBLE:
+        return jsContext.getValueDouble(pointer);
+      default:
+        throw new JSDataException(wrongTypeMessage("double", type));
     }
   }
 
   public String getString() {
-    return jsContext.getValueString(pointer);
+    int type = getType();
+    switch (type) {
+      case TYPE_STRING:
+        return jsContext.getValueString(pointer);
+      default:
+        throw new JSDataException(wrongTypeMessage("string", type));
+    }
   }
 }

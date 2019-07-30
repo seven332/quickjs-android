@@ -207,7 +207,7 @@ public class QuickJSTest {
     runJS("throw 1", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.TYPE_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertFalse(jsException.isError());
@@ -219,7 +219,7 @@ public class QuickJSTest {
     runJS("throw new Error()", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.TYPE_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
@@ -231,7 +231,7 @@ public class QuickJSTest {
     runJS("throw new Error()", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.TYPE_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
@@ -254,7 +254,7 @@ public class QuickJSTest {
         "})()", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(JSValue.VALUE_TAG_EXCEPTION, QuickJS.getValueTag(value));
+        assertEquals(JSValue.TYPE_EXCEPTION, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
@@ -270,7 +270,7 @@ public class QuickJSTest {
     runJS("1", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(JSValue.VALUE_TAG_INT, QuickJS.getValueTag(value));
+        assertEquals(JSValue.TYPE_INT, QuickJS.getValueTag(value));
 
         JSException jsException = QuickJS.getException(context);
         assertFalse(jsException.isError());

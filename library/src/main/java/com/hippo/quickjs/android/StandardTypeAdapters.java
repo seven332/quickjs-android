@@ -101,8 +101,8 @@ class StandardTypeAdapters {
 
     @Override
     public T fromJSValue(JSValue value) {
-      int tag = value.getTag();
-      if (tag == JSValue.VALUE_TAG_NULL || tag == JSValue.VALUE_TAG_UNDEFINED) return null;
+      int tag = value.getType();
+      if (tag == JSValue.TYPE_NULL || tag == JSValue.TYPE_UNDEFINED) return null;
       return delegate.fromJSValue(value);
     }
   }

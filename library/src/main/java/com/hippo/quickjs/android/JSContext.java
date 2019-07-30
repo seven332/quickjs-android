@@ -101,7 +101,7 @@ public class JSContext implements Closeable {
       }
 
       // Check js exception
-      if (QuickJS.getValueTag(value) == JSValue.VALUE_TAG_EXCEPTION) {
+      if (QuickJS.getValueTag(value) == JSValue.TYPE_EXCEPTION) {
         throw new JSEvaluationException(QuickJS.getException(pointer));
       }
 
