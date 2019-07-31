@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * QuickJS is a resources container to create {@link JSRuntime}s.
  */
-class QuickJS implements TypeAdapter.Depot {
+public class QuickJS implements TypeAdapter.Depot {
 
   private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(1);
 
