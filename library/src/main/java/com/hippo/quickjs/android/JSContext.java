@@ -18,6 +18,12 @@ package com.hippo.quickjs.android;
 
 import java.io.Closeable;
 
+/**
+ * JSContext is a JavaScript context with its own global objects.
+ * JSContexts in the same JSRuntime share the same memory heap.
+ *
+ * @see JSRuntime
+ */
 public class JSContext implements Closeable {
 
   /**
@@ -80,6 +86,10 @@ public class JSContext implements Closeable {
     return evaluate(script, fileName, type, flags, depot.<T>getAdapter(clazz));
   }
 
+  /**
+   * Evaluates the script in this JSContext.
+   * The TypeAdapter converts the result to the target type.
+   */
   public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
     synchronized (lock) {
       checkClosed();

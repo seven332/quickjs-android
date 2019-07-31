@@ -16,6 +16,10 @@
 
 package com.hippo.quickjs.android;
 
+/**
+ * JSValue is a Javascript value.
+ * It could be a number, a object, null, undefined or something else.
+ */
 public final class JSValue {
 
   public static final int TYPE_SYMBOL = -8;
@@ -36,18 +40,34 @@ public final class JSValue {
     this.jsContext = jsContext;
   }
 
+  /**
+   * Returns the raw type in QuickJS c code.
+   */
   public int getType() {
     return jsContext.getValueTag(pointer);
   }
 
+  /**
+   * Returns true if the JSValue is an array.
+   */
   public boolean isArray() {
     return jsContext.isValueArray(pointer);
   }
 
+  /**
+   * Returns the property as a JSValue.
+   * The type of the JSValue is {@link #TYPE_UNDEFINED} if the property doesn't exist.
+   * Throws {@link JSEvaluationException} if the cannot read property of this JSValue.
+   */
   public JSValue getProperty(int index) {
     return jsContext.getValueProperty(pointer, index);
   }
 
+  /**
+   * Returns the property as a JSValue.
+   * The type of the JSValue is {@link #TYPE_UNDEFINED} if the property doesn't exist.
+   * Throws {@link JSEvaluationException} if the cannot read property of this JSValue.
+   */
   public JSValue getProperty(String name) {
     return jsContext.getValueProperty(pointer, name);
   }

@@ -18,7 +18,14 @@ package com.hippo.quickjs.android;
 
 import java.io.Closeable;
 
-// TODO Share synchronize lock in JSContext, JSValue of the same JSRuntime
+// TODO Check all JSContext closed when closing JSRuntime
+
+/**
+ * JSRuntime is a JavaScript runtime with a memory heap.
+ * It can't evaluate JavaScript script.
+ *
+ * @see JSContext
+ */
 public class JSRuntime implements Closeable {
 
   private long pointer;
@@ -35,6 +42,9 @@ public class JSRuntime implements Closeable {
     }
   }
 
+  /**
+   * Creates a JSContext with the memory heap of this JSRuntime.
+   */
   public synchronized JSContext createJSContext() {
     checkClosed();
     long context = QuickJS.createContext(pointer);
