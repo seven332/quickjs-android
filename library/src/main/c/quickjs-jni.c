@@ -42,6 +42,72 @@ Java_com_hippo_quickjs_android_QuickJS_getValueTag(JNIEnv *env, jclass clazz, jl
     return JS_VALUE_GET_NORM_TAG(*val);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_isValueArray(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+    JSContext *ctx = (JSContext *) context;
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL(env, ctx, "Null JSContext pointer");
+    CHECK_NULL(env, val, "Null JSValue pointer");
+    return (jboolean) JS_IsArray(ctx, *val);
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(JNIEnv *env, jclass clazz, jlong context, jlong value, jint index) {
+    JSContext *ctx = (JSContext *) context;
+    JSValue *val = (JSValue *) value;
+    if (ctx == NULL || val == NULL) {
+        return 0;
+    }
+
+    jlong result = 0;
+
+    JSValue prop = JS_GetPropertyUint32(ctx, *val, (uint32_t) index);
+
+    // Make a copy of prop
+    void *copy = malloc(sizeof(JSValue));
+    if (copy != NULL) {
+        memcpy(copy, &prop, sizeof(JSValue));
+        result = (jlong) copy;
+    } else {
+        // Free prop now due to failing to make a copy
+        JS_FreeValue(ctx, prop);
+    }
+
+    return result;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(JNIEnv *env, jclass clazz, jlong context, jlong value, jstring name) {
+    JSContext *ctx = (JSContext *) context;
+    JSValue *val = (JSValue *) value;
+    if (ctx == NULL || val == NULL || name == NULL) {
+        return 0;
+    }
+
+    const char *name_utf = (*env)->GetStringUTFChars(env, name, NULL);
+    if (name_utf == NULL) {
+        return 0;
+    }
+
+    jlong result = 0;
+
+    JSValue prop = JS_GetPropertyStr(ctx, *val, name_utf);
+
+    // Make a copy of prop
+    void *copy = malloc(sizeof(JSValue));
+    if (copy != NULL) {
+        memcpy(copy, &prop, sizeof(JSValue));
+        result = (jlong) copy;
+    } else {
+        // Free prop now due to failing to make a copy
+        JS_FreeValue(ctx, prop);
+    }
+
+    (*env)->ReleaseStringUTFChars(env, name, name_utf);
+
+    return result;
+}
+
 #define CHECK_JS_TAG(VAL, TARGET, TYPE)                                                        \
     int32_t __tag__ = JS_VALUE_GET_NORM_TAG(VAL);                                              \
     if (__tag__ != (TARGET)) {                                                                 \

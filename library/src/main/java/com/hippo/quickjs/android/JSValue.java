@@ -40,6 +40,18 @@ public final class JSValue {
     return jsContext.getValueTag(pointer);
   }
 
+  public boolean isArray() {
+    return jsContext.isValueArray(pointer);
+  }
+
+  public JSValue getProperty(int index) {
+    return jsContext.getValueProperty(pointer, index);
+  }
+
+  public JSValue getProperty(String name) {
+    return jsContext.getValueProperty(pointer, name);
+  }
+
   private String wrongTypeMessage(String javaType, int jsType) {
     return "Can't treat the JSValue as " + javaType + ", it's type is " + jsType;
   }

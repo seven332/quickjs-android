@@ -112,6 +112,9 @@ class QuickJS implements TypeAdapter.Depot {
   static native void destroyContext(long context);
 
   static native int getValueTag(long value);
+  static native boolean isValueArray(long context, long value);
+  static native long getValueProperty(long context, long value, int index);
+  static native long getValueProperty(long context, long value, String name);
   static native boolean getValueBoolean(long value);
   static native int getValueInt(long value);
   static native double getValueDouble(long value);

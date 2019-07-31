@@ -119,6 +119,45 @@ public class JSContext implements Closeable {
     }
   }
 
+  boolean isValueArray(long value) {
+    synchronized (lock) {
+      checkClosed();
+      return QuickJS.isValueArray(pointer, value);
+    }
+  }
+
+  private JSValue processProperty(long value) {
+    if (value == 0) {
+      throw new IllegalStateException("Fail to get value property");
+    }
+
+    // Check js exception
+    if (QuickJS.getValueTag(value) == JSValue.TYPE_EXCEPTION) {
+      throw new JSEvaluationException(QuickJS.getException(pointer));
+    }
+
+    JSValue jsValue = new JSValue(value, this);
+    cleaner.register(jsValue, value);
+
+    return jsValue;
+  }
+
+  JSValue getValueProperty(long value, int index) {
+    synchronized (lock) {
+      checkClosed();
+      long property = QuickJS.getValueProperty(pointer, value, index);
+      return processProperty(property);
+    }
+  }
+
+  JSValue getValueProperty(long value, String name) {
+    synchronized (lock) {
+      checkClosed();
+      long property = QuickJS.getValueProperty(pointer, value, name);
+      return processProperty(property);
+    }
+  }
+
   boolean getValueBoolean(long value) {
     synchronized (lock) {
       checkClosed();

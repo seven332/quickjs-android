@@ -38,33 +38,106 @@ public class QuickJSTest {
 
   private void runJS(String sourceCode, JSRunnable runnable) {
     long runtime = QuickJS.createRuntime();
-    if (runtime != 0) {
+    assertNotEquals(0, runtime);
+    try {
+      long context = QuickJS.createContext(runtime);
+      assertNotEquals(0, context);
       try {
-        long context = QuickJS.createContext(runtime);
-        if (context != 0) {
-          try {
-            long value = QuickJS.evaluate(context, sourceCode, "source.js", 0);
-            if (value != 0) {
-              try {
-                runnable.run(runtime, context, value);
-              } finally {
-                QuickJS.destroyValue(context, value);
-              }
-            } else {
-              fail();
-            }
-          } finally {
-            QuickJS.destroyContext(context);
-          }
-        } else {
-          fail();
+        long value = QuickJS.evaluate(context, sourceCode, "source.js", 0);
+        assertNotEquals(0, value);
+        try {
+          runnable.run(runtime, context, value);
+        } finally {
+          QuickJS.destroyValue(context, value);
         }
       } finally {
-        QuickJS.destroyRuntime(runtime);
+        QuickJS.destroyContext(context);
       }
-    } else {
-      fail();
+    } finally {
+      QuickJS.destroyRuntime(runtime);
     }
+  }
+
+  @Test
+  public void testIsValueArray() {
+    runJS("[]", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertTrue(QuickJS.isValueArray(context, value));
+      }
+    });
+    runJS("false", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertFalse(QuickJS.isValueArray(context, value));
+      }
+    });
+  }
+
+  private interface PropertyRunnable {
+    void run(long property);
+  }
+
+  private void withProperty(long context, long value, int index, PropertyRunnable runnable) {
+    long property = QuickJS.getValueProperty(context, value, index);
+    assertNotEquals(0, property);
+    try {
+      runnable.run(property);
+    } finally {
+      QuickJS.destroyValue(context, property);
+    }
+  }
+
+  private void withProperty(long context, long value, String name, PropertyRunnable runnable) {
+    long property = QuickJS.getValueProperty(context, value, name);
+    assertNotEquals(0, property);
+    try {
+      runnable.run(property);
+    } finally {
+      QuickJS.destroyValue(context, property);
+    }
+  }
+
+  @Test
+  public void testGetValuePropertyInt() {
+    runJS("[1, 'str']", new JSRunnable() {
+      @Override
+      public void run(long runtime, final long context, long value) {
+        withProperty(context, value, 0, new PropertyRunnable() {
+          @Override
+          public void run(long property) {
+            assertEquals(1, QuickJS.getValueInt(property));
+          }
+        });
+        withProperty(context, value, 1, new PropertyRunnable() {
+          @Override
+          public void run(long property) {
+            assertEquals("str", QuickJS.getValueString(context, property));
+          }
+        });
+      }
+    });
+  }
+
+  @Test
+  public void testGetValuePropertyString() {
+    runJS("a = {a: 1, b: 'str'}", new JSRunnable() {
+      @Override
+      public void run(long runtime, final long context, long value) {
+        withProperty(context, value, "a", new PropertyRunnable() {
+          @Override
+          public void run(long property) {
+            assertEquals(1, QuickJS.getValueInt(property));
+          }
+        });
+        withProperty(context, value, "b", new PropertyRunnable() {
+          @Override
+          public void run(long property) {
+            assertEquals("str", QuickJS.getValueString(context, property));
+          }
+        });
+      }
+    });
   }
 
   @Test
