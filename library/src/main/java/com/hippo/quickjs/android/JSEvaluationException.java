@@ -16,6 +16,9 @@
 
 package com.hippo.quickjs.android;
 
+/**
+ * This exception is raised if QuickJS raises a JavaScript exception.
+ */
 public class JSEvaluationException extends RuntimeException {
 
   private JSException jsException;

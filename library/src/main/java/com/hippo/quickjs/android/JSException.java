@@ -19,6 +19,9 @@ package com.hippo.quickjs.android;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+/**
+ * The information of JavaScript exception.
+ */
 public class JSException {
 
   private boolean isError;
@@ -35,11 +38,17 @@ public class JSException {
     return isError;
   }
 
+  /**
+   * The exception message.
+   */
   @Nullable
   public String getException() {
     return exception;
   }
 
+  /**
+   * The stack trace.
+   */
   @Nullable
   public String getStack() {
     return stack;

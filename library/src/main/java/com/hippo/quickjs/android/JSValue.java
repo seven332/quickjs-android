@@ -57,7 +57,8 @@ public final class JSValue {
   /**
    * Returns the property as a JSValue.
    * The type of the JSValue is {@link #TYPE_UNDEFINED} if the property doesn't exist.
-   * Throws {@link JSEvaluationException} if the cannot read property of this JSValue.
+   *
+   * @throws JSEvaluationException if the cannot read property of this JSValue.
    */
   public JSValue getProperty(int index) {
     return jsContext.getValueProperty(pointer, index);
@@ -66,7 +67,8 @@ public final class JSValue {
   /**
    * Returns the property as a JSValue.
    * The type of the JSValue is {@link #TYPE_UNDEFINED} if the property doesn't exist.
-   * Throws {@link JSEvaluationException} if the cannot read property of this JSValue.
+   *
+   * @throws JSEvaluationException if the cannot read property of this JSValue.
    */
   public JSValue getProperty(String name) {
     return jsContext.getValueProperty(pointer, name);
@@ -84,6 +86,11 @@ public final class JSValue {
     return "Can't treat the number as " + javaType + ": " + number;
   }
 
+  /**
+   * Gets boolean value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_BOOLEAN}
+   */
   public boolean getBoolean() {
     int type = getType();
     switch (type) {
@@ -122,10 +129,23 @@ public final class JSValue {
     }
   }
 
+  /**
+   * Gets byte value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE},
+   *         or has decimal part, or bigger than {@link Byte#MAX_VALUE} or smaller than {@link Byte#MIN_VALUE}
+   */
   public byte getByte() {
     return (byte) getIntInRange("byte", Byte.MIN_VALUE, Byte.MAX_VALUE);
   }
 
+  /**
+   * Gets char value of this JSValue. Only works if the JSValue is {@link #TYPE_STRING}
+   * and string length is {@code 1}.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_STRING},
+   *         or string length is not {@code 1}
+   */
   public char getChar() {
     int type = getType();
     switch (type) {
@@ -140,14 +160,32 @@ public final class JSValue {
     }
   }
 
+  /**
+   * Get short value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE},
+   *         or has decimal part, or bigger than {@link Short#MAX_VALUE} or smaller than {@link Short#MIN_VALUE}
+   */
   public short getShort() {
     return (short) getIntInRange("short", Short.MIN_VALUE, Short.MAX_VALUE);
   }
 
+  /**
+   * Get int value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE},
+   *         or has decimal part, or bigger than {@link Integer#MAX_VALUE} or smaller than {@link Integer#MIN_VALUE}
+   */
   public int getInt() {
     return getInt("int");
   }
 
+  /**
+   * Get int value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE},
+   *         or has decimal part, or bigger than {@link Long#MAX_VALUE} or smaller than {@link Long#MIN_VALUE}
+   */
   public long getLong() {
     int type = getType();
     switch (type) {
@@ -167,6 +205,11 @@ public final class JSValue {
     }
   }
 
+  /**
+   * Gets float value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE}
+   */
   public float getFloat() {
     int type = getType();
     switch (type) {
@@ -179,6 +222,11 @@ public final class JSValue {
     }
   }
 
+  /**
+   * Gets double value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE}
+   */
   public double getDouble() {
     int type = getType();
     switch (type) {
@@ -191,6 +239,11 @@ public final class JSValue {
     }
   }
 
+  /**
+   * Gets string value of this JSValue.
+   *
+   * @throws JSDataException if it's not {@link #TYPE_STRING}
+   */
   public String getString() {
     int type = getType();
     switch (type) {
