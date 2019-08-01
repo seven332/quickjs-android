@@ -30,10 +30,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class QuickJS implements TypeAdapter.Depot {
 
-  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(1);
+  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(2);
 
   static {
     BUILT_IN_FACTORIES.add(StandardTypeAdapters.FACTORY);
+    BUILT_IN_FACTORIES.add(CommonTypeAdapters.FACTORY);
   }
 
   private final List<TypeAdapter.Factory> factories;

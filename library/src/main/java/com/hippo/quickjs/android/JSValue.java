@@ -16,6 +16,8 @@
 
 package com.hippo.quickjs.android;
 
+// TODO Make JSValue closeable?
+
 /**
  * JSValue is a Javascript value.
  * It could be a number, a object, null, undefined or something else.
