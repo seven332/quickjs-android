@@ -29,11 +29,11 @@ import java.io.Closeable;
 public class JSRuntime implements Closeable {
 
   private long pointer;
-  private final TypeAdapter.Depot depot;
+  private final QuickJS quickJS;
 
-  JSRuntime(long pointer, TypeAdapter.Depot depot) {
+  JSRuntime(long pointer, QuickJS quickJS) {
     this.pointer = pointer;
-    this.depot = depot;
+    this.quickJS = quickJS;
   }
 
   private void checkClosed() {
@@ -51,7 +51,7 @@ public class JSRuntime implements Closeable {
     if (context == 0) {
       throw new IllegalStateException("Cannot create JSContext instance");
     }
-    return new JSContext(context, depot, this);
+    return new JSContext(context, quickJS, this);
   }
 
   @Override

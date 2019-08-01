@@ -35,10 +35,12 @@ public final class JSValue {
   public static final int TYPE_DOUBLE = 7;
 
   private final long pointer;
+  private final JSRuntime jsRuntime;
   private final JSContext jsContext;
 
-  JSValue(long pointer, JSContext jsContext) {
+  JSValue(long pointer, JSRuntime jsRuntime, JSContext jsContext) {
     this.pointer = pointer;
+    this.jsRuntime = jsRuntime;
     this.jsContext = jsContext;
   }
 
@@ -46,14 +48,20 @@ public final class JSValue {
    * Returns the raw type in QuickJS c code.
    */
   public int getType() {
-    return jsContext.getValueTag(pointer);
+    synchronized (jsRuntime) {
+      jsContext.checkClosed();
+      return QuickJS.getValueTag(pointer);
+    }
   }
 
   /**
    * Returns true if the JSValue is an array.
    */
   public boolean isArray() {
-    return jsContext.isValueArray(pointer);
+    synchronized (jsRuntime) {
+      long context = jsContext.checkClosed();
+      return QuickJS.isValueArray(context, pointer);
+    }
   }
 
   /**
@@ -63,7 +71,11 @@ public final class JSValue {
    * @throws JSEvaluationException if the cannot read property of this JSValue.
    */
   public JSValue getProperty(int index) {
-    return jsContext.getValueProperty(pointer, index);
+    synchronized (jsRuntime) {
+      long context = jsContext.checkClosed();
+      long property = QuickJS.getValueProperty(context, pointer, index);
+      return jsContext.wrapAsJSValue(property);
+    }
   }
 
   /**
@@ -73,7 +85,11 @@ public final class JSValue {
    * @throws JSEvaluationException if the cannot read property of this JSValue.
    */
   public JSValue getProperty(String name) {
-    return jsContext.getValueProperty(pointer, name);
+    synchronized (jsRuntime) {
+      long context = jsContext.checkClosed();
+      long property = QuickJS.getValueProperty(context, pointer, name);
+      return jsContext.wrapAsJSValue(property);
+    }
   }
 
   private String wrongTypeMessage(String javaType, int jsType) {
@@ -94,31 +110,37 @@ public final class JSValue {
    * @throws JSDataException if it's not {@link #TYPE_BOOLEAN}
    */
   public boolean getBoolean() {
-    int type = getType();
-    switch (type) {
-      case TYPE_BOOLEAN:
-        return jsContext.getValueBoolean(pointer);
-      default:
-        throw new JSDataException(wrongTypeMessage("boolean", type));
+    synchronized (jsRuntime) {
+      jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_BOOLEAN:
+          return QuickJS.getValueBoolean(pointer);
+        default:
+          throw new JSDataException(wrongTypeMessage("boolean", type));
+      }
     }
   }
 
   private int getInt(String javaType) {
-    int type = getType();
-    switch (type) {
-      case TYPE_INT:
-        return jsContext.getValueInt(pointer);
-      case TYPE_DOUBLE:
-        double value = jsContext.getValueDouble(pointer);
-        int iPart = (int) value;
-        double fPart = value - iPart;
-        if (fPart == 0.0f) {
-          return iPart;
-        } else {
-          throw new JSDataException(wrongNumberMessage(javaType, value));
-        }
-      default:
-        throw new JSDataException(wrongTypeMessage(javaType, type));
+    synchronized (jsRuntime) {
+      jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_INT:
+          return QuickJS.getValueInt(pointer);
+        case TYPE_DOUBLE:
+          double value = QuickJS.getValueDouble(pointer);
+          int iPart = (int) value;
+          double fPart = value - iPart;
+          if (fPart == 0.0f) {
+            return iPart;
+          } else {
+            throw new JSDataException(wrongNumberMessage(javaType, value));
+          }
+        default:
+          throw new JSDataException(wrongTypeMessage(javaType, type));
+      }
     }
   }
 
@@ -149,16 +171,19 @@ public final class JSValue {
    *         or string length is not {@code 1}
    */
   public char getChar() {
-    int type = getType();
-    switch (type) {
-      case TYPE_STRING:
-        String str = jsContext.getValueString(pointer);
-        if (str.length() != 1) {
-          throw new JSDataException("Can't treat the string as a char: \"" + str + "\"");
-        }
-        return str.charAt(0);
-      default:
-        throw new JSDataException(wrongTypeMessage("char", type));
+    synchronized (jsRuntime) {
+      long context = jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_STRING:
+          String str = QuickJS.getValueString(context, pointer);
+          if (str.length() != 1) {
+            throw new JSDataException("Can't treat the string as a char: \"" + str + "\"");
+          }
+          return str.charAt(0);
+        default:
+          throw new JSDataException(wrongTypeMessage("char", type));
+      }
     }
   }
 
@@ -189,21 +214,24 @@ public final class JSValue {
    *         or has decimal part, or bigger than {@link Long#MAX_VALUE} or smaller than {@link Long#MIN_VALUE}
    */
   public long getLong() {
-    int type = getType();
-    switch (type) {
-      case TYPE_INT:
-        return jsContext.getValueInt(pointer);
-      case TYPE_DOUBLE:
-        double value = jsContext.getValueDouble(pointer);
-        long iPart = (long) value;
-        double fPart = value - iPart;
-        if (fPart == 0.0f) {
-          return iPart;
-        } else {
-          throw new JSDataException(wrongNumberMessage("long", value));
-        }
-      default:
-        throw new JSDataException(wrongTypeMessage("long", type));
+    synchronized (jsRuntime) {
+      jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_INT:
+          return QuickJS.getValueInt(pointer);
+        case TYPE_DOUBLE:
+          double value = QuickJS.getValueDouble(pointer);
+          long iPart = (long) value;
+          double fPart = value - iPart;
+          if (fPart == 0.0f) {
+            return iPart;
+          } else {
+            throw new JSDataException(wrongNumberMessage("long", value));
+          }
+        default:
+          throw new JSDataException(wrongTypeMessage("long", type));
+      }
     }
   }
 
@@ -213,14 +241,17 @@ public final class JSValue {
    * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE}
    */
   public float getFloat() {
-    int type = getType();
-    switch (type) {
-      case TYPE_INT:
-        return jsContext.getValueInt(pointer);
-      case TYPE_DOUBLE:
-        return (float) jsContext.getValueDouble(pointer);
-      default:
-        throw new JSDataException(wrongTypeMessage("float", type));
+    synchronized (jsRuntime) {
+      jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_INT:
+          return QuickJS.getValueInt(pointer);
+        case TYPE_DOUBLE:
+          return (float) QuickJS.getValueDouble(pointer);
+        default:
+          throw new JSDataException(wrongTypeMessage("float", type));
+      }
     }
   }
 
@@ -230,14 +261,17 @@ public final class JSValue {
    * @throws JSDataException if it's not {@link #TYPE_INT} and not {@link #TYPE_DOUBLE}
    */
   public double getDouble() {
-    int type = getType();
-    switch (type) {
-      case TYPE_INT:
-        return jsContext.getValueInt(pointer);
-      case TYPE_DOUBLE:
-        return jsContext.getValueDouble(pointer);
-      default:
-        throw new JSDataException(wrongTypeMessage("double", type));
+    synchronized (jsRuntime) {
+      jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_INT:
+          return QuickJS.getValueInt(pointer);
+        case TYPE_DOUBLE:
+          return QuickJS.getValueDouble(pointer);
+        default:
+          throw new JSDataException(wrongTypeMessage("double", type));
+      }
     }
   }
 
@@ -247,12 +281,15 @@ public final class JSValue {
    * @throws JSDataException if it's not {@link #TYPE_STRING}
    */
   public String getString() {
-    int type = getType();
-    switch (type) {
-      case TYPE_STRING:
-        return jsContext.getValueString(pointer);
-      default:
-        throw new JSDataException(wrongTypeMessage("string", type));
+    synchronized (jsRuntime) {
+      long context = jsContext.checkClosed();
+      int type = QuickJS.getValueTag(pointer);
+      switch (type) {
+        case TYPE_STRING:
+          return QuickJS.getValueString(context, pointer);
+        default:
+          throw new JSDataException(wrongTypeMessage("string", type));
+      }
     }
   }
 }

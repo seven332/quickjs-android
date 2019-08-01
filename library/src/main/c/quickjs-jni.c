@@ -5,6 +5,8 @@
 
 #include "java-helper.h"
 
+// TODO Never return null, throw java exception instead
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
     return (jlong) JS_NewRuntime();

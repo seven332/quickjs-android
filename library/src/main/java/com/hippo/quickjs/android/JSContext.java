@@ -57,25 +57,26 @@ public class JSContext implements Closeable {
   private static final int EVAL_FLAG_MASK = 0b11100;
 
   private long pointer;
-  private final TypeAdapter.Depot depot;
-  private final Object lock;
+  private final QuickJS quickJS;
+  private final JSRuntime jsRuntime;
   private final NativeCleaner<JSValue> cleaner;
 
-  JSContext(long pointer, TypeAdapter.Depot depot, Object lock) {
+  JSContext(long pointer, QuickJS quickJS, JSRuntime jsRuntime) {
     this.pointer = pointer;
-    this.depot = depot;
-    this.lock = lock;
+    this.quickJS = quickJS;
+    this.jsRuntime = jsRuntime;
     this.cleaner = new JSValueCleaner();
   }
 
-  private void checkClosed() {
+  long checkClosed() {
     if (pointer == 0) {
       throw new IllegalStateException("The JSContext is closed");
     }
+    return pointer;
   }
 
   public <T> T evaluate(String script, String fileName, Class<T> clazz) {
-    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, depot.<T>getAdapter(clazz));
+    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.<T>getAdapter(clazz));
   }
 
   public <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
@@ -83,7 +84,7 @@ public class JSContext implements Closeable {
   }
 
   public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
-    return evaluate(script, fileName, type, flags, depot.<T>getAdapter(clazz));
+    return evaluate(script, fileName, type, flags, quickJS.<T>getAdapter(clazz));
   }
 
   /**
@@ -91,7 +92,7 @@ public class JSContext implements Closeable {
    * The TypeAdapter converts the result to the target type.
    */
   public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
-    synchronized (lock) {
+    synchronized (jsRuntime) {
       checkClosed();
 
       // Trigger cleaner
@@ -115,30 +116,19 @@ public class JSContext implements Closeable {
         throw new JSEvaluationException(QuickJS.getException(pointer));
       }
 
-      JSValue jsValue = new JSValue(value, this);
+      JSValue jsValue = new JSValue(value, jsRuntime, this);
       cleaner.register(jsValue, value);
 
       return adapter.fromJSValue(jsValue);
     }
   }
 
-  int getValueTag(long value) {
-    synchronized (lock) {
-      checkClosed();
-      return QuickJS.getValueTag(value);
-    }
-  }
-
-  boolean isValueArray(long value) {
-    synchronized (lock) {
-      checkClosed();
-      return QuickJS.isValueArray(pointer, value);
-    }
-  }
-
-  private JSValue processProperty(long value) {
+  /**
+   * Wraps a JSValue c pointer as a Java JSValue object instance.
+   */
+  JSValue wrapAsJSValue(long value) {
     if (value == 0) {
-      throw new IllegalStateException("Fail to get value property");
+      throw new IllegalStateException("Can't wrap null pointer as JSValue");
     }
 
     // Check js exception
@@ -146,65 +136,23 @@ public class JSContext implements Closeable {
       throw new JSEvaluationException(QuickJS.getException(pointer));
     }
 
-    JSValue jsValue = new JSValue(value, this);
+    JSValue jsValue = new JSValue(value, jsRuntime, this);
+
+    // Register it to cleaner
     cleaner.register(jsValue, value);
 
     return jsValue;
   }
 
-  JSValue getValueProperty(long value, int index) {
-    synchronized (lock) {
-      checkClosed();
-      long property = QuickJS.getValueProperty(pointer, value, index);
-      return processProperty(property);
-    }
-  }
-
-  JSValue getValueProperty(long value, String name) {
-    synchronized (lock) {
-      checkClosed();
-      long property = QuickJS.getValueProperty(pointer, value, name);
-      return processProperty(property);
-    }
-  }
-
-  boolean getValueBoolean(long value) {
-    synchronized (lock) {
-      checkClosed();
-      return QuickJS.getValueBoolean(value);
-    }
-  }
-
-  int getValueInt(long value) {
-    synchronized (lock) {
-      checkClosed();
-      return QuickJS.getValueInt(value);
-    }
-  }
-
-  double getValueDouble(long value) {
-    synchronized (lock) {
-      checkClosed();
-      return QuickJS.getValueDouble(value);
-    }
-  }
-
-  String getValueString(long value) {
-    synchronized (lock) {
-      checkClosed();
-      return QuickJS.getValueString(pointer, value);
-    }
-  }
-
   int getNotRemovedJSValueCount() {
-    synchronized (lock) {
+    synchronized (jsRuntime) {
       return cleaner.size();
     }
   }
 
   @Override
   public void close() {
-    synchronized (lock) {
+    synchronized (jsRuntime) {
       if (pointer != 0) {
         // Destroy all JSValue
         cleaner.forceClean();
