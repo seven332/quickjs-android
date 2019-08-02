@@ -23,12 +23,61 @@ import static org.junit.Assert.*;
 public class QuickJSTest {
 
   @Test
+  public void testCreateRuntime() {
+    long runtime = 0;
+    try {
+      runtime = QuickJS.createRuntime();
+    } finally {
+      assertNotEquals(0, runtime);
+      QuickJS.destroyRuntime(runtime);
+    }
+  }
+
+  @Test
+  public void testDestroyRuntime() {
+    try {
+      QuickJS.destroyRuntime(0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSRuntime", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testCreateContext() {
+    long runtime = 0;
+    try {
+      runtime = QuickJS.createRuntime();
+      long context = 0;
+      try {
+        context = QuickJS.createContext(runtime);
+      } finally {
+        assertNotEquals(0, context);
+        QuickJS.destroyContext(context);
+      }
+    } finally {
+      assertNotEquals(0, runtime);
+      QuickJS.destroyRuntime(runtime);
+    }
+  }
+
+  @Test
+  public void testDestroyContext() {
+    try {
+      QuickJS.destroyContext(0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+  }
+
+  @Test
   public void testGetValueTag() {
     try {
       QuickJS.getValueTag(0);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Null JSValue pointer", e.getMessage());
+      assertEquals("Null JSValue", e.getMessage());
     }
   }
 
@@ -72,6 +121,20 @@ public class QuickJSTest {
         assertFalse(QuickJS.isValueArray(context, value));
       }
     });
+
+    try {
+      QuickJS.isValueArray(0, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.isValueArray(1, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSValue", e.getMessage());
+    }
   }
 
   private interface PropertyRunnable {
@@ -117,6 +180,20 @@ public class QuickJSTest {
         });
       }
     });
+
+    try {
+      QuickJS.getValueProperty(0, 0, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.getValueProperty(1, 0, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSValue", e.getMessage());
+    }
   }
 
   @Test
@@ -138,6 +215,27 @@ public class QuickJSTest {
         });
       }
     });
+
+    try {
+      QuickJS.getValueProperty(0, 0, null);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.getValueProperty(1, 0, null);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSValue", e.getMessage());
+    }
+
+    try {
+      QuickJS.getValueProperty(1, 1, null);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null name", e.getMessage());
+    }
   }
 
   @Test
@@ -172,7 +270,7 @@ public class QuickJSTest {
       QuickJS.getValueBoolean(0);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Null JSValue pointer", e.getMessage());
+      assertEquals("Null JSValue", e.getMessage());
     }
   }
 
@@ -201,7 +299,7 @@ public class QuickJSTest {
       QuickJS.getValueInt(0);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Null JSValue pointer", e.getMessage());
+      assertEquals("Null JSValue", e.getMessage());
     }
   }
 
@@ -230,7 +328,7 @@ public class QuickJSTest {
       QuickJS.getValueDouble(0);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Null JSValue pointer", e.getMessage());
+      assertEquals("Null JSValue", e.getMessage());
     }
   }
 
@@ -262,7 +360,7 @@ public class QuickJSTest {
           QuickJS.getValueString(context, 0);
           fail();
         } catch (IllegalStateException e) {
-          assertEquals("Null JSValue pointer", e.getMessage());
+          assertEquals("Null JSValue", e.getMessage());
         }
       }
     });
@@ -271,7 +369,31 @@ public class QuickJSTest {
       QuickJS.getValueString(0, 0);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Null JSContext pointer", e.getMessage());
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.getValueString(1, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSValue", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testDestroyValue() {
+    try {
+      QuickJS.destroyValue(0, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.destroyValue(1, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSValue", e.getMessage());
     }
   }
 
@@ -351,5 +473,36 @@ public class QuickJSTest {
         assertNull(jsException.getStack());
       }
     });
+
+    try {
+      QuickJS.getException(0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testEvaluate() {
+    try {
+      QuickJS.evaluate(0, null, null, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.evaluate(1, null, null, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null source code", e.getMessage());
+    }
+
+    try {
+      QuickJS.evaluate(1, "", null, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null file name", e.getMessage());
+    }
   }
 }
