@@ -34,7 +34,7 @@ public class JSContext implements Closeable {
   static final int TYPE_NULL = 2;
   static final int TYPE_UNDEFINED = 3;
   static final int TYPE_EXCEPTION = 6;
-  static final int TYPE_DOUBLE = 7;
+  static final int TYPE_FLOAT64 = 7;
 
   /**
    * Global code.
@@ -166,7 +166,7 @@ public class JSContext implements Closeable {
         break;
       case TYPE_EXCEPTION:
         throw new JSEvaluationException(QuickJS.getException(pointer));
-      case TYPE_DOUBLE:
+      case TYPE_FLOAT64:
         jsValue = new JSFloat64(value, this);
         break;
       default:

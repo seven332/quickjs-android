@@ -185,7 +185,7 @@ Java_com_hippo_quickjs_android_QuickJS_getValueInt(JNIEnv *env, jclass clazz, jl
 }
 
 JNIEXPORT jdouble JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueDouble(JNIEnv *env, jclass clazz, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueFloat64(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
     CHECK_JS_TAG_RET(*val, JS_TAG_FLOAT64, "double");

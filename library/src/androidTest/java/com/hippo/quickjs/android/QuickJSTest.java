@@ -344,11 +344,11 @@ public class QuickJSTest {
   }
 
   @Test
-  public void testGetValueDouble() {
+  public void testGetValueFloat64() {
     runJS("123.1", new JSRunnable() {
       @Override
       public void run(long runtime, long context, long value) {
-        assertEquals(123.1, QuickJS.getValueDouble(value), 0.0001);
+        assertEquals(123.1, QuickJS.getValueFloat64(value), 0.0001);
       }
     });
 
@@ -356,7 +356,7 @@ public class QuickJSTest {
       @Override
       public void run(long runtime, long context, long value) {
         try {
-          QuickJS.getValueDouble(value);
+          QuickJS.getValueFloat64(value);
           fail();
         } catch (JSDataException e) {
           assertEquals("Invalid JSValue tag for double: 0", e.getMessage());
@@ -365,7 +365,7 @@ public class QuickJSTest {
     });
 
     try {
-      QuickJS.getValueDouble(0);
+      QuickJS.getValueFloat64(0);
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Null JSValue", e.getMessage());

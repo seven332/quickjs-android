@@ -80,7 +80,7 @@ final class JSFloat64 extends JSNumber {
       synchronized (jsContext.jsRuntime) {
         if (!cached) {
           jsContext.checkClosed();
-          cache = QuickJS.getValueDouble(pointer);
+          cache = QuickJS.getValueFloat64(pointer);
           cached = true;
         }
       }
