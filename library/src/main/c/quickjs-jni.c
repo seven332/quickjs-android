@@ -66,7 +66,7 @@ Java_com_hippo_quickjs_android_QuickJS_isValueFunction(JNIEnv *env, jclass clazz
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_callValueFunction(JNIEnv *env, jclass clazz,
+Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(JNIEnv *env, jclass clazz,
         jlong context, jlong function, jlong thisObj, jlongArray args) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);

@@ -431,7 +431,7 @@ public class QuickJSTest {
             withEvaluation(context, "9", new ValueRunnable() {
               @Override
               public void run(long valueJ) {
-                long ret = QuickJS.callValueFunction(context, function, 0, new long[] { valueI, valueJ });
+                long ret = QuickJS.invokeValueFunction(context, function, 0, new long[] { valueI, valueJ });
                 assertNotEquals(0, ret);
                 try {
                   assertEquals(27, QuickJS.getValueInt(ret));
@@ -446,21 +446,21 @@ public class QuickJSTest {
     });
 
     try {
-      QuickJS.callValueFunction(0, 0, 0, null);
+      QuickJS.invokeValueFunction(0, 0, 0, null);
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Null JSContext", e.getMessage());
     }
 
     try {
-      QuickJS.callValueFunction(1, 0, 0, null);
+      QuickJS.invokeValueFunction(1, 0, 0, null);
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Null function", e.getMessage());
     }
 
     try {
-      QuickJS.callValueFunction(1, 1, 0, null);
+      QuickJS.invokeValueFunction(1, 1, 0, null);
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Null arguments", e.getMessage());

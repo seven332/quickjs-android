@@ -30,7 +30,7 @@ public final class JSFunction extends JSObject {
   /**
    * Calls the JavaScript function.
    */
-  public JSValue call(@Nullable JSValue thisObj, JSValue[] args) {
+  public JSValue invoke(@Nullable JSValue thisObj, JSValue[] args) {
     // Check whether JSValues are from the same JSRuntime
     if (thisObj != null) checkSameJSRuntime(thisObj);
     for (JSValue arg : args) checkSameJSRuntime(arg);
@@ -42,7 +42,7 @@ public final class JSFunction extends JSObject {
 
     synchronized (jsContext.jsRuntime) {
       long context = jsContext.checkClosed();
-      long ret = QuickJS.callValueFunction(context, pointer, thisObj != null ? thisObj.pointer : 0, valueArgs);
+      long ret = QuickJS.invokeValueFunction(context, pointer, thisObj != null ? thisObj.pointer : 0, valueArgs);
       return jsContext.wrapAsJSValue(ret);
     }
   }
