@@ -56,7 +56,7 @@ class StandardTypeAdapters {
 
     @Override
     public Boolean fromJSValue(JSValue value) {
-      return value.getBoolean();
+      return value.cast(JSBoolean.class).getBoolean();
     }
   };
 
@@ -68,7 +68,7 @@ class StandardTypeAdapters {
 
     @Override
     public Byte fromJSValue(JSValue value) {
-      return value.getByte();
+      return value.cast(JSNumber.class).getByte();
     }
   };
 
@@ -80,7 +80,11 @@ class StandardTypeAdapters {
 
     @Override
     public Character fromJSValue(JSValue value) {
-      return value.getChar();
+      String str = value.cast(JSString.class).getString();
+      if (str.length() != 1) {
+        throw new JSDataException("Can't treat \"" + str + "\" as char");
+      }
+      return str.charAt(0);
     }
   };
 
@@ -92,7 +96,7 @@ class StandardTypeAdapters {
 
     @Override
     public Short fromJSValue(JSValue value) {
-      return value.getShort();
+      return value.cast(JSNumber.class).getShort();
     }
   };
 
@@ -104,7 +108,7 @@ class StandardTypeAdapters {
 
     @Override
     public Integer fromJSValue(JSValue value) {
-      return value.getInt();
+      return value.cast(JSNumber.class).getInt();
     }
   };
 
@@ -116,7 +120,7 @@ class StandardTypeAdapters {
 
     @Override
     public Long fromJSValue(JSValue value) {
-      return value.getLong();
+      return value.cast(JSNumber.class).getLong();
     }
   };
 
@@ -128,7 +132,7 @@ class StandardTypeAdapters {
 
     @Override
     public Float fromJSValue(JSValue value) {
-      return value.getFloat();
+      return value.cast(JSNumber.class).getFloat();
     }
   };
 
@@ -140,19 +144,19 @@ class StandardTypeAdapters {
 
     @Override
     public Double fromJSValue(JSValue value) {
-      return value.getDouble();
+      return value.cast(JSNumber.class).getDouble();
     }
   };
 
   private static final TypeAdapter<String> STRING_TYPE_ADAPTER = new TypeAdapter<String>() {
     @Override
     public JSValue toJSValue(String value) {
-      return null;
+      throw new IllegalStateException("TODO");
     }
 
     @Override
     public String fromJSValue(JSValue value) {
-      return value.getString();
+      return value.cast(JSString.class).getString();
     }
   };
 
@@ -171,8 +175,7 @@ class StandardTypeAdapters {
 
     @Override
     public T fromJSValue(JSValue value) {
-      int tag = value.getType();
-      if (tag == JSValue.TYPE_NULL || tag == JSValue.TYPE_UNDEFINED) return null;
+      if (value instanceof JSNull || value instanceof JSUndefined) return null;
       return delegate.fromJSValue(value);
     }
   }

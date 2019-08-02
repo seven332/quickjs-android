@@ -26,6 +26,16 @@ import java.io.Closeable;
  */
 public class JSContext implements Closeable {
 
+  static final int TYPE_SYMBOL = -8;
+  static final int TYPE_STRING = -7;
+  static final int TYPE_OBJECT = -1;
+  static final int TYPE_INT = 0;
+  static final int TYPE_BOOLEAN = 1;
+  static final int TYPE_NULL = 2;
+  static final int TYPE_UNDEFINED = 3;
+  static final int TYPE_EXCEPTION = 6;
+  static final int TYPE_DOUBLE = 7;
+
   /**
    * Global code.
    */
@@ -57,8 +67,8 @@ public class JSContext implements Closeable {
   private static final int EVAL_FLAG_MASK = 0b11100;
 
   private long pointer;
-  private final QuickJS quickJS;
-  private final JSRuntime jsRuntime;
+  final QuickJS quickJS;
+  final JSRuntime jsRuntime;
   private final NativeCleaner<JSValue> cleaner;
 
   JSContext(long pointer, QuickJS quickJS, JSRuntime jsRuntime) {
@@ -107,36 +117,57 @@ public class JSContext implements Closeable {
 
       long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
 
-      if (value == 0) {
-        throw new IllegalStateException("Fail to evaluate the script");
-      }
-
-      // Check js exception
-      if (QuickJS.getValueTag(value) == JSValue.TYPE_EXCEPTION) {
-        throw new JSEvaluationException(QuickJS.getException(pointer));
-      }
-
-      JSValue jsValue = new JSValue(value, jsRuntime, this);
-      cleaner.register(jsValue, value);
+      JSValue jsValue = wrapAsJSValue(value);
 
       return adapter.fromJSValue(jsValue);
     }
   }
 
   /**
-   * Wraps a JSValue c pointer as a Java JSValue object instance.
+   * Wraps a JSValue c pointer as a Java JSValue.
+   *
+   * @throws JSEvaluationException if it's
    */
   JSValue wrapAsJSValue(long value) {
     if (value == 0) {
       throw new IllegalStateException("Can't wrap null pointer as JSValue");
     }
 
-    // Check js exception
-    if (QuickJS.getValueTag(value) == JSValue.TYPE_EXCEPTION) {
-      throw new JSEvaluationException(QuickJS.getException(pointer));
-    }
+    JSValue jsValue;
 
-    JSValue jsValue = new JSValue(value, jsRuntime, this);
+    int type = QuickJS.getValueTag(value);
+    switch (type) {
+      case TYPE_SYMBOL:
+        jsValue = new JSSymbol(value, this);
+        break;
+      case TYPE_STRING:
+        jsValue = new JSString(value, this);
+        break;
+      case TYPE_OBJECT:
+        // TODO JSArray, JSFunction
+        jsValue = new JSObject(value, this);
+        break;
+      case TYPE_INT:
+        jsValue = new JSInt(value, this);
+        break;
+      case TYPE_BOOLEAN:
+        jsValue = new JSBoolean(value, this);
+        break;
+      case TYPE_NULL:
+        jsValue = new JSNull(value, this);
+        break;
+      case TYPE_UNDEFINED:
+        jsValue = new JSUndefined(value, this);
+        break;
+      case TYPE_EXCEPTION:
+        throw new JSEvaluationException(QuickJS.getException(pointer));
+      case TYPE_DOUBLE:
+        jsValue = new JSFloat64(value, this);
+        break;
+      default:
+        jsValue = new JSInternal(value, this);
+        break;
+    }
 
     // Register it to cleaner
     cleaner.register(jsValue, value);

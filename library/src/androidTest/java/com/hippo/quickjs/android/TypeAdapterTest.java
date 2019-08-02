@@ -56,7 +56,7 @@ public class TypeAdapterTest {
 
     @Override
     public AtomicInteger fromJSValue(JSValue value) {
-      return new AtomicInteger(value.getInt());
+      return new AtomicInteger(value.cast(JSNumber.class).getInt());
     }
   }
 

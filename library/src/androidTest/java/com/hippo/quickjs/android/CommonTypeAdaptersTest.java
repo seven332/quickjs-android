@@ -40,7 +40,7 @@ public class CommonTypeAdaptersTest {
     runJS("1", JSValue.class, new JSRunnable<JSValue>() {
       @Override
       public void run(JSValue value) {
-        assertEquals(1, value.getInt());
+        assertEquals(1, value.cast(JSNumber.class).getInt());
       }
     });
   }

@@ -50,15 +50,15 @@ public class StandardTypeAdaptersTest {
   public void testBoolean() {
     assertEquivalent("false", false, boolean.class);
     assertEquivalent("true", true, boolean.class);
-    assertException("null", "Can't treat the JSValue as boolean, it's type is 2", boolean.class);
-    assertException("undefined", "Can't treat the JSValue as boolean, it's type is 3", boolean.class);
-    assertException("1", "Can't treat the JSValue as boolean, it's type is 0", boolean.class);
+    assertException("null", "expected: JSBoolean, actual: JSNull", boolean.class);
+    assertException("undefined", "expected: JSBoolean, actual: JSUndefined", boolean.class);
+    assertException("1", "expected: JSBoolean, actual: JSInt", boolean.class);
 
     assertEquivalent("false", false, Boolean.class);
     assertEquivalent("true", true, Boolean.class);
     assertEquivalent("null", null, Boolean.class);
     assertEquivalent("undefined", null, Boolean.class);
-    assertException("1", "Can't treat the JSValue as boolean, it's type is 0", Boolean.class);
+    assertException("1", "expected: JSBoolean, actual: JSInt", Boolean.class);
   }
 
   @Test
@@ -67,38 +67,44 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("1", (byte) 1, byte.class);
     assertEquivalent("-1", (byte) -1, byte.class);
     assertEquivalent("1.0", (byte) 1, byte.class);
-    assertException("9999", "Can't treat the number as byte: 9999", byte.class);
-    assertException("1.1", "Can't treat the number as byte: 1.1", byte.class);
-    assertException("null", "Can't treat the JSValue as byte, it's type is 2", byte.class);
-    assertException("undefined", "Can't treat the JSValue as byte, it's type is 3", byte.class);
-    assertException("false", "Can't treat the JSValue as byte, it's type is 1", byte.class);
+    assertEquivalent("127", Byte.MAX_VALUE, byte.class);
+    assertEquivalent("-128", Byte.MIN_VALUE, byte.class);
+    assertException("128", "Can't treat 128 as byte", byte.class);
+    assertException("-129", "Can't treat -129 as byte", byte.class);
+    assertException("1.1", "Can't treat 1.1 as byte", byte.class);
+    assertException("null", "expected: JSNumber, actual: JSNull", byte.class);
+    assertException("undefined", "expected: JSNumber, actual: JSUndefined", byte.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", byte.class);
 
     assertEquivalent("0", (byte) 0, Byte.class);
     assertEquivalent("1", (byte) 1, Byte.class);
     assertEquivalent("-1", (byte) -1, Byte.class);
     assertEquivalent("1.0", (byte) 1, Byte.class);
-    assertException("9999", "Can't treat the number as byte: 9999", Byte.class);
-    assertException("1.1", "Can't treat the number as byte: 1.1", Byte.class);
+    assertEquivalent("127", Byte.MAX_VALUE, Byte.class);
+    assertEquivalent("-128", Byte.MIN_VALUE, Byte.class);
+    assertException("128", "Can't treat 128 as byte", Byte.class);
+    assertException("-129", "Can't treat -129 as byte", Byte.class);
+    assertException("1.1", "Can't treat 1.1 as byte", Byte.class);
     assertEquivalent("null", null, Byte.class);
     assertEquivalent("undefined", null, Byte.class);
-    assertException("false", "Can't treat the JSValue as byte, it's type is 1", Byte.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", Byte.class);
   }
 
   @Test
   public void testChar() {
     assertEquivalent("'a'", 'a', char.class);
-    assertException("'abc'", "Can't treat the string as a char: \"abc\"", char.class);
-    assertException("''", "Can't treat the string as a char: \"\"", char.class);
-    assertException("null", "Can't treat the JSValue as char, it's type is 2", char.class);
-    assertException("undefined", "Can't treat the JSValue as char, it's type is 3", char.class);
-    assertException("false", "Can't treat the JSValue as char, it's type is 1", char.class);
+    assertException("'abc'", "Can't treat \"abc\" as char", char.class);
+    assertException("''", "Can't treat \"\" as char", char.class);
+    assertException("null", "expected: JSString, actual: JSNull", char.class);
+    assertException("undefined", "expected: JSString, actual: JSUndefined", char.class);
+    assertException("false", "expected: JSString, actual: JSBoolean", char.class);
 
     assertEquivalent("'a'", 'a', Character.class);
-    assertException("'abc'", "Can't treat the string as a char: \"abc\"", Character.class);
-    assertException("''", "Can't treat the string as a char: \"\"", Character.class);
+    assertException("'abc'", "Can't treat \"abc\" as char", Character.class);
+    assertException("''", "Can't treat \"\" as char", Character.class);
     assertEquivalent("null", null, Character.class);
     assertEquivalent("undefined", null, Character.class);
-    assertException("false", "Can't treat the JSValue as char, it's type is 1", Character.class);
+    assertException("false", "expected: JSString, actual: JSBoolean", Character.class);
   }
 
   @Test
@@ -107,21 +113,27 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("1", (short) 1, short.class);
     assertEquivalent("-1", (short) -1, short.class);
     assertEquivalent("1.0", (short) 1, short.class);
-    assertException("9999999", "Can't treat the number as short: 9999999", short.class);
-    assertException("1.1", "Can't treat the number as short: 1.1", short.class);
-    assertException("null", "Can't treat the JSValue as short, it's type is 2", short.class);
-    assertException("undefined", "Can't treat the JSValue as short, it's type is 3", short.class);
-    assertException("false", "Can't treat the JSValue as short, it's type is 1", short.class);
+    assertEquivalent("32767", Short.MAX_VALUE, short.class);
+    assertEquivalent("-32768", Short.MIN_VALUE, short.class);
+    assertException("32768", "Can't treat 32768 as short", short.class);
+    assertException("-32769", "Can't treat -32769 as short", short.class);
+    assertException("1.1", "Can't treat 1.1 as short", short.class);
+    assertException("null", "expected: JSNumber, actual: JSNull", short.class);
+    assertException("undefined", "expected: JSNumber, actual: JSUndefined", short.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", short.class);
 
     assertEquivalent("0", (short) 0, Short.class);
     assertEquivalent("1", (short) 1, Short.class);
     assertEquivalent("-1", (short) -1, Short.class);
     assertEquivalent("1.0", (short) 1, Short.class);
-    assertException("9999999", "Can't treat the number as short: 9999999", Short.class);
-    assertException("1.1", "Can't treat the number as short: 1.1", Short.class);
-    assertEquivalent("null", null, Byte.class);
-    assertEquivalent("undefined", null, Byte.class);
-    assertException("false", "Can't treat the JSValue as short, it's type is 1", Short.class);
+    assertEquivalent("32767", Short.MAX_VALUE, Short.class);
+    assertEquivalent("-32768", Short.MIN_VALUE, Short.class);
+    assertException("32768", "Can't treat 32768 as short", Short.class);
+    assertException("-32769", "Can't treat -32769 as short", Short.class);
+    assertException("1.1", "Can't treat 1.1 as short", Short.class);
+    assertEquivalent("null", null, Short.class);
+    assertEquivalent("undefined", null, Short.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", Short.class);
   }
 
   @Test
@@ -130,13 +142,13 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("0.0", 0, int.class);
     assertEquivalent("1", 1, int.class);
     assertEquivalent("1.0", 1, int.class);
-    assertEquivalent("2147483647", 2147483647, int.class);
-    assertEquivalent("-2147483648", -2147483648, int.class);
-    assertException("2147483648", "Can't treat the number as int: 2.147483648E9", int.class);
-    assertException("-2147483649", "Can't treat the number as int: -2.147483649E9", int.class);
-    assertException("null", "Can't treat the JSValue as int, it's type is 2", int.class);
-    assertException("undefined", "Can't treat the JSValue as int, it's type is 3", int.class);
-    assertException("false", "Can't treat the JSValue as int, it's type is 1", int.class);
+    assertEquivalent("2147483647", Integer.MAX_VALUE, int.class);
+    assertEquivalent("-2147483648", Integer.MIN_VALUE, int.class);
+    assertException("2147483648", "Can't treat 2.147483648E9 as int", int.class);
+    assertException("-2147483649", "Can't treat -2.147483649E9 as int", int.class);
+    assertException("null", "expected: JSNumber, actual: JSNull", int.class);
+    assertException("undefined", "expected: JSNumber, actual: JSUndefined", int.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", int.class);
 
     assertEquivalent("0", 0, Integer.class);
     assertEquivalent("0.0", 0, Integer.class);
@@ -144,11 +156,11 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("1.0", 1, Integer.class);
     assertEquivalent("2147483647", 2147483647, Integer.class);
     assertEquivalent("-2147483648", -2147483648, Integer.class);
-    assertException("2147483648", "Can't treat the number as int: 2.147483648E9", Integer.class);
-    assertException("-2147483649", "Can't treat the number as int: -2.147483649E9", Integer.class);
+    assertException("2147483648", "Can't treat 2.147483648E9 as int", Integer.class);
+    assertException("-2147483649", "Can't treat -2.147483649E9 as int", Integer.class);
     assertEquivalent("null", null, Integer.class);
     assertEquivalent("undefined", null, Integer.class);
-    assertException("false", "Can't treat the JSValue as int, it's type is 1", Integer.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", Integer.class);
   }
 
   @Test
@@ -169,11 +181,11 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("-9223372036854775807", -9223372036854775808L, long.class);
     assertEquivalent("-9223372036854775808", -9223372036854775808L, long.class);
     assertEquivalent("-9223372036854775809", -9223372036854775808L, long.class);
-    assertException("0.000001", "Can't treat the number as long: 1.0E-6", long.class);
-    assertException("9923372036854775809", "Can't treat the number as long: 9.923372036854776E18", long.class);
-    assertException("null", "Can't treat the JSValue as long, it's type is 2", long.class);
-    assertException("undefined", "Can't treat the JSValue as long, it's type is 3", long.class);
-    assertException("false", "Can't treat the JSValue as long, it's type is 1", long.class);
+    assertException("0.000001", "Can't treat 1.0E-6 as long", long.class);
+    assertException("9923372036854775809", "Can't treat 9.923372036854776E18 as long", long.class);
+    assertException("null", "expected: JSNumber, actual: JSNull", long.class);
+    assertException("undefined", "expected: JSNumber, actual: JSUndefined", long.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", long.class);
 
     assertEquivalent("0", 0L, Long.class);
     assertEquivalent("0.0", 0L, Long.class);
@@ -191,11 +203,11 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("-9223372036854775807", -9223372036854775808L, Long.class);
     assertEquivalent("-9223372036854775808", -9223372036854775808L, Long.class);
     assertEquivalent("-9223372036854775809", -9223372036854775808L, Long.class);
-    assertException("0.000001", "Can't treat the number as long: 1.0E-6", Long.class);
-    assertException("9923372036854775809", "Can't treat the number as long: 9.923372036854776E18", Long.class);
+    assertException("0.000001", "Can't treat 1.0E-6 as long", Long.class);
+    assertException("9923372036854775809", "Can't treat 9.923372036854776E18 as long", Long.class);
     assertEquivalent("null", null, Long.class);
     assertEquivalent("undefined", null, Long.class);
-    assertException("false", "Can't treat the JSValue as long, it's type is 1", Long.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", Long.class);
   }
 
   @Test
@@ -208,9 +220,9 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("Number.MAX_VALUE", Float.POSITIVE_INFINITY, float.class);
     assertEquivalent("Number.MIN_VALUE", 0.0f, float.class);
     assertEquivalent("Number.NaN", Float.NaN, float.class);
-    assertException("null", "Can't treat the JSValue as float, it's type is 2", float.class);
-    assertException("undefined", "Can't treat the JSValue as float, it's type is 3", float.class);
-    assertException("false", "Can't treat the JSValue as float, it's type is 1", float.class);
+    assertException("null", "expected: JSNumber, actual: JSNull", float.class);
+    assertException("undefined", "expected: JSNumber, actual: JSUndefined", float.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", float.class);
 
     assertEquivalent("0", 0.0f, Float.class);
     assertEquivalent("0.0", 0.0f, Float.class);
@@ -222,7 +234,7 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("Number.NaN", Float.NaN, Float.class);
     assertEquivalent("null", null, Float.class);
     assertEquivalent("undefined", null, Float.class);
-    assertException("false", "Can't treat the JSValue as float, it's type is 1", Float.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", Float.class);
   }
 
   @Test
@@ -237,9 +249,9 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("Number.POSITIVE_INFINITY", Double.POSITIVE_INFINITY, double.class);
     assertEquivalent("Number.NEGATIVE_INFINITY", Double.NEGATIVE_INFINITY, double.class);
     assertEquivalent("Number.NaN", Double.NaN, double.class);
-    assertException("null", "Can't treat the JSValue as double, it's type is 2", double.class);
-    assertException("undefined", "Can't treat the JSValue as double, it's type is 3", double.class);
-    assertException("false", "Can't treat the JSValue as double, it's type is 1", double.class);
+    assertException("null", "expected: JSNumber, actual: JSNull", double.class);
+    assertException("undefined", "expected: JSNumber, actual: JSUndefined", double.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", double.class);
 
     assertEquivalent("0", 0.0, Double.class);
     assertEquivalent("0.0", 0.0, Double.class);
@@ -253,7 +265,7 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("Number.NaN", Double.NaN, Double.class);
     assertEquivalent("null", null, Double.class);
     assertEquivalent("undefined", null, Double.class);
-    assertException("false", "Can't treat the JSValue as double, it's type is 1", Double.class);
+    assertException("false", "expected: JSNumber, actual: JSBoolean", Double.class);
   }
 
   @Test
@@ -262,6 +274,6 @@ public class StandardTypeAdaptersTest {
     assertEquivalent("'str'", "str", String.class);
     assertEquivalent("null", null, String.class);
     assertEquivalent("undefined", null, String.class);
-    assertException("false", "Can't treat the JSValue as string, it's type is 1", String.class);
+    assertException("false", "expected: JSString, actual: JSBoolean", String.class);
   }
 }
