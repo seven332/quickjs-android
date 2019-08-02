@@ -45,4 +45,13 @@ public abstract class JSValue {
       throw new JSDataException("expected: " + clazz.getSimpleName() + ", actual: " + getClass().getSimpleName());
     }
   }
+
+  /**
+   * @throws IllegalStateException if two JSValues are not from the same JSRuntime
+   */
+  final void checkSameJSRuntime(JSValue jsValue) {
+    if (jsValue.jsContext.jsRuntime != jsContext.jsRuntime) {
+      throw new IllegalStateException("Two JSValues are not from the same JSRuntime");
+    }
+  }
 }

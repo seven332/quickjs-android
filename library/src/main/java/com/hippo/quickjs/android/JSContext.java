@@ -144,8 +144,12 @@ public class JSContext implements Closeable {
         jsValue = new JSString(value, this);
         break;
       case TYPE_OBJECT:
-        // TODO JSArray, JSFunction
-        jsValue = new JSObject(value, this);
+        // TODO JSArray
+        if (QuickJS.isValueFunction(pointer, value)) {
+          jsValue = new JSFunction(value, this);
+        } else {
+          jsValue = new JSObject(value, this);
+        }
         break;
       case TYPE_INT:
         jsValue = new JSInt(value, this);

@@ -137,11 +137,51 @@ public class QuickJSTest {
     }
   }
 
-  private interface PropertyRunnable {
-    void run(long property);
+  @Test
+  public void testIsValueFunction() {
+    runJS("b = function(){}", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertTrue(QuickJS.isValueFunction(context, value));
+      }
+    });
+    runJS("false", new JSRunnable() {
+      @Override
+      public void run(long runtime, long context, long value) {
+        assertFalse(QuickJS.isValueFunction(context, value));
+      }
+    });
+
+    try {
+      QuickJS.isValueFunction(0, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.isValueFunction(1, 0);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSValue", e.getMessage());
+    }
   }
 
-  private void withProperty(long context, long value, int index, PropertyRunnable runnable) {
+  private interface ValueRunnable {
+    void run(long value);
+  }
+
+  private void withEvaluation(long context, String sourceCode, ValueRunnable runnable) {
+    long value = QuickJS.evaluate(context, sourceCode, "test.js", 0);
+    assertNotEquals(0, value);
+    try {
+      runnable.run(value);
+    } finally {
+      QuickJS.destroyValue(context, value);
+    }
+  }
+
+  private void withProperty(long context, long value, int index, ValueRunnable runnable) {
     long property = QuickJS.getValueProperty(context, value, index);
     assertNotEquals(0, property);
     try {
@@ -151,7 +191,7 @@ public class QuickJSTest {
     }
   }
 
-  private void withProperty(long context, long value, String name, PropertyRunnable runnable) {
+  private void withProperty(long context, long value, String name, ValueRunnable runnable) {
     long property = QuickJS.getValueProperty(context, value, name);
     assertNotEquals(0, property);
     try {
@@ -166,13 +206,13 @@ public class QuickJSTest {
     runJS("[1, 'str']", new JSRunnable() {
       @Override
       public void run(long runtime, final long context, long value) {
-        withProperty(context, value, 0, new PropertyRunnable() {
+        withProperty(context, value, 0, new ValueRunnable() {
           @Override
           public void run(long property) {
             assertEquals(1, QuickJS.getValueInt(property));
           }
         });
-        withProperty(context, value, 1, new PropertyRunnable() {
+        withProperty(context, value, 1, new ValueRunnable() {
           @Override
           public void run(long property) {
             assertEquals("str", QuickJS.getValueString(context, property));
@@ -201,13 +241,13 @@ public class QuickJSTest {
     runJS("a = {a: 1, b: 'str'}", new JSRunnable() {
       @Override
       public void run(long runtime, final long context, long value) {
-        withProperty(context, value, "a", new PropertyRunnable() {
+        withProperty(context, value, "a", new ValueRunnable() {
           @Override
           public void run(long property) {
             assertEquals(1, QuickJS.getValueInt(property));
           }
         });
-        withProperty(context, value, "b", new PropertyRunnable() {
+        withProperty(context, value, "b", new ValueRunnable() {
           @Override
           public void run(long property) {
             assertEquals("str", QuickJS.getValueString(context, property));
@@ -377,6 +417,53 @@ public class QuickJSTest {
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Null JSValue", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testCallValueFunction() {
+    runJS("f=function a(i,j){return i*j}", new JSRunnable() {
+      @Override
+      public void run(long runtime, final long context, final long function) {
+        withEvaluation(context, "3", new ValueRunnable() {
+          @Override
+          public void run(final long valueI) {
+            withEvaluation(context, "9", new ValueRunnable() {
+              @Override
+              public void run(long valueJ) {
+                long ret = QuickJS.callValueFunction(context, function, 0, new long[] { valueI, valueJ });
+                assertNotEquals(0, ret);
+                try {
+                  assertEquals(27, QuickJS.getValueInt(ret));
+                } finally {
+                  QuickJS.destroyValue(context, ret);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+
+    try {
+      QuickJS.callValueFunction(0, 0, 0, null);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null JSContext", e.getMessage());
+    }
+
+    try {
+      QuickJS.callValueFunction(1, 0, 0, null);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null function", e.getMessage());
+    }
+
+    try {
+      QuickJS.callValueFunction(1, 1, 0, null);
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Null arguments", e.getMessage());
     }
   }
 

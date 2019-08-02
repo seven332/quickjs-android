@@ -56,6 +56,54 @@ Java_com_hippo_quickjs_android_QuickJS_isValueArray(JNIEnv *env, jclass clazz, j
     return (jboolean) JS_IsArray(ctx, *val);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_isValueFunction(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    return (jboolean) JS_IsFunction(ctx, *val);
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_callValueFunction(JNIEnv *env, jclass clazz,
+        jlong context, jlong function, jlong thisObj, jlongArray args) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *func_obj = (JSValue *) function;
+    CHECK_NULL_RET(env, func_obj, "Null function");
+    JSValue *this_obj = (JSValue *) thisObj;
+    CHECK_NULL_RET(env, args, "Null arguments")
+    jlong *elements = (*env)->GetLongArrayElements(env, args, NULL);
+    CHECK_NULL_RET(env, elements, MSG_OOM);
+
+    int argc = (*env)->GetArrayLength(env, args);
+    JSValueConst argv[argc];
+    for (int i = 0; i < argc; i++) {
+        argv[i] = *((JSValue *) elements[i]);
+    }
+
+    jlong result = 0;
+
+    JSValue ret = JS_Call(ctx, *func_obj, this_obj != NULL ? *this_obj : JS_UNDEFINED, argc, argv);
+
+    // Make a copy of ret
+    void *copy = malloc(sizeof(JSValue));
+    if (copy != NULL) {
+        memcpy(copy, &ret, sizeof(JSValue));
+        result = (jlong) copy;
+    } else {
+        // Free ret now due to failing to make a copy
+        JS_FreeValue(ctx, ret);
+    }
+
+    (*env)->ReleaseLongArrayElements(env, args, elements, JNI_ABORT);
+
+    CHECK_NULL_RET(env, result, MSG_OOM);
+
+    return result;
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(JNIEnv *env, jclass clazz, jlong context, jlong value, jint index) {
     JSContext *ctx = (JSContext *) context;
