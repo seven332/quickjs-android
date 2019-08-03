@@ -10,6 +10,8 @@
 #define MSG_NULL_JS_CONTEXT "Null JSContext"
 #define MSG_NULL_JS_VALUE "Null JSValue"
 
+// TODO Add debug code to track JSValue reference count
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
     jlong runtime = (jlong) JS_NewRuntime();
@@ -236,6 +238,42 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(J
     (*env)->ReleaseStringUTFChars(env, name, name_utf);
 
     CHECK_NULL_RET(env, result, MSG_OOM);
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJIJ(JNIEnv *env, jclass clazz, jlong context, jlong value, jint index, jlong property) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    JSValue *prop = (JSValue *) property;
+    CHECK_NULL_RET(env, prop, "Null property");
+
+    JS_DupValue(ctx, *prop);
+
+    return (jboolean) (JS_SetPropertyUint32(ctx, *val, (uint32_t) index, *prop) >= 0);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(JNIEnv *env, jclass clazz, jlong context, jlong value, jstring name, jlong property) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    CHECK_NULL_RET(env, name, "Null name");
+    JSValue *prop = (JSValue *) property;
+    CHECK_NULL_RET(env, prop, "Null property");
+
+    const char *name_utf = (*env)->GetStringUTFChars(env, name, NULL);
+    CHECK_NULL_RET(env, name_utf, MSG_OOM);
+
+    JS_DupValue(ctx, *prop);
+
+    jboolean result = (jboolean) (JS_SetPropertyStr(ctx, *val, (uint32_t) name_utf, *prop) >= 0);
+
+    (*env)->ReleaseStringUTFChars(env, name, name_utf);
 
     return result;
 }

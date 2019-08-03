@@ -66,7 +66,7 @@ public class JSContext implements Closeable {
 
   private static final int EVAL_FLAG_MASK = 0b11100;
 
-  private long pointer;
+  long pointer;
   final QuickJS quickJS;
   final JSRuntime jsRuntime;
   private final NativeCleaner<JSValue> cleaner;

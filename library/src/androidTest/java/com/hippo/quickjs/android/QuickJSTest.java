@@ -411,6 +411,202 @@ public class QuickJSTest {
   }
 
   @Test
+  public void testSetValuePropertyInt() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueObject(context);
+        assertNotEquals(0, value);
+        try {
+          long property = QuickJS.createValueObject(context);
+          assertNotEquals(0, property);
+          try {
+            withProperty(context, value, 1, new ValueRunnable() {
+              @Override
+              public void run(long value) {
+                assertEquals(JSContext.TYPE_UNDEFINED, QuickJS.getValueTag(value));
+              }
+            });
+
+            assertTrue(QuickJS.setValueProperty(context, value, 1, property));
+
+            withProperty(context, value, 1, new ValueRunnable() {
+              @Override
+              public void run(long value) {
+                assertEquals(JSContext.TYPE_OBJECT, QuickJS.getValueTag(value));
+              }
+            });
+          } finally {
+            QuickJS.destroyValue(context, property);
+          }
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueUndefined(context);
+        assertNotEquals(0, value);
+        try {
+          long property = QuickJS.createValueObject(context);
+          assertNotEquals(0, property);
+          try {
+            assertFalse(QuickJS.setValueProperty(context, value, 1, property));
+            assertEquals("TypeError: value has no property\n", QuickJS.getException(context).toString());
+          } finally {
+            QuickJS.destroyValue(context, property);
+          }
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(0, 0, 0, 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null JSContext", e.getMessage());
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(1, 0, 0, 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null JSValue", e.getMessage());
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(1, 1, 0, 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null property", e.getMessage());
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testSetValuePropertyString() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueObject(context);
+        assertNotEquals(0, value);
+        try {
+          long property = QuickJS.createValueObject(context);
+          assertNotEquals(0, property);
+          try {
+            withProperty(context, value, "prop", new ValueRunnable() {
+              @Override
+              public void run(long value) {
+                assertEquals(JSContext.TYPE_UNDEFINED, QuickJS.getValueTag(value));
+              }
+            });
+
+            assertTrue(QuickJS.setValueProperty(context, value, "prop", property));
+
+            withProperty(context, value, "prop", new ValueRunnable() {
+              @Override
+              public void run(long value) {
+                assertEquals(JSContext.TYPE_OBJECT, QuickJS.getValueTag(value));
+              }
+            });
+          } finally {
+            QuickJS.destroyValue(context, property);
+          }
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueUndefined(context);
+        assertNotEquals(0, value);
+        try {
+          long property = QuickJS.createValueObject(context);
+          assertNotEquals(0, property);
+          try {
+            assertFalse(QuickJS.setValueProperty(context, value, "prop", property));
+            assertEquals("TypeError: value has no property\n", QuickJS.getException(context).toString());
+          } finally {
+            QuickJS.destroyValue(context, property);
+          }
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(0, 0, null, 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null JSContext", e.getMessage());
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(1, 0, null, 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null JSValue", e.getMessage());
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(1, 1, null, 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null name", e.getMessage());
+        }
+      }
+    });
+
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        try {
+          QuickJS.setValueProperty(1, 1, "prop", 0);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("Null property", e.getMessage());
+        }
+      }
+    });
+  }
+
+  @Test
   public void testGetValueBoolean() {
     runJS("true", new JSRunnable() {
       @Override

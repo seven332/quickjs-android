@@ -50,4 +50,28 @@ public class JSObject extends JSValue {
       return jsContext.wrapAsJSValue(property);
     }
   }
+
+  /**
+   * Sets JSValue as a property.
+   */
+  public void setProperty(int index, JSValue jsValue) {
+    checkSameJSContext(jsValue);
+    synchronized (jsContext.jsRuntime) {
+      if (!QuickJS.setValueProperty(jsContext.pointer, pointer, index, jsValue.pointer)) {
+        throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
+      }
+    }
+  }
+
+  /**
+   * Sets JSValue as a property.
+   */
+  public void setProperty(String name, JSValue jsValue) {
+    checkSameJSContext(jsValue);
+    synchronized (jsContext.jsRuntime) {
+      if (!QuickJS.setValueProperty(jsContext.pointer, pointer, name, jsValue.pointer)) {
+        throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
+      }
+    }
+  }
 }
