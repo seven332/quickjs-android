@@ -124,6 +124,83 @@ public class JSContext implements Closeable {
   }
 
   /**
+   * Creates a JavaScript undefined.
+   */
+  public JSUndefined createJSUndefined() {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueUndefined(pointer);
+      return wrapAsJSValue(val).cast(JSUndefined.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript null.
+   */
+  public JSNull createJSNull() {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueNull(pointer);
+      return wrapAsJSValue(val).cast(JSNull.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript boolean.
+   */
+  public JSBoolean createJSBoolean(boolean value) {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueBoolean(pointer, value);
+      return wrapAsJSValue(val).cast(JSBoolean.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript number.
+   */
+  public JSNumber createJSNumber(int value) {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueInt(pointer, value);
+      return wrapAsJSValue(val).cast(JSNumber.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript number.
+   */
+  public JSNumber createJSNumber(double value) {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueFloat64(pointer, value);
+      return wrapAsJSValue(val).cast(JSNumber.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript object.
+   */
+  public JSObject createJSObject() {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueObject(pointer);
+      return wrapAsJSValue(val).cast(JSObject.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript array.
+   */
+  public JSArray createJSArray() {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArray(pointer);
+      return wrapAsJSValue(val).cast(JSArray.class);
+    }
+  }
+
+  /**
    * Wraps a JSValue c pointer as a Java JSValue.
    *
    * @throws JSEvaluationException if it's

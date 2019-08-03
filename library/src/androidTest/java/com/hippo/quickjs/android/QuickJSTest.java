@@ -71,6 +71,138 @@ public class QuickJSTest {
     }
   }
 
+  private interface ContextRunnable {
+    void run(long runtime, long context);
+  }
+
+  public void withContext(ContextRunnable runnable) {
+    long runtime = QuickJS.createRuntime();
+    assertNotEquals(0, runtime);
+    try {
+      long context = QuickJS.createContext(runtime);
+      assertNotEquals(0, context);
+      try {
+        runnable.run(runtime, context);
+      } finally {
+        QuickJS.destroyContext(context);
+      }
+    } finally {
+      QuickJS.destroyRuntime(runtime);
+    }
+  }
+
+  @Test
+  public void testCreateValueUndefined() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueUndefined(context);
+        assertNotEquals(0, value);
+        try {
+          assertEquals(JSContext.TYPE_UNDEFINED, QuickJS.getValueTag(value));
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testCreateValueNull() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueNull(context);
+        assertNotEquals(0, value);
+        try {
+          assertEquals(JSContext.TYPE_NULL, QuickJS.getValueTag(value));
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testCreateValueBoolean() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueBoolean(context, true);
+        assertNotEquals(0, value);
+        try {
+          assertTrue(QuickJS.getValueBoolean(value));
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testCreateValueInt() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueInt(context, 32);
+        assertNotEquals(0, value);
+        try {
+          assertEquals(32, QuickJS.getValueInt(value));
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testCreateValueFloat64() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueFloat64(context, 1.11);
+        assertNotEquals(0, value);
+        try {
+          assertEquals(1.11, QuickJS.getValueFloat64(value), 0.0);
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testCreateValueObject() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueObject(context);
+        assertNotEquals(0, value);
+        try {
+          assertEquals(JSContext.TYPE_OBJECT, QuickJS.getValueTag(value));
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testCreateValueArray() {
+    withContext(new ContextRunnable() {
+      @Override
+      public void run(long runtime, long context) {
+        long value = QuickJS.createValueArray(context);
+        assertNotEquals(0, value);
+        try {
+          assertTrue(QuickJS.isValueArray(context, value));
+        } finally {
+          QuickJS.destroyValue(context, value);
+        }
+      }
+    });
+  }
+
   @Test
   public void testGetValueTag() {
     try {
