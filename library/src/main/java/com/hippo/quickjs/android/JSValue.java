@@ -47,11 +47,11 @@ public abstract class JSValue {
   }
 
   /**
-   * @throws IllegalStateException if two JSValues are not from the same JSRuntime
+   * @throws IllegalStateException if two JSValues are not from the same JSContext
    */
-  final void checkSameJSRuntime(JSValue jsValue) {
-    if (jsValue.jsContext.jsRuntime != jsContext.jsRuntime) {
-      throw new IllegalStateException("Two JSValues are not from the same JSRuntime");
+  final void checkSameJSContext(JSValue jsValue) {
+    if (jsValue.jsContext != jsContext) {
+      throw new IllegalStateException("Two JSValues are not from the same JSContext");
     }
   }
 }

@@ -32,8 +32,8 @@ public final class JSFunction extends JSObject {
    */
   public JSValue invoke(@Nullable JSValue thisObj, JSValue[] args) {
     // Check whether JSValues are from the same JSRuntime
-    if (thisObj != null) checkSameJSRuntime(thisObj);
-    for (JSValue arg : args) checkSameJSRuntime(arg);
+    if (thisObj != null) checkSameJSContext(thisObj);
+    for (JSValue arg : args) checkSameJSContext(arg);
 
     long[] valueArgs = new long[args.length];
     for (int i = 0; i < args.length; i++) {
