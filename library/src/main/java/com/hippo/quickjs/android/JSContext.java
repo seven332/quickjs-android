@@ -215,7 +215,7 @@ public class JSContext implements Closeable {
   /**
    * Wraps a JSValue c pointer as a Java JSValue.
    *
-   * @throws JSEvaluationException if it's
+   * @throws JSEvaluationException if it's JS_EXCEPTION
    */
   JSValue wrapAsJSValue(long value) {
     if (value == 0) {
