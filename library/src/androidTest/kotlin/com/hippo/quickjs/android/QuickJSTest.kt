@@ -148,6 +148,23 @@ class QuickJSTest {
   }
 
   @Test
+  fun testCreateValueString() {
+    withRuntimeContext { _, context ->
+      withValue(context, QuickJS.createValueString(context, "string")) { value ->
+        assertEquals("string", QuickJS.getValueString(context, value))
+      }
+    }
+
+    assertException(IllegalStateException::class.java, "Null JSContext") {
+      QuickJS.createValueString(0, null)
+    }
+
+    assertException(IllegalStateException::class.java, "Null value") {
+      QuickJS.createValueString(1, null)
+    }
+  }
+
+  @Test
   fun testCreateValueObject() {
     withRuntimeContext { _, context ->
       withValue(context, QuickJS.createValueObject(context)) { value ->

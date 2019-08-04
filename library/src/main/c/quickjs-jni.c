@@ -119,6 +119,26 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFloat64(JNIEnv *env, jclass cl
 }
 
 JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_createValueString(JNIEnv *env, jclass clazz, jlong context, jstring value) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    CHECK_NULL_RET(env, value, "Null value");
+
+    const char *value_utf = (*env)->GetStringUTFChars(env, value, NULL);
+    CHECK_NULL_RET(env, value_utf, MSG_OOM);
+
+    jlong result = 0;
+    JSValue val = JS_NewString(ctx, value_utf);
+    COPY_JS_VALUE(ctx, val, result);
+
+    (*env)->ReleaseStringUTFChars(env, value, value_utf);
+
+    CHECK_NULL_RET(env, result, MSG_OOM);
+
+    return result;
+}
+
+JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createValueObject(JNIEnv *env, jclass clazz, jlong context) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);

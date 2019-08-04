@@ -123,6 +123,7 @@ public class QuickJS implements TypeAdapter.Depot {
   static native long createValueBoolean(long context, boolean value);
   static native long createValueInt(long context, int value);
   static native long createValueFloat64(long context, double value);
+  static native long createValueString(long context, String value);
   static native long createValueObject(long context);
   static native long createValueArray(long context);
 

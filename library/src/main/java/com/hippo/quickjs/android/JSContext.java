@@ -179,6 +179,17 @@ public class JSContext implements Closeable {
   }
 
   /**
+   * Creates a JavaScript string.
+   */
+  public JSString createJSString(String value) {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueString(pointer, value);
+      return wrapAsJSValue(val).cast(JSString.class);
+    }
+  }
+
+  /**
    * Creates a JavaScript object.
    */
   public JSObject createJSObject() {
