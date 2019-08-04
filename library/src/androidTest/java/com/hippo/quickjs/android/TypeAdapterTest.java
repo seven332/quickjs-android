@@ -48,7 +48,7 @@ public class TypeAdapterTest {
     }
   }
 
-  private class AtomicIntegerTypeAdapter extends TypeAdapter<AtomicInteger> {
+  private static class AtomicIntegerTypeAdapter extends TypeAdapter<AtomicInteger> {
     @Override
     public JSValue toJSValue(AtomicInteger value) {
       throw new IllegalStateException("TODO");
@@ -60,8 +60,7 @@ public class TypeAdapterTest {
     }
   }
 
-  private class AtomicIntegerTypeAdapterFactory implements TypeAdapter.Factory {
-
+  private static class AtomicIntegerTypeAdapterFactory implements TypeAdapter.Factory {
     @Nullable
     @Override
     public TypeAdapter<?> create(Type type) {
