@@ -82,6 +82,10 @@ public class JSContext implements Closeable {
     if (pointer == 0) {
       throw new IllegalStateException("The JSContext is closed");
     }
+
+    // Trigger cleaner
+    cleaner.clean();
+
     return pointer;
   }
 
@@ -102,14 +106,15 @@ public class JSContext implements Closeable {
    * The TypeAdapter converts the result to the target type.
    */
   public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
-    if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) throw new IllegalArgumentException("Invalid type: " + type);
-    if ((flags & (~EVAL_FLAG_MASK)) != 0) throw new IllegalArgumentException("Invalid flags: " + flags);
+    if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
+      throw new IllegalArgumentException("Invalid type: " + type);
+    }
+    if ((flags & (~EVAL_FLAG_MASK)) != 0) {
+      throw new IllegalArgumentException("Invalid flags: " + flags);
+    }
 
     synchronized (jsRuntime) {
       checkClosed();
-
-      // Trigger cleaner
-      cleaner.clean();
 
       long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
 
