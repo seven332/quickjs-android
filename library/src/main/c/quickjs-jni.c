@@ -304,7 +304,7 @@ JNIEXPORT jdouble JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueFloat64(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
-    CHECK_JS_TAG_RET(*val, JS_TAG_FLOAT64, "double");
+    CHECK_JS_TAG_RET(*val, JS_TAG_FLOAT64, "float64");
     return (jdouble) JS_VALUE_GET_FLOAT64(*val);
 }
 
