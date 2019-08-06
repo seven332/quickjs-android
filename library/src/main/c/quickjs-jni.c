@@ -271,6 +271,8 @@ Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJIJ(JNIEnv *env, jclas
     JSValue *prop = (JSValue *) property;
     CHECK_NULL_RET(env, prop, "Null property");
 
+    // JS_SetPropertyUint32 requires a reference count of the property JSValue
+    // Meanwhile, it calls JS_FreeValue on the property JSValue if it fails
     JS_DupValue(ctx, *prop);
 
     return (jboolean) (JS_SetPropertyUint32(ctx, *val, (uint32_t) index, *prop) >= 0);
@@ -289,6 +291,8 @@ Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(
     const char *name_utf = (*env)->GetStringUTFChars(env, name, NULL);
     CHECK_NULL_RET(env, name_utf, MSG_OOM);
 
+    // JS_SetPropertyStr requires a reference count of the property JSValue
+    // Meanwhile, it calls JS_FreeValue on the property JSValue if it fails
     JS_DupValue(ctx, *prop);
 
     jboolean result = (jboolean) (JS_SetPropertyStr(ctx, *val, (uint32_t) name_utf, *prop) >= 0);
