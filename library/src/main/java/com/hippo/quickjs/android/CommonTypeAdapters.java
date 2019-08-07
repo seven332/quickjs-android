@@ -34,12 +34,12 @@ class CommonTypeAdapters {
 
   private static final TypeAdapter<JSValue> JS_VALUE_TYPE_ADAPTER = new TypeAdapter<JSValue>() {
     @Override
-    public JSValue toJSValue(JSValue value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, JSValue value) {
+      return value;
     }
 
     @Override
-    public JSValue fromJSValue(JSValue value) {
+    public JSValue fromJSValue(Context context, JSValue value) {
       return value;
     }
   };

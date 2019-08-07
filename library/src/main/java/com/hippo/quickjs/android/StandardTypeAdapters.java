@@ -50,36 +50,36 @@ class StandardTypeAdapters {
 
   private static final TypeAdapter<Boolean> BOOLEAN_TYPE_ADAPTER = new TypeAdapter<Boolean>() {
     @Override
-    public JSValue toJSValue(Boolean value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Boolean value) {
+      return context.createJSBoolean(value);
     }
 
     @Override
-    public Boolean fromJSValue(JSValue value) {
+    public Boolean fromJSValue(Context context, JSValue value) {
       return value.cast(JSBoolean.class).getBoolean();
     }
   };
 
   private static final TypeAdapter<Byte> BYTE_TYPE_ADAPTER = new TypeAdapter<Byte>() {
     @Override
-    public JSValue toJSValue(Byte value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Byte value) {
+      return context.createJSNumber(value);
     }
 
     @Override
-    public Byte fromJSValue(JSValue value) {
+    public Byte fromJSValue(Context context, JSValue value) {
       return value.cast(JSNumber.class).getByte();
     }
   };
 
   private static final TypeAdapter<Character> CHARACTER_TYPE_ADAPTER = new TypeAdapter<Character>() {
     @Override
-    public JSValue toJSValue(Character value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Character value) {
+      return context.createJSString(value.toString());
     }
 
     @Override
-    public Character fromJSValue(JSValue value) {
+    public Character fromJSValue(Context context, JSValue value) {
       String str = value.cast(JSString.class).getString();
       if (str.length() != 1) {
         throw new JSDataException("Can't treat \"" + str + "\" as char");
@@ -90,72 +90,72 @@ class StandardTypeAdapters {
 
   private static final TypeAdapter<Short> SHORT_TYPE_ADAPTER = new TypeAdapter<Short>() {
     @Override
-    public JSValue toJSValue(Short value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Short value) {
+      return context.createJSNumber(value);
     }
 
     @Override
-    public Short fromJSValue(JSValue value) {
+    public Short fromJSValue(Context context, JSValue value) {
       return value.cast(JSNumber.class).getShort();
     }
   };
 
   private static final TypeAdapter<Integer> INTEGER_TYPE_ADAPTER = new TypeAdapter<Integer>() {
     @Override
-    public JSValue toJSValue(Integer value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Integer value) {
+      return context.createJSNumber(value);
     }
 
     @Override
-    public Integer fromJSValue(JSValue value) {
+    public Integer fromJSValue(Context context, JSValue value) {
       return value.cast(JSNumber.class).getInt();
     }
   };
 
   private static final TypeAdapter<Long> LONG_TYPE_ADAPTER = new TypeAdapter<Long>() {
     @Override
-    public JSValue toJSValue(Long value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Long value) {
+      return context.createJSNumber(value);
     }
 
     @Override
-    public Long fromJSValue(JSValue value) {
+    public Long fromJSValue(Context context, JSValue value) {
       return value.cast(JSNumber.class).getLong();
     }
   };
 
   private static final TypeAdapter<Float> FLOAT_TYPE_ADAPTER = new TypeAdapter<Float>() {
     @Override
-    public JSValue toJSValue(Float value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Float value) {
+      return context.createJSNumber(value);
     }
 
     @Override
-    public Float fromJSValue(JSValue value) {
+    public Float fromJSValue(Context context, JSValue value) {
       return value.cast(JSNumber.class).getFloat();
     }
   };
 
   private static final TypeAdapter<Double> DOUBLE_TYPE_ADAPTER = new TypeAdapter<Double>() {
     @Override
-    public JSValue toJSValue(Double value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, Double value) {
+      return context.createJSNumber(value);
     }
 
     @Override
-    public Double fromJSValue(JSValue value) {
+    public Double fromJSValue(Context context, JSValue value) {
       return value.cast(JSNumber.class).getDouble();
     }
   };
 
   private static final TypeAdapter<String> STRING_TYPE_ADAPTER = new TypeAdapter<String>() {
     @Override
-    public JSValue toJSValue(String value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, String value) {
+      return context.createJSString(value);
     }
 
     @Override
-    public String fromJSValue(JSValue value) {
+    public String fromJSValue(Context context, JSValue value) {
       return value.cast(JSString.class).getString();
     }
   };
@@ -169,14 +169,14 @@ class StandardTypeAdapters {
     }
 
     @Override
-    public JSValue toJSValue(T value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, T value) {
+      return context.createJSNull();
     }
 
     @Override
-    public T fromJSValue(JSValue value) {
+    public T fromJSValue(Context context, JSValue value) {
       if (value instanceof JSNull || value instanceof JSUndefined) return null;
-      return delegate.fromJSValue(value);
+      return delegate.fromJSValue(context, value);
     }
   }
 }

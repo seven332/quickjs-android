@@ -28,13 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * QuickJS is a resources container to create {@link JSRuntime}s.
  */
-public class QuickJS implements TypeAdapter.Depot {
+public class QuickJS {
 
-  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(2);
+  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(3);
 
   static {
     BUILT_IN_FACTORIES.add(StandardTypeAdapters.FACTORY);
     BUILT_IN_FACTORIES.add(CommonTypeAdapters.FACTORY);
+    BUILT_IN_FACTORIES.add(InterfaceTypeAdapter.FACTORY);
   }
 
   private final List<TypeAdapter.Factory> factories;
@@ -50,9 +51,10 @@ public class QuickJS implements TypeAdapter.Depot {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  @Override
   public <T> TypeAdapter<T> getAdapter(Type type) {
-    // TODO Create key from type to ensure the same type creates the same key
+    // Canonicalize type
+    type = Types.removeSubtypeWildcard(Types.canonicalize(type));
+
     TypeAdapter<?> adapter = adapterCache.get(type);
     if (adapter != null) {
       return (TypeAdapter<T>) adapter;
@@ -85,16 +87,11 @@ public class QuickJS implements TypeAdapter.Depot {
     private List<TypeAdapter.Factory> factories = new ArrayList<>();
 
     public <T> Builder registerTypeAdapter(final Type type, final TypeAdapter<T> adapter) {
-      return registerTypeAdapterFactory(new TypeAdapter.Factory() {
-        @Nullable
-        @Override
-        public TypeAdapter<?> create(Type targetType) {
-          // TODO Use a custom function to compare type
-          if (type == targetType) {
-            return adapter;
-          }
-          return null;
+      return registerTypeAdapterFactory(targetType -> {
+        if (Types.equals(type, targetType)) {
+          return adapter;
         }
+        return null;
       });
     }
 

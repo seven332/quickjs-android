@@ -22,17 +22,62 @@ import java.lang.reflect.Type;
 
 public abstract class TypeAdapter<T> {
 
-  public abstract JSValue toJSValue(T value);
+  public abstract JSValue toJSValue(Context context, T value);
 
-  public abstract T fromJSValue(JSValue value);
+  public abstract T fromJSValue(Context context, JSValue value);
 
   public interface Factory {
     @Nullable
     TypeAdapter<?> create(Type type);
   }
 
-  public interface Depot {
+  public interface Context {
+    // TODO Throw exception if not found
+    /**
+     * Returns a TypeAdapter for the type.
+     * Returns {@code null} if no TypeAdapter matched.
+     */
     @Nullable
     <T> TypeAdapter<T> getAdapter(Type type);
+
+    /**
+     * Creates a JavaScript undefined.
+     */
+    JSUndefined createJSUndefined();
+
+    /**
+     * Creates a JavaScript null.
+     */
+    JSNull createJSNull();
+
+    /**
+     * Creates a JavaScript boolean.
+     */
+    JSBoolean createJSBoolean(boolean value);
+
+    /**
+     * Creates a JavaScript number.
+     */
+    JSNumber createJSNumber(int value);
+
+    /**
+     * Creates a JavaScript number.
+     */
+    JSNumber createJSNumber(double value);
+
+    /**
+     * Creates a JavaScript string.
+     */
+    JSString createJSString(String value);
+
+    /**
+     * Creates a JavaScript object.
+     */
+    JSObject createJSObject();
+
+    /**
+     * Creates a JavaScript array.
+     */
+    JSArray createJSArray();
   }
 }

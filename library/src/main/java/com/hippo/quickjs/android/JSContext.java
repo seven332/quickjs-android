@@ -16,7 +16,10 @@
 
 package com.hippo.quickjs.android;
 
+import androidx.annotation.Nullable;
+
 import java.io.Closeable;
+import java.lang.reflect.Type;
 
 /**
  * JSContext is a JavaScript context with its own global objects.
@@ -24,7 +27,7 @@ import java.io.Closeable;
  *
  * @see JSRuntime
  */
-public class JSContext implements Closeable {
+public class JSContext implements Closeable, TypeAdapter.Context {
 
   static final int TYPE_SYMBOL = -8;
   static final int TYPE_STRING = -7;
@@ -120,13 +123,20 @@ public class JSContext implements Closeable {
 
       JSValue jsValue = wrapAsJSValue(value);
 
-      return adapter.fromJSValue(jsValue);
+      return adapter.fromJSValue(this, jsValue);
     }
+  }
+
+  @Nullable
+  @Override
+  public <T> TypeAdapter<T> getAdapter(Type type) {
+    return quickJS.getAdapter(type);
   }
 
   /**
    * Creates a JavaScript undefined.
    */
+  @Override
   public JSUndefined createJSUndefined() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -138,6 +148,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript null.
    */
+  @Override
   public JSNull createJSNull() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -149,6 +160,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript boolean.
    */
+  @Override
   public JSBoolean createJSBoolean(boolean value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -160,6 +172,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript number.
    */
+  @Override
   public JSNumber createJSNumber(int value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -171,6 +184,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript number.
    */
+  @Override
   public JSNumber createJSNumber(double value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -182,6 +196,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript string.
    */
+  @Override
   public JSString createJSString(String value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -193,6 +208,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript object.
    */
+  @Override
   public JSObject createJSObject() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -204,6 +220,7 @@ public class JSContext implements Closeable {
   /**
    * Creates a JavaScript array.
    */
+  @Override
   public JSArray createJSArray() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -211,6 +228,8 @@ public class JSContext implements Closeable {
       return wrapAsJSValue(val).cast(JSArray.class);
     }
   }
+
+  // TODO createJSFunction
 
   /**
    * Wraps a JSValue c pointer as a Java JSValue.

@@ -50,12 +50,12 @@ public class TypeAdapterTest {
 
   private static class AtomicIntegerTypeAdapter extends TypeAdapter<AtomicInteger> {
     @Override
-    public JSValue toJSValue(AtomicInteger value) {
-      throw new IllegalStateException("TODO");
+    public JSValue toJSValue(Context context, AtomicInteger value) {
+      return context.createJSNumber(value.get());
     }
 
     @Override
-    public AtomicInteger fromJSValue(JSValue value) {
+    public AtomicInteger fromJSValue(Context context, JSValue value) {
       return new AtomicInteger(value.cast(JSNumber.class).getInt());
     }
   }

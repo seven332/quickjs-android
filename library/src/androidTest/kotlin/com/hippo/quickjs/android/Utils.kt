@@ -16,7 +16,7 @@
 
 package com.hippo.quickjs.android
 
-import junit.framework.Assert.*
+import org.junit.Assert.*
 
 inline fun <T : Throwable> assertException(type: Class<T>, message: String, block: () -> Unit) {
   try {
