@@ -26,7 +26,7 @@ class CommonTypeAdapters {
 
     @Nullable
     @Override
-    public TypeAdapter<?> create(Type type) {
+    public TypeAdapter<?> create(TypeAdapter.Depot depot, Type type) {
       if (type == JSValue.class) return JS_VALUE_TYPE_ADAPTER;
       return null;
     }
@@ -34,12 +34,12 @@ class CommonTypeAdapters {
 
   private static final TypeAdapter<JSValue> JS_VALUE_TYPE_ADAPTER = new TypeAdapter<JSValue>() {
     @Override
-    public JSValue toJSValue(Context context, JSValue value) {
+    public JSValue toJSValue(Depot depot, Context context, JSValue value) {
       return value;
     }
 
     @Override
-    public JSValue fromJSValue(Context context, JSValue value) {
+    public JSValue fromJSValue(Depot depot, Context context, JSValue value) {
       return value;
     }
   };

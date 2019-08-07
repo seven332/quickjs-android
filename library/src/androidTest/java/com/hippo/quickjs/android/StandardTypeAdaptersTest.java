@@ -27,7 +27,7 @@ public class StandardTypeAdaptersTest {
     QuickJS quickJS = new QuickJS.Builder().build();
     try (JSRuntime runtime = quickJS.createJSRuntime()) {
       try (JSContext context = runtime.createJSContext()) {
-        assertEquals(except, context.evaluate(script, "test.js", StandardTypeAdapters.FACTORY.create(clazz)));
+        assertEquals(except, context.evaluate(script, "test.js", StandardTypeAdapters.FACTORY.create(quickJS, clazz)));
       }
     }
   }
@@ -37,7 +37,7 @@ public class StandardTypeAdaptersTest {
     try (JSRuntime runtime = quickJS.createJSRuntime()) {
       try (JSContext context = runtime.createJSContext()) {
         try {
-          context.evaluate(script, "test.js", StandardTypeAdapters.FACTORY.create(clazz));
+          context.evaluate(script, "test.js", StandardTypeAdapters.FACTORY.create(quickJS, clazz));
           fail();
         } catch (JSDataException e) {
           assertEquals(message, e.getMessage());

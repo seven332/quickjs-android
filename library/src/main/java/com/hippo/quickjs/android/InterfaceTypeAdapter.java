@@ -118,7 +118,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
     return methods;
   }
 
-  static final Factory FACTORY = type -> {
+  static final Factory FACTORY = (depot, type) -> {
     Map<String, SimpleMethod> methods = getInterfaceMethods(type);
     if (methods == null) return null;
     return new InterfaceTypeAdapter(Types.getRawType(type), methods);
@@ -133,12 +133,12 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
   }
 
   @Override
-  public JSValue toJSValue(Context context, Object value) {
+  public JSValue toJSValue(Depot depot, Context context, Object value) {
     return null;
   }
 
   @Override
-  public Object fromJSValue(Context context, JSValue value) {
+  public Object fromJSValue(Depot depot, Context context, JSValue value) {
     JSObject jo = value.cast(JSObject.class);
 
     return Proxy.newProxyInstance(rawType.getClassLoader(), new Class<?>[]{ rawType }, (proxy, method, args) -> {
@@ -156,20 +156,20 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       JSValue[] parameters = new JSValue[parameterNumber];
       for (int i = 0; i < parameterNumber; i++) {
         Type type = simpleMethod.parameterTypes[i];
-        TypeAdapter adapter = context.getAdapter(type);
+        TypeAdapter adapter = depot.getAdapter(type);
         if (adapter == null) throw new IllegalStateException("Can't find TypeAdapter for " + type);
-        parameters[i] = adapter.toJSValue(context, args[i]);
+        parameters[i] = adapter.toJSValue(depot, context, args[i]);
       }
 
       Type resultType = simpleMethod.returnType;
-      TypeAdapter resultAdapter = context.getAdapter(resultType);
+      TypeAdapter resultAdapter = depot.getAdapter(resultType);
       if (resultAdapter == null) throw new IllegalStateException("Can't find TypeAdapter for " + resultType);
 
       JSFunction function = jo.getProperty(name).cast(JSFunction.class);
 
       JSValue result = function.invoke(jo, parameters);
 
-      return resultAdapter.fromJSValue(context, result);
+      return resultAdapter.fromJSValue(depot, context, result);
     });
   }
 }

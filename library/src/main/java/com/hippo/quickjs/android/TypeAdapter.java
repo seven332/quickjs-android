@@ -22,16 +22,16 @@ import java.lang.reflect.Type;
 
 public abstract class TypeAdapter<T> {
 
-  public abstract JSValue toJSValue(Context context, T value);
+  public abstract JSValue toJSValue(Depot depot, Context context, T value);
 
-  public abstract T fromJSValue(Context context, JSValue value);
+  public abstract T fromJSValue(Depot depot, Context context, JSValue value);
 
   public interface Factory {
     @Nullable
-    TypeAdapter<?> create(Type type);
+    TypeAdapter<?> create(Depot depot, Type type);
   }
 
-  public interface Context {
+  public interface Depot {
     // TODO Throw exception if not found
     /**
      * Returns a TypeAdapter for the type.
@@ -39,6 +39,9 @@ public abstract class TypeAdapter<T> {
      */
     @Nullable
     <T> TypeAdapter<T> getAdapter(Type type);
+  }
+
+  public interface Context {
 
     /**
      * Creates a JavaScript undefined.
