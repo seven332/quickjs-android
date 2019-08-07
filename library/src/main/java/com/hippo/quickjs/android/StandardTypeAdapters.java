@@ -27,6 +27,7 @@ class StandardTypeAdapters {
     @Nullable
     @Override
     public TypeAdapter<?> create(Type type) {
+      if (type == void.class) return VOID_TYPE_ADAPTER;
       if (type == boolean.class) return BOOLEAN_TYPE_ADAPTER;
       if (type == byte.class) return BYTE_TYPE_ADAPTER;
       if (type == char.class) return CHARACTER_TYPE_ADAPTER;
@@ -35,6 +36,7 @@ class StandardTypeAdapters {
       if (type == long.class) return LONG_TYPE_ADAPTER;
       if (type == float.class) return FLOAT_TYPE_ADAPTER;
       if (type == double.class) return DOUBLE_TYPE_ADAPTER;
+      if (type == Void.class) return VOID_TYPE_ADAPTER;
       if (type == Boolean.class) return new NullableTypeAdapter<>(BOOLEAN_TYPE_ADAPTER);
       if (type == Byte.class) return new NullableTypeAdapter<>(BYTE_TYPE_ADAPTER);
       if (type == Character.class) return new NullableTypeAdapter<>(CHARACTER_TYPE_ADAPTER);
@@ -45,6 +47,19 @@ class StandardTypeAdapters {
       if (type == Double.class) return new NullableTypeAdapter<>(DOUBLE_TYPE_ADAPTER);
       if (type == String.class) return new NullableTypeAdapter<>(STRING_TYPE_ADAPTER);
       return null;
+    }
+  };
+
+  private static final TypeAdapter<Void> VOID_TYPE_ADAPTER = new TypeAdapter<Void>() {
+    @Override
+    public JSValue toJSValue(Context context, Void value) {
+      return context.createJSNull();
+    }
+
+    @Override
+    public Void fromJSValue(Context context, JSValue value) {
+      if (value instanceof JSNull || value instanceof JSUndefined) return null;
+      throw new JSDataException("excepted: JSNull or JSUndefined, actual: " + value.getClass().getSimpleName());
     }
   };
 

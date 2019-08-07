@@ -91,8 +91,7 @@ public class InterfaceTypeAdapterTest {
         assertEquals(a - b, calculator.minus(a, b), 0.0);
         assertEquals(a * b, calculator.multiplies(a, b), 0.0);
         assertEquals(a / b, calculator.divides(a, b), 0.0);
-        // TODO Add TypeAdapter for void, Void
-        // calculator.noop();
+        calculator.noop();
       }
     }
   }
@@ -152,7 +151,7 @@ public class InterfaceTypeAdapterTest {
     double minus(double a, double b);
     double multiplies(double a, double b);
     double divides(double a, double b);
-    // void noop();
+    void noop();
   }
 
   interface AtomicIntegerHolder {
