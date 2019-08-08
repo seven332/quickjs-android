@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package com.hippo.quickjs.android
+package com.hippo.quickjs.android;
 
-import org.junit.Assert.*
+import static org.junit.Assert.*;
 
-inline fun <T : Throwable> assertException(type: Class<T>, message: String, block: () -> Unit) {
-  try {
-    block()
-    fail()
-  } catch (e: Throwable) {
-    assertTrue("excepted: ${type.name}, actual: ${e.javaClass.name}", type.isInstance(e))
-    assertEquals(message, e.message)
+public class Utils {
+
+  public static <T extends Throwable> void assertException(Class<T> type, String message, Block block) {
+    try {
+      block.run();
+      fail();
+    } catch (Throwable e) {
+      assertTrue("excepted: ${type.name}, actual: ${e.javaClass.name}", type.isInstance(e));
+      assertEquals(message, e.getMessage());
+    }
+  }
+
+  public interface Block {
+    void run();
   }
 }

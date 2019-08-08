@@ -26,13 +26,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.hippo.quickjs.android.Utils.assertException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 public final class TypesTest {
 
   @Test
-  public void newParameterizedType() throws Exception {
+  public void newParameterizedType() {
     // List<A>. List is a top-level class.
     Type type = Types.newParameterizedType(List.class, A.class);
     assertThat(getFirstTypeArgument(type)).isEqualTo(A.class);
@@ -43,33 +43,30 @@ public final class TypesTest {
   }
 
   @Test
-  public void parameterizedTypeWithRequiredOwnerMissing() throws Exception {
-    try {
-      Types.newParameterizedType(A.class, B.class);
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("unexpected owner type for " + A.class + ": null");
-    }
+  public void parameterizedTypeWithRequiredOwnerMissing() {
+    assertException(
+        IllegalArgumentException.class,
+        "unexpected owner type for " + A.class + ": null",
+        () -> Types.newParameterizedType(A.class, B.class)
+    );
   }
 
   @Test
-  public void parameterizedTypeWithUnnecessaryOwnerProvided() throws Exception {
-    try {
-      Types.newParameterizedTypeWithOwner(A.class, List.class, B.class);
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("unexpected owner type for " + List.class + ": " + A.class);
-    }
+  public void parameterizedTypeWithUnnecessaryOwnerProvided() {
+    assertException(
+        IllegalArgumentException.class,
+        "unexpected owner type for " + List.class + ": " + A.class,
+        () -> Types.newParameterizedTypeWithOwner(A.class, List.class, B.class)
+    );
   }
 
   @Test
-  public void parameterizedTypeWithIncorrectOwnerProvided() throws Exception {
-    try {
-      Types.newParameterizedTypeWithOwner(A.class, D.class, B.class);
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("unexpected owner type for " + D.class + ": " + A.class);
-    }
+  public void parameterizedTypeWithIncorrectOwnerProvided() {
+    assertException(
+        IllegalArgumentException.class,
+        "unexpected owner type for " + D.class + ": " + A.class,
+        () -> Types.newParameterizedTypeWithOwner(A.class, D.class, B.class)
+    );
   }
 
   @Test
@@ -167,7 +164,7 @@ public final class TypesTest {
    * Given a parameterized type {@code A<B, C>}, returns B. If the specified type is not a generic
    * type, returns null.
    */
-  private static Type getFirstTypeArgument(Type type) throws Exception {
+  private static Type getFirstTypeArgument(Type type) {
     if (!(type instanceof ParameterizedType)) return null;
     ParameterizedType ptype = (ParameterizedType) type;
     Type[] actualTypeArguments = ptype.getActualTypeArguments();
@@ -217,13 +214,13 @@ public final class TypesTest {
   }
 
   @Test
-  public void propertiesTypes() throws Exception {
+  public void propertiesTypes() {
     assertThat(Types.mapKeyAndValueTypes(Properties.class, Properties.class))
         .containsExactly(String.class, String.class);
   }
 
   @Test
-  public void fixedVariablesTypes() throws Exception {
+  public void fixedVariablesTypes() {
     assertThat(Types.mapKeyAndValueTypes(StringIntegerMap.class, StringIntegerMap.class))
         .containsExactly(String.class, Integer.class);
   }
@@ -237,24 +234,23 @@ public final class TypesTest {
   }
 
   @Test
-  public void parameterizedAndWildcardTypesCannotHavePrimitiveArguments() throws Exception {
-    try {
-      Types.newParameterizedType(List.class, int.class);
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("Unexpected primitive int. Use the boxed type.");
-    }
-    try {
-      Types.subtypeOf(byte.class);
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("Unexpected primitive byte. Use the boxed type.");
-    }
-    try {
-      Types.subtypeOf(boolean.class);
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("Unexpected primitive boolean. Use the boxed type.");
-    }
+  public void parameterizedAndWildcardTypesCannotHavePrimitiveArguments() {
+    assertException(
+        IllegalArgumentException.class,
+        "Unexpected primitive int. Use the boxed type.",
+        () -> Types.newParameterizedType(List.class, int.class)
+    );
+
+    assertException(
+        IllegalArgumentException.class,
+        "Unexpected primitive byte. Use the boxed type.",
+        () -> Types.subtypeOf(byte.class)
+    );
+
+    assertException(
+        IllegalArgumentException.class,
+        "Unexpected primitive boolean. Use the boxed type.",
+        () -> Types.subtypeOf(boolean.class)
+    );
   }
 }
