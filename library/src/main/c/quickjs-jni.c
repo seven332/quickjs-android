@@ -1,6 +1,5 @@
 #include <jni.h>
 #include <quickjs.h>
-#include <malloc.h>
 #include <string.h>
 
 #include "java-helper.h"
@@ -62,15 +61,15 @@ Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz,
     JS_FreeContext(ctx);
 }
 
-#define COPY_JS_VALUE(JS_CONTEXT, JS_VALUE, RESULT)         \
-    do {                                                    \
-        void *__copy__ = malloc(sizeof(JSValue));           \
-        if (__copy__ != NULL) {                             \
-            memcpy(__copy__, &(JS_VALUE), sizeof(JSValue)); \
-            (RESULT) = (jlong) __copy__;                    \
-        } else {                                            \
-            JS_FreeValue((JS_CONTEXT), (JS_VALUE));         \
-        }                                                   \
+#define COPY_JS_VALUE(JS_CONTEXT, JS_VALUE, RESULT)                                    \
+    do {                                                                               \
+        void *__copy__ = js_malloc_rt(JS_GetRuntime(JS_CONTEXT), sizeof(JSValue)); \
+        if (__copy__ != NULL) {                                                        \
+            memcpy(__copy__, &(JS_VALUE), sizeof(JSValue));                            \
+            (RESULT) = (jlong) __copy__;                                               \
+        } else {                                                                       \
+            JS_FreeValue((JS_CONTEXT), (JS_VALUE));                                    \
+        }                                                                              \
     } while (0)
 
 JNIEXPORT jlong JNICALL
@@ -379,7 +378,7 @@ Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, j
     JSValue *val = (JSValue *) value;
     CHECK_NULL(env, val, MSG_NULL_JS_VALUE);
     JS_FreeValue(ctx, *val);
-    free(val);
+    js_free_rt(JS_GetRuntime(ctx), val);
 }
 
 JNIEXPORT jobject JNICALL
