@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project(quickjs C)
 
+option(LEAK_TRIGGER "Add a leak trigger" FALSE)
+
 file(STRINGS "quickjs/VERSION" CONFIG_VERSION)
 
 include_directories(quickjs)
@@ -45,6 +47,15 @@ set(QJSBN_SOURCES
         qjscalc.c
         ${QJSBN_LIB_SOURCES}
 )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(COMMON_FLAGS ${COMMON_FLAGS} -DDUMP_LEAKS)
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+if (LEAK_TRIGGER)
+    # Use printf as leak_trigger
+    set(COMMON_FLAGS ${COMMON_FLAGS} -Dprintf=leak_trigger)
+endif (LEAK_TRIGGER)
 
 # Camouflage executable files as shared libraries to make apk include them
 

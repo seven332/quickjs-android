@@ -10,8 +10,6 @@
 #define MSG_NULL_JS_CONTEXT "Null JSContext"
 #define MSG_NULL_JS_VALUE "Null JSValue"
 
-// TODO Add debug code to track JSValue reference count
-
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
     jlong runtime = (jlong) JS_NewRuntime();
@@ -19,11 +17,33 @@ Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) 
     return runtime;
 }
 
+#ifdef LEAK_TRIGGER
+
+static int leak_state = 0;
+
+// Redirect printf() to this function
+// to get memory leak detection result in JS_FreeRuntime()
+// without modifying the source code of QuickJS.
+int leak_trigger(const char* _, ...) {
+    leak_state = 1;
+    return 0;
+}
+
+#endif
+
 JNIEXPORT void JNICALL
 Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz, jlong runtime) {
     JSRuntime *rt = (JSRuntime *) runtime;
     CHECK_NULL(env, rt, MSG_NULL_JS_RUNTIME)
+#ifdef LEAK_TRIGGER
+    leak_state = 0;
+#endif
     JS_FreeRuntime(rt);
+#ifdef LEAK_TRIGGER
+    if (leak_state != 0) {
+        THROW_ILLEGAL_STATE_EXCEPTION(env, "Memory Leak");
+    }
+#endif
 }
 
 JNIEXPORT jlong JNICALL
