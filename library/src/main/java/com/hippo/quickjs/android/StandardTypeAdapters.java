@@ -37,15 +37,15 @@ class StandardTypeAdapters {
       if (type == float.class) return FLOAT_TYPE_ADAPTER;
       if (type == double.class) return DOUBLE_TYPE_ADAPTER;
       if (type == Void.class) return VOID_TYPE_ADAPTER;
-      if (type == Boolean.class) return new NullableTypeAdapter<>(BOOLEAN_TYPE_ADAPTER);
-      if (type == Byte.class) return new NullableTypeAdapter<>(BYTE_TYPE_ADAPTER);
-      if (type == Character.class) return new NullableTypeAdapter<>(CHARACTER_TYPE_ADAPTER);
-      if (type == Short.class) return new NullableTypeAdapter<>(SHORT_TYPE_ADAPTER);
-      if (type == Integer.class) return new NullableTypeAdapter<>(INTEGER_TYPE_ADAPTER);
-      if (type == Long.class) return new NullableTypeAdapter<>(LONG_TYPE_ADAPTER);
-      if (type == Float.class) return new NullableTypeAdapter<>(FLOAT_TYPE_ADAPTER);
-      if (type == Double.class) return new NullableTypeAdapter<>(DOUBLE_TYPE_ADAPTER);
-      if (type == String.class) return new NullableTypeAdapter<>(STRING_TYPE_ADAPTER);
+      if (type == Boolean.class) return BOOLEAN_TYPE_ADAPTER.nullable();
+      if (type == Byte.class) return BYTE_TYPE_ADAPTER.nullable();
+      if (type == Character.class) return CHARACTER_TYPE_ADAPTER.nullable();
+      if (type == Short.class) return SHORT_TYPE_ADAPTER.nullable();
+      if (type == Integer.class) return INTEGER_TYPE_ADAPTER.nullable();
+      if (type == Long.class) return LONG_TYPE_ADAPTER.nullable();
+      if (type == Float.class) return FLOAT_TYPE_ADAPTER.nullable();
+      if (type == Double.class) return DOUBLE_TYPE_ADAPTER.nullable();
+      if (type == String.class) return STRING_TYPE_ADAPTER.nullable();
       return null;
     }
   };
@@ -174,24 +174,4 @@ class StandardTypeAdapters {
       return value.cast(JSString.class).getString();
     }
   };
-
-  private static class NullableTypeAdapter<T> extends TypeAdapter<T> {
-
-    private final TypeAdapter<T> delegate;
-
-    NullableTypeAdapter(TypeAdapter<T> delegate) {
-      this.delegate = delegate;
-    }
-
-    @Override
-    public JSValue toJSValue(Depot depot, Context context, T value) {
-      return context.createJSNull();
-    }
-
-    @Override
-    public T fromJSValue(Depot depot, Context context, JSValue value) {
-      if (value instanceof JSNull || value instanceof JSUndefined) return null;
-      return delegate.fromJSValue(depot, context, value);
-    }
-  }
 }

@@ -121,7 +121,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
   static final Factory FACTORY = (depot, type) -> {
     Map<String, SimpleMethod> methods = getInterfaceMethods(type);
     if (methods == null) return null;
-    return new InterfaceTypeAdapter(Types.getRawType(type), methods);
+    return new InterfaceTypeAdapter(Types.getRawType(type), methods).nullable();
   };
 
   private final Class<?> rawType;
@@ -134,7 +134,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
 
   @Override
   public JSValue toJSValue(Depot depot, Context context, Object value) {
-    return null;
+    throw new IllegalStateException("TODO");
   }
 
   @Override

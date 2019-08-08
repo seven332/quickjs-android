@@ -22,9 +22,38 @@ import java.lang.reflect.Type;
 
 public abstract class TypeAdapter<T> {
 
-  public abstract JSValue toJSValue(Depot depot, Context context, T value);
+  public abstract JSValue toJSValue(Depot depot, Context context, @Nullable T value);
 
   public abstract T fromJSValue(Depot depot, Context context, JSValue value);
+
+  /**
+   * Returns a TypeAdapter equal to this TypeAdapter,
+   * but with support for null java object and null/undefined javascript value.
+   */
+  public final TypeAdapter<T> nullable() {
+    return new NullableTypeAdapter<>(this);
+  }
+
+  private static class NullableTypeAdapter<T> extends TypeAdapter<T> {
+
+    private final TypeAdapter<T> delegate;
+
+    NullableTypeAdapter(TypeAdapter<T> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public JSValue toJSValue(Depot depot, Context context, T value) {
+      if (value == null) return context.createJSNull();
+      return delegate.toJSValue(depot, context, value);
+    }
+
+    @Override
+    public T fromJSValue(Depot depot, Context context, JSValue value) {
+      if (value instanceof JSNull || value instanceof JSUndefined) return null;
+      return delegate.fromJSValue(depot, context, value);
+    }
+  }
 
   public interface Factory {
     @Nullable
