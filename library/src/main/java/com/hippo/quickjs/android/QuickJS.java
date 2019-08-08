@@ -30,11 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class QuickJS implements TypeAdapter.Depot {
 
-  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(3);
+  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(4);
 
   static {
     BUILT_IN_FACTORIES.add(StandardTypeAdapters.FACTORY);
     BUILT_IN_FACTORIES.add(CommonTypeAdapters.FACTORY);
+    BUILT_IN_FACTORIES.add(ArrayTypeAdapter.FACTORY);
     BUILT_IN_FACTORIES.add(InterfaceTypeAdapter.FACTORY);
   }
 
@@ -109,6 +110,11 @@ public class QuickJS implements TypeAdapter.Depot {
   static {
     System.loadLibrary("quickjs-android");
   }
+
+  // TODO Try to call java method in c code
+  //  QuickJS's JSValue is always in stack
+  //  com.hippo.quickjs.android.JSValue require a heap copy
+  //  This is a waste of memory
 
   static native long createRuntime();
   static native void destroyRuntime(long runtime);
