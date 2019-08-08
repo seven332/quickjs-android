@@ -20,7 +20,7 @@ import androidx.annotation.Nullable;
 
 import java.lang.reflect.Type;
 
-class CommonTypeAdapters {
+class JSValueAdapter {
 
   static final TypeAdapter.Factory FACTORY = new TypeAdapter.Factory() {
 
@@ -35,6 +35,7 @@ class CommonTypeAdapters {
   private static final TypeAdapter<JSValue> JS_VALUE_TYPE_ADAPTER = new TypeAdapter<JSValue>() {
     @Override
     public JSValue toJSValue(Depot depot, Context context, JSValue value) {
+      if (value == null) throw new NullPointerException("value == null");
       return value;
     }
 

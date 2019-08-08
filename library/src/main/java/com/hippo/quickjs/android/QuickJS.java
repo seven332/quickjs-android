@@ -34,7 +34,7 @@ public class QuickJS implements TypeAdapter.Depot {
 
   static {
     BUILT_IN_FACTORIES.add(StandardTypeAdapters.FACTORY);
-    BUILT_IN_FACTORIES.add(CommonTypeAdapters.FACTORY);
+    BUILT_IN_FACTORIES.add(JSValueAdapter.FACTORY);
     BUILT_IN_FACTORIES.add(ArrayTypeAdapter.FACTORY);
     BUILT_IN_FACTORIES.add(InterfaceTypeAdapter.FACTORY);
   }
