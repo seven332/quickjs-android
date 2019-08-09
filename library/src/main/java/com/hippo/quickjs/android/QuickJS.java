@@ -77,7 +77,16 @@ public class QuickJS implements TypeAdapter.Depot {
    * Creates a JSRuntime with resources in this QuickJS.
    */
   public JSRuntime createJSRuntime() {
-    long runtime = QuickJS.createRuntime();
+    return createJSRuntime(-1);
+  }
+
+  /**
+   * Creates a JSRuntime with resources in this QuickJS.
+   *
+   * @param mallocLimit the malloc limit of the JSRuntime
+   */
+  JSRuntime createJSRuntime(long mallocLimit) {
+    long runtime = QuickJS.createRuntime(mallocLimit);
     if (runtime == 0) {
       throw new IllegalStateException("Cannot create JSRuntime instance");
     }
@@ -116,7 +125,7 @@ public class QuickJS implements TypeAdapter.Depot {
   //  com.hippo.quickjs.android.JSValue require a heap copy
   //  This is a waste of memory
 
-  static native long createRuntime();
+  static native long createRuntime(long mallocLimit);
   static native void destroyRuntime(long runtime);
 
   static native long createContext(long runtime);

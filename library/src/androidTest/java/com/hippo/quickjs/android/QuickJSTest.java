@@ -16,6 +16,7 @@
 
 package com.hippo.quickjs.android;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.hippo.quickjs.android.Utils.assertException;
@@ -26,7 +27,7 @@ public class QuickJSTest {
 
   @Test
   public void testCreateRuntime() {
-    long runtime = QuickJS.createRuntime();
+    long runtime = QuickJS.createRuntime(-1);
     assertNotEquals(0, runtime);
     QuickJS.destroyRuntime(runtime);
   }
@@ -41,7 +42,11 @@ public class QuickJSTest {
   }
 
   private void withRuntime(WithRuntimeBlock block) {
-    long runtime = QuickJS.createRuntime();
+    withRuntime(-1, block);
+  }
+
+  private void withRuntime(long mallocLimit, WithRuntimeBlock block) {
+    long runtime = QuickJS.createRuntime(mallocLimit);
     assertNotEquals(0, runtime);
     try {
       block.run(runtime);
@@ -52,6 +57,20 @@ public class QuickJSTest {
 
   private interface WithRuntimeBlock {
     void run(long runtime);
+  }
+
+  @Ignore("It causes accessing null pointer in C")
+  @Test
+  public void testOutOfMemory() {
+    for (int i = 0; i < 50000; i++) {
+      withRuntime(i, runtime ->
+          assertException(
+              IllegalStateException.class,
+              "Out of memory",
+              () -> QuickJS.createContext(runtime)
+          )
+      );
+    }
   }
 
   @Test

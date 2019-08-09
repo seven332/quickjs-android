@@ -25,7 +25,7 @@ public class Utils {
       block.run();
       fail();
     } catch (Throwable e) {
-      assertTrue("excepted: ${type.name}, actual: ${e.javaClass.name}", type.isInstance(e));
+      assertTrue("excepted: " + type.getName() + ", actual: " + e.getClass().getName(), type.isInstance(e));
       assertEquals(message, e.getMessage());
     }
   }
