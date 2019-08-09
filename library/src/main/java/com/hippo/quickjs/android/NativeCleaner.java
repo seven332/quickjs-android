@@ -21,6 +21,9 @@ import java.lang.ref.ReferenceQueue;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * https://youtu.be/7_caITSjk1k
+ */
 abstract class NativeCleaner<T> {
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
