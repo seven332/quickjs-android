@@ -47,4 +47,18 @@ public class JSContextTest {
       }
     }
   }
+
+  @Test
+  public void getGlobalObject() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        context.evaluate("a = 1", "unknown.js", int.class);
+        assertEquals(1, context.getGlobalObject().getProperty("a").cast(JSNumber.class).getInt());
+
+        context.getGlobalObject().setProperty("b", context.createJSString("string"));
+        assertEquals("string", context.evaluate("b", "unknown.js", String.class));
+      }
+    }
+  }
 }

@@ -425,6 +425,21 @@ Java_com_hippo_quickjs_android_QuickJS_getException(JNIEnv *env, jclass clazz, j
 }
 
 JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getGlobalObject(JNIEnv *env, jclass clazz, jlong context) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+
+    jlong result = 0;
+
+    JSValue val = JS_GetGlobalObject(ctx);
+    COPY_JS_VALUE(ctx, val, result);
+
+    CHECK_NULL_RET(env, result, MSG_OOM);
+
+    return result;
+}
+
+JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
         jlong context, jstring source_code, jstring file_name, jint flags) {
     JSContext *ctx = (JSContext *) context;

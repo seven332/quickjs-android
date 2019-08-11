@@ -90,7 +90,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   }
 
   public <T> T evaluate(String script, String fileName, Class<T> clazz) {
-    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.<T>getAdapter(clazz));
+    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getAdapter(clazz));
   }
 
   public <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
@@ -98,7 +98,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   }
 
   public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
-    return evaluate(script, fileName, type, flags, quickJS.<T>getAdapter(clazz));
+    return evaluate(script, fileName, type, flags, quickJS.getAdapter(clazz));
   }
 
   /**
@@ -121,6 +121,17 @@ public class JSContext implements Closeable, TypeAdapter.Context {
       JSValue jsValue = wrapAsJSValue(value);
 
       return adapter.fromJSValue(quickJS, this, jsValue);
+    }
+  }
+
+  /**
+   * Returns the global object.
+   */
+  public JSObject getGlobalObject() {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.getGlobalObject(pointer);
+      return wrapAsJSValue(val).cast(JSObject.class);
     }
   }
 
