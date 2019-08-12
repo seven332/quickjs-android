@@ -10,11 +10,17 @@
 #define MSG_NULL_JS_VALUE "Null JSValue"
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz, jlong mallocLimit) {
+Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
     JSRuntime *rt = JS_NewRuntime();
-    CHECK_NULL_RET(env, rt, MSG_OOM)
-    JS_SetMemoryLimit(rt, (size_t) mallocLimit);
+    CHECK_NULL_RET(env, rt, MSG_OOM);
     return (jlong) rt;
+}
+
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(JNIEnv *env, jclass clazz, jlong runtime, jint mallocLimit) {
+    JSRuntime *rt = (JSRuntime *) runtime;
+    CHECK_NULL(env, rt, MSG_NULL_JS_RUNTIME);
+    JS_SetMemoryLimit(rt, (size_t) mallocLimit);
 }
 
 #ifdef LEAK_TRIGGER

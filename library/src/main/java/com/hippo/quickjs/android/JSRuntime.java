@@ -43,6 +43,21 @@ public class JSRuntime implements Closeable {
   }
 
   /**
+   * Set the malloc limit for this JSRuntime.
+   * Only positive number and {@code -1} are accepted.
+   * {@code -1} for no limit.
+   */
+  public synchronized void setMallocLimit(int mallocLimit) {
+    checkClosed();
+
+    if (mallocLimit == 0 || mallocLimit < -1) {
+      throw new IllegalArgumentException("Only positive number and -1 are accepted as malloc limit");
+    }
+
+    QuickJS.setRuntimeMallocLimit(pointer, mallocLimit);
+  }
+
+  /**
    * Creates a JSContext with the memory heap of this JSRuntime.
    */
   public synchronized JSContext createJSContext() {
