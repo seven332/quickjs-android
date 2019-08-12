@@ -16,8 +16,6 @@
 
 package com.hippo.quickjs.android;
 
-import androidx.annotation.Nullable;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,26 +49,25 @@ public class QuickJS implements TypeAdapter.Depot {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
   @Override
   public <T> TypeAdapter<T> getAdapter(Type type) {
     // Canonicalize type
-    type = Types.removeSubtypeWildcard(Types.canonicalize(type));
+    Type newType = Types.removeSubtypeWildcard(Types.canonicalize(type));
 
-    TypeAdapter<?> adapter = adapterCache.get(type);
+    TypeAdapter<?> adapter = adapterCache.get(newType);
     if (adapter != null) {
       return (TypeAdapter<T>) adapter;
     }
 
     for (int i = 0, size = factories.size(); i < size; i++) {
-      adapter = factories.get(i).create(this, type);
+      adapter = factories.get(i).create(this, newType);
       if (adapter != null) {
-        adapterCache.put(type, adapter);
+        adapterCache.put(newType, adapter);
         return (TypeAdapter<T>) adapter;
       }
     }
 
-    return null;
+    throw new IllegalArgumentException("Can't find TypeAdapter for " + type);
   }
 
   /**

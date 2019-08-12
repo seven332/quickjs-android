@@ -139,7 +139,7 @@ public class InterfaceTypeAdapterTest {
         try {
           holder.get();
           fail();
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException e) {
           assertEquals("Can't find TypeAdapter for class java.util.concurrent.atomic.AtomicInteger", e.getMessage());
         }
       }

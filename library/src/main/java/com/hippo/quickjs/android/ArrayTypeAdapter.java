@@ -26,7 +26,6 @@ class ArrayTypeAdapter extends TypeAdapter<Object> {
     if (elementType == null) return null;
     Class<?> elementClass = Types.getRawType(elementType);
     TypeAdapter<Object> elementAdapter = depot.getAdapter(elementType);
-    if (elementAdapter == null) throw new IllegalStateException("Can't find TypeAdapter for " + elementType);
     return new ArrayTypeAdapter(elementClass, elementAdapter).nullable();
   };
 

@@ -157,13 +157,11 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       for (int i = 0; i < parameterNumber; i++) {
         Type type = simpleMethod.parameterTypes[i];
         TypeAdapter adapter = depot.getAdapter(type);
-        if (adapter == null) throw new IllegalStateException("Can't find TypeAdapter for " + type);
         parameters[i] = adapter.toJSValue(depot, context, args[i]);
       }
 
       Type resultType = simpleMethod.returnType;
       TypeAdapter resultAdapter = depot.getAdapter(resultType);
-      if (resultAdapter == null) throw new IllegalStateException("Can't find TypeAdapter for " + resultType);
 
       JSFunction function = jo.getProperty(name).cast(JSFunction.class);
 

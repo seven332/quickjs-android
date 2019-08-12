@@ -61,12 +61,11 @@ public abstract class TypeAdapter<T> {
   }
 
   public interface Depot {
-    // TODO Throw exception if not found
     /**
      * Returns a TypeAdapter for the type.
-     * Returns {@code null} if no TypeAdapter matched.
+     *
+     * @throws IllegalArgumentException if no TypeAdapter matched
      */
-    @Nullable
     <T> TypeAdapter<T> getAdapter(Type type);
   }
 
