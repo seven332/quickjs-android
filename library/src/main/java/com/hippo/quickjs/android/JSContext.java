@@ -16,6 +16,8 @@
 
 package com.hippo.quickjs.android;
 
+import androidx.annotation.Nullable;
+
 import java.io.Closeable;
 
 /**
@@ -89,23 +91,62 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     return pointer;
   }
 
-  public <T> T evaluate(String script, String fileName, Class<T> clazz) {
-    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getAdapter(clazz));
-  }
-
-  public <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
-    return evaluate(script, fileName, EVAL_TYPE_GLOBAL, 0, adapter);
-  }
-
-  public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
-    return evaluate(script, fileName, type, flags, quickJS.getAdapter(clazz));
+  /**
+   * Evaluates the script in this JSContext.
+   */
+  public void evaluate(String script, String fileName) {
+    evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, null);
   }
 
   /**
    * Evaluates the script in this JSContext.
-   * The TypeAdapter converts the result to the target type.
+   *
+   * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
+   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
+   */
+  public void evaluate(String script, String fileName, int type, int flags) {
+    evaluateInternal(script, fileName, type, flags, null);
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
+   * Returns the result as the java class.
+   */
+  public <T> T evaluate(String script, String fileName, Class<T> clazz) {
+    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getAdapter(clazz));
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
+   * Returns the result converted by the TypeAdapter.
+   */
+  public <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
+    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, adapter);
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
+   * Returns the result as the java class.
+   *
+   * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
+   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
+   */
+  public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
+    return evaluateInternal(script, fileName, type, flags, quickJS.getAdapter(clazz));
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
+   * Returns the result converted by the TypeAdapter.
+   *
+   * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
+   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
    */
   public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
+    return evaluateInternal(script, fileName, type, flags, adapter);
+  }
+
+  private <T> T evaluateInternal(String script, String fileName, int type, int flags, @Nullable TypeAdapter<T> adapter) {
     if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
       throw new IllegalArgumentException("Invalid type: " + type);
     }
@@ -118,9 +159,14 @@ public class JSContext implements Closeable, TypeAdapter.Context {
 
       long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
 
-      JSValue jsValue = wrapAsJSValue(value);
-
-      return adapter.fromJSValue(quickJS, this, jsValue);
+      if (adapter != null) {
+        JSValue jsValue = wrapAsJSValue(value);
+        return adapter.fromJSValue(quickJS, this, jsValue);
+      } else {
+        // The value is unused
+        QuickJS.destroyValue(pointer, value);
+        return null;
+      }
     }
   }
 

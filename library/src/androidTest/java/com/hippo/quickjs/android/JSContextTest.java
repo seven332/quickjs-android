@@ -18,6 +18,7 @@ package com.hippo.quickjs.android;
 
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public class JSContextTest {
@@ -58,6 +59,17 @@ public class JSContextTest {
 
         context.getGlobalObject().setProperty("b", context.createJSString("string"));
         assertEquals("string", context.evaluate("b", "unknown.js", String.class));
+      }
+    }
+  }
+
+  @Test
+  public void evaluateWithoutReturn() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        context.evaluate("a = {}", "test.js");
+        assertThat(context.getGlobalObject().getProperty("a")).isInstanceOf(JSObject.class);
       }
     }
   }
