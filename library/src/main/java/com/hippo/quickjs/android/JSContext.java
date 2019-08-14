@@ -163,8 +163,14 @@ public class JSContext implements Closeable, TypeAdapter.Context {
         JSValue jsValue = wrapAsJSValue(value);
         return adapter.fromJSValue(quickJS, this, jsValue);
       } else {
-        // The value is unused
-        QuickJS.destroyValue(pointer, value);
+        // Only check exception
+        try {
+          if (QuickJS.getValueTag(value) == TYPE_EXCEPTION) {
+            throw new JSEvaluationException(QuickJS.getException(pointer));
+          }
+        } finally {
+          QuickJS.destroyValue(pointer, value);
+        }
         return null;
       }
     }
@@ -321,6 +327,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
         jsValue = new JSUndefined(value, this);
         break;
       case TYPE_EXCEPTION:
+        QuickJS.destroyValue(pointer, value);
         throw new JSEvaluationException(QuickJS.getException(pointer));
       case TYPE_FLOAT64:
         jsValue = new JSFloat64(value, this);

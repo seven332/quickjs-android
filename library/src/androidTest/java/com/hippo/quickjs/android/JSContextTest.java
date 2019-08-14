@@ -18,6 +18,7 @@ package com.hippo.quickjs.android;
 
 import org.junit.Test;
 
+import static com.hippo.quickjs.android.Utils.assertException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
@@ -45,6 +46,34 @@ public class JSContextTest {
         context.evaluate("1", "unknown.js", int.class);
 
         assertEquals(1, context.getNotRemovedJSValueCount());
+      }
+    }
+  }
+
+  @Test
+  public void throwException() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertException(
+            JSEvaluationException.class,
+            "Throw: 1\n",
+            () -> context.evaluate("throw 1", "unknown.js")
+        );
+      }
+    }
+  }
+
+  @Test
+  public void throwExceptionWithReturn() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertException(
+            JSEvaluationException.class,
+            "Throw: 1\n",
+            () -> context.evaluate("throw 1", "unknown.js", int.class)
+        );
       }
     }
   }
