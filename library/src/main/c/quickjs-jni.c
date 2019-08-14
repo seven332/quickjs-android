@@ -56,9 +56,9 @@ JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, jlong runtime) {
     JSRuntime *rt = (JSRuntime *) runtime;
     CHECK_NULL_RET(env, rt, MSG_NULL_JS_RUNTIME);
-    jlong context = (jlong) JS_NewContext(rt);
-    CHECK_NULL_RET(env, context, MSG_OOM);
-    return context;
+    JSContext *ctx = JS_NewContext(rt);
+    CHECK_NULL_RET(env, ctx, MSG_OOM);
+    return (jlong) ctx;
 }
 
 JNIEXPORT void JNICALL
@@ -70,10 +70,10 @@ Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz,
 
 #define COPY_JS_VALUE(JS_CONTEXT, JS_VALUE, RESULT)                                    \
     do {                                                                               \
-        void *__copy__ = js_malloc_rt(JS_GetRuntime(JS_CONTEXT), sizeof(JSValue)); \
+        void *__copy__ = js_malloc_rt(JS_GetRuntime(JS_CONTEXT), sizeof(JSValue));     \
         if (__copy__ != NULL) {                                                        \
             memcpy(__copy__, &(JS_VALUE), sizeof(JSValue));                            \
-            (RESULT) = (jlong) __copy__;                                               \
+            (RESULT) = __copy__;                                                       \
         } else {                                                                       \
             JS_FreeValue((JS_CONTEXT), (JS_VALUE));                                    \
         }                                                                              \
@@ -84,12 +84,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueUndefined(JNIEnv *env, jclass 
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = 0;
     JSValue val = JS_UNDEFINED;
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -97,12 +97,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueNull(JNIEnv *env, jclass clazz
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NULL;
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -110,12 +110,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueBoolean(JNIEnv *env, jclass cl
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NewBool(ctx, value);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -123,12 +123,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueInt(JNIEnv *env, jclass clazz,
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NewInt32(ctx, value);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -136,12 +136,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFloat64(JNIEnv *env, jclass cl
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NewFloat64(ctx, value);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -153,7 +153,7 @@ Java_com_hippo_quickjs_android_QuickJS_createValueString(JNIEnv *env, jclass cla
     const char *value_utf = (*env)->GetStringUTFChars(env, value, NULL);
     CHECK_NULL_RET(env, value_utf, MSG_OOM);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NewString(ctx, value_utf);
     COPY_JS_VALUE(ctx, val, result);
 
@@ -161,7 +161,7 @@ Java_com_hippo_quickjs_android_QuickJS_createValueString(JNIEnv *env, jclass cla
 
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -169,12 +169,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueObject(JNIEnv *env, jclass cla
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NewObject(ctx);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -182,12 +182,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueArray(JNIEnv *env, jclass claz
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
     JSValue val = JS_NewArray(ctx);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jint JNICALL
@@ -233,7 +233,7 @@ Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(JNIEnv *env, jclass c
         argv[i] = *((JSValue *) elements[i]);
     }
 
-    jlong result = 0;
+    JSValue *result = NULL;
 
     JSValue ret = JS_Call(ctx, *func_obj, this_obj != NULL ? *this_obj : JS_UNDEFINED, argc, argv);
 
@@ -243,7 +243,7 @@ Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(JNIEnv *env, jclass c
 
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -253,7 +253,7 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(JNIEnv *env, jclass
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
 
-    jlong result = 0;
+    JSValue *result = NULL;
 
     JSValue prop = JS_GetPropertyUint32(ctx, *val, (uint32_t) index);
 
@@ -261,7 +261,7 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(JNIEnv *env, jclass
 
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -275,7 +275,7 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(J
     const char *name_utf = (*env)->GetStringUTFChars(env, name, NULL);
     CHECK_NULL_RET(env, name_utf, MSG_OOM);
 
-    jlong result = 0;
+    JSValue *result = NULL;
 
     JSValue prop = JS_GetPropertyStr(ctx, *val, name_utf);
 
@@ -285,7 +285,7 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(J
 
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -321,7 +321,7 @@ Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(
     // Meanwhile, it calls JS_FreeValue on the property JSValue if it fails
     JS_DupValue(ctx, *prop);
 
-    jboolean result = (jboolean) (JS_SetPropertyStr(ctx, *val, (uint32_t) name_utf, *prop) >= 0);
+    jboolean result = (jboolean) (JS_SetPropertyStr(ctx, *val, name_utf, *prop) >= 0);
 
     (*env)->ReleaseStringUTFChars(env, name, name_utf);
 
@@ -435,14 +435,14 @@ Java_com_hippo_quickjs_android_QuickJS_getGlobalObject(JNIEnv *env, jclass clazz
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
-    jlong result = 0;
+    JSValue *result = NULL;
 
     JSValue val = JS_GetGlobalObject(ctx);
     COPY_JS_VALUE(ctx, val, result);
 
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
 
 JNIEXPORT jlong JNICALL
@@ -456,7 +456,7 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
     const char *source_code_utf = NULL;
     jsize source_code_length = 0;
     const char *file_name_utf = NULL;
-    jlong result = 0;
+    JSValue *result = NULL;
 
     source_code_utf = (*env)->GetStringUTFChars(env, source_code, NULL);
     source_code_length = (*env)->GetStringUTFLength(env, source_code);
@@ -477,5 +477,5 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
 
     CHECK_NULL_RET(env, result, MSG_OOM);
 
-    return result;
+    return (jlong) result;
 }
