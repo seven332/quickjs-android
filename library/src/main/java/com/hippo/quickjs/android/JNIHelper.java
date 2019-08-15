@@ -47,6 +47,14 @@ class JNIHelper {
     }
   }
 
+  private static long javaValueToJSValue(JSContext jsContext, Type type, boolean value) { return javaValueToJSValue(jsContext, type, (Boolean) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, char value) { return javaValueToJSValue(jsContext, type, (Character) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, byte value) { return javaValueToJSValue(jsContext, type, (Byte) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, short value) { return javaValueToJSValue(jsContext, type, (Short) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, int value) { return javaValueToJSValue(jsContext, type, (Integer) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, long value) { return javaValueToJSValue(jsContext, type, (Long) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, float value) { return javaValueToJSValue(jsContext, type, (Float) value); }
+  private static long javaValueToJSValue(JSContext jsContext, Type type, double value) { return javaValueToJSValue(jsContext, type, (Double) value); }
   private static long javaValueToJSValue(JSContext jsContext, Type type, Object value) {
     synchronized (jsContext.jsRuntime) {
       jsContext.checkClosed();
@@ -65,19 +73,11 @@ class JNIHelper {
   }
 
   private static boolean unbox(Boolean value) { return value; }
-  private static Boolean box(boolean value) { return value; }
   private static char unbox(Character value) { return value; }
-  private static Character box(char value) { return value; }
   private static byte unbox(Byte value) { return value; }
-  private static Byte box(byte value) { return value; }
   private static short unbox(Short value) { return value; }
-  private static Short box(short value) { return value; }
   private static int unbox(Integer value) { return value; }
-  private static Integer box(int value) { return value; }
   private static long unbox(Long value) { return value; }
-  private static Long box(long value) { return value; }
   private static float unbox(Float value) { return value; }
-  private static Float box(float value) { return value; }
   private static double unbox(Double value) { return value; }
-  private static Double box(double value) { return value; }
 }

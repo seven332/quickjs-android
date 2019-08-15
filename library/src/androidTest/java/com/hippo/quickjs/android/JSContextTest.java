@@ -16,6 +16,7 @@
 
 package com.hippo.quickjs.android;
 
+import androidx.annotation.Nullable;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -127,6 +128,32 @@ public class JSContextTest {
         context.evaluate("a = {}", "test.js");
         context.getGlobalObject().getProperty("a").cast(JSObject.class).setProperty("fun", function);
         assertEquals(4321, (int) context.evaluate("a.fun('4321')", "test.js", int.class));
+      }
+    }
+  }
+
+  @Test
+  public void createValueFunctionWithCustomPrimitiveTypeAdapter() {
+    QuickJS quickJS = new QuickJS.Builder().registerTypeAdapter(int.class, new TypeAdapter<Integer>() {
+      @Override
+      public JSValue toJSValue(Depot depot, Context context, @Nullable Integer value) {
+        return context.createJSNumber(value - 1);
+      }
+      @Override
+      public Integer fromJSValue(Depot depot, Context context, JSValue value) {
+        return value.cast(JSNumber.class).getInt();
+      }
+    }.nullable()).build();
+
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        A2I a2i = new A2I();
+        Method method = new Method(int.class, "atoi", new Type[] { String.class });
+        JSFunction function = context.createJSFunction(a2i, method);
+
+        context.evaluate("a = {}", "test.js");
+        context.getGlobalObject().getProperty("a").cast(JSObject.class).setProperty("fun", function);
+        assertEquals(4320, (int) context.evaluate("a.fun('4321')", "test.js", int.class));
       }
     }
   }
