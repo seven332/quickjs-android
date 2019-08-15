@@ -283,7 +283,19 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     }
   }
 
-  // TODO createJSFunction
+  /**
+   * Create a JavaScript function from a java method.
+   */
+  @Override
+  public JSFunction createJSFunction(Object instance, Method method) {
+    if (instance == null) throw new NullPointerException("instance == null");
+    if (method == null) throw new NullPointerException("method == null");
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueFunction(pointer, this, instance, method.name, method.getSignature(), method.returnType, method.parameterTypes);
+      return wrapAsJSValue(val).cast(JSFunction.class);
+    }
+  }
 
   /**
    * Wraps a JSValue c pointer as a Java JSValue.

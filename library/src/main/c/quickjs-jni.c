@@ -2,6 +2,7 @@
 #include <quickjs.h>
 #include <string.h>
 
+#include "quick-java.h"
 #include "java-helper.h"
 
 #define MSG_OOM "Out of memory"
@@ -58,6 +59,9 @@ Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, 
     CHECK_NULL_RET(env, rt, MSG_NULL_JS_RUNTIME);
     JSContext *ctx = JS_NewContext(rt);
     CHECK_NULL_RET(env, ctx, MSG_OOM);
+
+    if (quick_java_init_java(ctx)) THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+
     return (jlong) ctx;
 }
 
@@ -184,6 +188,52 @@ Java_com_hippo_quickjs_android_QuickJS_createValueArray(JNIEnv *env, jclass claz
 
     JSValue *result = NULL;
     JSValue val = JS_NewArray(ctx);
+    COPY_JS_VALUE(ctx, val, result);
+    CHECK_NULL_RET(env, result, MSG_OOM);
+
+    return (jlong) result;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jobject js_context,
+        jobject instance,
+        jstring method_name,
+        jstring method_sign,
+        jobject return_type,
+        jobjectArray arg_types
+) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+
+    const char *method_name_utf8 = (*env)->GetStringUTFChars(env, method_name, NULL);
+    const char *method_sign_utf8 = (*env)->GetStringUTFChars(env, method_sign, NULL);
+    if (method_name_utf8 == NULL || method_sign_utf8 == NULL) {
+        if (method_name_utf8 != NULL) (*env)->ReleaseStringUTFChars(env, method_name, method_name_utf8);
+        if (method_sign_utf8 != NULL) (*env)->ReleaseStringUTFChars(env, method_sign, method_sign_utf8);
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+    }
+
+    jclass instance_class = (*env)->GetObjectClass(env, instance);
+    jmethodID method = (*env)->GetMethodID(env, instance_class, method_name_utf8, method_sign_utf8);
+    (*env)->ReleaseStringUTFChars(env, method_name, method_name_utf8);
+    (*env)->ReleaseStringUTFChars(env, method_sign, method_sign_utf8);
+    if (method == NULL) {
+        if ((*env)->ExceptionCheck(env)) return 0;
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, "Can't find method");
+    }
+
+    int arg_count = (*env)->GetArrayLength(env, arg_types);
+    jobject arg_types_copy[arg_count];
+    for (int i = 0; i < arg_count; i++) {
+        arg_types_copy[i] = (*env)->GetObjectArrayElement(env, arg_types, i);
+    }
+
+    JSValue *result = NULL;
+    JSValue val = QJ_NewJavaFunction(ctx, env, js_context, instance, method, return_type, arg_count, arg_types_copy);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
@@ -478,4 +528,19 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
     CHECK_NULL_RET(env, result, MSG_OOM);
 
     return (jlong) result;
+}
+
+JNIEXPORT jint JNICALL
+JNI_OnLoad(JavaVM *vm, void* reserved) {
+    JNIEnv *env = NULL;
+
+    if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+
+    if (quick_java_init(env)) {
+        return JNI_ERR;
+    }
+
+    return JNI_VERSION_1_6;
 }
