@@ -31,17 +31,17 @@ public class InterfaceTypeAdapterTest {
 
   @Test
   public void getInterfaceMethods() {
-    Map<String, InterfaceTypeAdapter.SimpleMethod> methods = InterfaceTypeAdapter.getInterfaceMethods(InterfaceC.class);
+    Map<String, Method> methods = InterfaceTypeAdapter.getInterfaceMethods(InterfaceC.class);
 
     assertThat(methods).containsOnly(
         MapEntry.entry("getValue",
-            new InterfaceTypeAdapter.SimpleMethod(NullPointerException.class, "getValue", new Type[]{})),
+            new Method(NullPointerException.class, "getValue", new Type[]{})),
         MapEntry.entry("setValue",
-            new InterfaceTypeAdapter.SimpleMethod(void.class, "setValue", new Type[]{ Throwable.class })),
+            new Method(void.class, "setValue", new Type[]{ Throwable.class })),
         MapEntry.entry("fun1",
-            new InterfaceTypeAdapter.SimpleMethod(void.class, "fun1", new Type[]{})),
+            new Method(void.class, "fun1", new Type[]{})),
         MapEntry.entry("fun2",
-            new InterfaceTypeAdapter.SimpleMethod(String.class, "fun2", new Type[]{ String[].class }))
+            new Method(String.class, "fun2", new Type[]{ String[].class }))
     );
   }
 
