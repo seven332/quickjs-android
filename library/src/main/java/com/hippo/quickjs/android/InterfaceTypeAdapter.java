@@ -16,61 +16,16 @@
 
 package com.hippo.quickjs.android;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 class InterfaceTypeAdapter extends TypeAdapter<Object> {
-
-  static class SimpleMethod {
-    final Type returnType;
-    final String name;
-    final Type[] parameterTypes;
-
-    SimpleMethod(Type returnType, String name, Type[] parameterTypes) {
-      this.returnType = returnType;
-      this.name = name;
-      this.parameterTypes = parameterTypes;
-    }
-
-    @NonNull
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append(returnType);
-      sb.append(" ");
-      sb.append(name);
-      sb.append("(");
-      for (int i = 0; i < parameterTypes.length; i++) {
-        if (i != 0) sb.append(", ");
-        sb.append(parameterTypes[i]);
-      }
-      sb.append(")");
-      return sb.toString();
-    }
-
-    @Override
-    public int hashCode() {
-      int result = 1;
-      result = 31 * result + returnType.hashCode();
-      result = 31 * result + name.hashCode();
-      result = 31 * result + Arrays.hashCode(parameterTypes);
-      return result;
-    }
-
-    @Override
-    public boolean equals(@Nullable Object obj) {
-      if (!(obj instanceof SimpleMethod)) return false;
-      SimpleMethod other = (SimpleMethod) obj;
-      return returnType.equals(other.returnType)
-          && name.equals(other.name)
-          && Arrays.equals(parameterTypes, other.parameterTypes);
-    }
-  }
 
   /**
    * Returns all methods in the interface type.
@@ -78,13 +33,13 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
    * or any method is overloaded, or any type can't be resolved.
    */
   @Nullable
-  static Map<String, SimpleMethod> getInterfaceMethods(Type type) {
+  static Map<String, Method> getInterfaceMethods(Type type) {
     Class<?> rawType = Types.getRawType(type);
     if (!rawType.isInterface()) return null;
 
-    Map<String, SimpleMethod> methods = new HashMap<>();
+    Map<String, Method> methods = new HashMap<>();
 
-    for (Method method : rawType.getMethods()) {
+    for (java.lang.reflect.Method method : rawType.getMethods()) {
       Type returnType = Types.resolve(type, rawType, method.getGenericReturnType());
       // It's not resolved
       if (returnType instanceof TypeVariable) return null;
@@ -99,7 +54,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
         if (parameterTypes[i] instanceof TypeVariable) return null;
       }
 
-      SimpleMethod oldMethod = methods.get(name);
+      Method oldMethod = methods.get(name);
       if (oldMethod != null) {
         if (!Arrays.equals(oldMethod.parameterTypes, parameterTypes)) {
           // overload is not supported
@@ -112,22 +67,22 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
         }
       }
 
-      methods.put(name, new SimpleMethod(returnType, name, parameterTypes));
+      methods.put(name, new Method(returnType, name, parameterTypes));
     }
 
     return methods;
   }
 
   static final Factory FACTORY = (depot, type) -> {
-    Map<String, SimpleMethod> methods = getInterfaceMethods(type);
+    Map<String, Method> methods = getInterfaceMethods(type);
     if (methods == null) return null;
     return new InterfaceTypeAdapter(Types.getRawType(type), methods).nullable();
   };
 
   private final Class<?> rawType;
-  private final Map<String, SimpleMethod> methods;
+  private final Map<String, Method> methods;
 
-  private InterfaceTypeAdapter(Class<?> rawType, Map<String, SimpleMethod> methods) {
+  private InterfaceTypeAdapter(Class<?> rawType, Map<String, Method> methods) {
     this.rawType = rawType;
     this.methods = methods;
   }
@@ -148,7 +103,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       }
 
       String name = method.getName();
-      SimpleMethod simpleMethod = methods.get(name);
+      Method simpleMethod = methods.get(name);
       if (simpleMethod == null) throw new NoSuchMethodException("Can't find method: " + name);
 
       int parameterNumber = args != null ? args.length : 0;
