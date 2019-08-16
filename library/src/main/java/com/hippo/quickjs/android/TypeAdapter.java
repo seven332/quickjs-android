@@ -115,5 +115,10 @@ public abstract class TypeAdapter<T> {
      * Create a JavaScript function from a java non-static method.
      */
     JSFunction createJSFunction(Object instance, Method method);
+
+    /**
+     * Create a JavaScript function from a java static method.
+     */
+    JSFunction createJSFunctionS(Class clazz, Method method);
   }
 }

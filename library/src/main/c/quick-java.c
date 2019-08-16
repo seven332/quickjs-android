@@ -20,14 +20,12 @@
     }
 
 // TODO append the java exception to the js exception
-#define CHECK_JAVA_EXCEPTION_JS_EXCEPTION(CTX, ENV)  \
-    if ((*(ENV))->ExceptionCheck(ENV)) {             \
-        (*(ENV))->ExceptionDescribe(ENV);            \
-        (*(ENV))->ExceptionClear(ENV);               \
+#define CHECK_JAVA_EXCEPTION_JS_EXCEPTION(CTX, ENV)                  \
+    if ((*(ENV))->ExceptionCheck(ENV)) {                             \
+        (*(ENV))->ExceptionDescribe(ENV);                            \
+        (*(ENV))->ExceptionClear(ENV);                               \
         return JS_ThrowInternalError((CTX), "Catch java exception"); \
     }
-
-// typedef JSValue JavaStaticMethodCaller(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jclass clazz, jmethodID method, jvalue *argv);
 
 #define OBTAIN_ENV(VM)                                                                              \
     JNIEnv *env = NULL;                                                                             \
@@ -42,12 +40,12 @@ static int js_value_to_java_value(JSContext *ctx, JNIEnv *env, jobject js_contex
 
 static JSClassID java_method_class_id;
 
-typedef JSValue (*JavaMethodCaller)(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject instance, jmethodID method, jvalue *argv);
+typedef JSValue (*JavaMethodCaller)(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject callee, jmethodID method, jvalue *argv);
 
 typedef struct {
     JavaVM *vm;
     jobject js_context;
-    jobject instance;
+    jobject callee;
     jmethodID method;
     jobject return_type;
     int arg_count;
@@ -73,7 +71,7 @@ static JSValue java_method_call(JSContext *ctx, JSValueConst func_obj, JSValueCo
         }
     }
 
-    JSValue result = data->caller(ctx, env, data->js_context, data->return_type, data->instance, data->method, java_argv);
+    JSValue result = data->caller(ctx, env, data->js_context, data->return_type, data->callee, data->method, java_argv);
 
     RELEASE_ENV(data->vm);
     return result;
@@ -89,7 +87,7 @@ static void java_method_finalizer(JSRuntime *rt, JSValue val) {
     OBTAIN_ENV(data->vm);
 
     if (env != NULL) {
-        (*env)->DeleteGlobalRef(env, data->instance);
+        (*env)->DeleteGlobalRef(env, data->callee);
         (*env)->DeleteGlobalRef(env, data->js_context);
         (*env)->DeleteGlobalRef(env, data->return_type);
         for (int i = 0; i < data->arg_count; i++) {
@@ -262,51 +260,70 @@ static int js_value_to_java_value(
     return unbox_primitive_type(env, type, result);
 }
 
-#define FUNCTION_CALL_JAVA_METHOD(FUNCTION_NAME, JAVA_TYPE, JAVA_CALLER, JAVA_CONVERTER)                                                               \
-static JSValue FUNCTION_NAME(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject instance, jmethodID method, jvalue *argv) { \
-    JAVA_TYPE java_result = (*env)->JAVA_CALLER(env, instance, method, argv);                                                                          \
-    CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);                                                                                                       \
-    JSValue *result = (JSValue *) (*env)->CallStaticLongMethod(env, jni_helper_class, JAVA_CONVERTER, js_context, return_type, java_result);           \
-    CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);                                                                                                       \
-    return JS_DupValue(ctx, *result);                                                                                                                  \
-}
-
-static JSValue call_void_java_method(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject instance, jmethodID method, jvalue *argv) {
-    (*env)->CallVoidMethodA(env, instance, method, argv);
+static JSValue call_void_java_method(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject callee, jmethodID method, jvalue *argv) {
+    (*env)->CallVoidMethodA(env, callee, method, argv);
     CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);
     return JS_UNDEFINED;
 }
 
-FUNCTION_CALL_JAVA_METHOD(call_boolean_java_method, jboolean, CallBooleanMethodA, java_boolean_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_char_java_method, jchar, CallCharMethodA, java_char_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_byte_java_method, jbyte, CallByteMethodA, java_byte_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_short_java_method, jshort, CallShortMethodA, java_short_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_int_java_method, jint, CallIntMethodA, java_int_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_long_java_method, jlong, CallLongMethodA, java_long_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_float_java_method, jfloat, CallFloatMethodA, java_float_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_double_java_method, jdouble, CallDoubleMethodA, java_double_to_js_value_method)
-FUNCTION_CALL_JAVA_METHOD(call_object_java_method, jobject, CallObjectMethodA, java_object_to_js_value_method)
+static JSValue call_void_java_static_method(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject callee, jmethodID method, jvalue *argv) {
+    (*env)->CallStaticVoidMethodA(env, callee, method, argv);
+    CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);
+    return JS_UNDEFINED;
+}
 
-static JavaMethodCaller select_java_method_caller(JNIEnv *env, jobject type) {
+#define FUNCTION_CALL_JAVA_METHOD(FUNCTION_NAME, JAVA_TYPE, JAVA_CALLER, JAVA_CONVERTER)                                                             \
+static JSValue FUNCTION_NAME(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject callee, jmethodID method, jvalue *argv) { \
+    JAVA_TYPE java_result = (*env)->JAVA_CALLER(env, callee, method, argv);                                                                          \
+    CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);                                                                                                     \
+    JSValue *result = (JSValue *) (*env)->CallStaticLongMethod(env, jni_helper_class, JAVA_CONVERTER, js_context, return_type, java_result);         \
+    CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);                                                                                                     \
+    return JS_DupValue(ctx, *result);                                                                                                                \
+}
+
+FUNCTION_CALL_JAVA_METHOD(call_boolean_java_method, jboolean, CallBooleanMethodA, java_boolean_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_boolean_java_static_method, jboolean, CallStaticBooleanMethodA, java_boolean_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_char_java_method, jchar, CallCharMethodA, java_char_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_char_java_static_method, jchar, CallStaticCharMethodA, java_char_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_byte_java_method, jbyte, CallByteMethodA, java_byte_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_byte_java_static_method, jbyte, CallStaticByteMethodA, java_byte_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_short_java_method, jshort, CallShortMethodA, java_short_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_short_java_static_method, jshort, CallStaticShortMethodA, java_short_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_int_java_method, jint, CallIntMethodA, java_int_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_int_java_static_method, jint, CallStaticIntMethodA, java_int_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_long_java_method, jlong, CallLongMethodA, java_long_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_long_java_static_method, jlong, CallStaticLongMethodA, java_long_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_float_java_method, jfloat, CallFloatMethodA, java_float_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_float_java_static_method, jfloat, CallStaticFloatMethodA, java_float_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_double_java_method, jdouble, CallDoubleMethodA, java_double_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_double_java_static_method, jdouble, CallStaticDoubleMethodA, java_double_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_object_java_method, jobject, CallObjectMethodA, java_object_to_js_value_method)
+FUNCTION_CALL_JAVA_METHOD(call_object_java_static_method, jobject, CallStaticObjectMethodA, java_object_to_js_value_method)
+
+#undef FUNCTION_CALL_JAVA_METHOD
+
+static JavaMethodCaller select_java_method_caller(JNIEnv *env, jboolean is_static, jobject type) {
     jboolean is_primitive_type = (*env)->CallStaticBooleanMethod(env, jni_helper_class, is_primitive_type_method, type);
     CHECK_JAVA_EXCEPTION_NULL(env);
-    if (!is_primitive_type) return call_object_java_method;
+    if (!is_primitive_type) return is_static ? call_object_java_static_method : call_object_java_method;
 
     jboolean is_the_type;
-#define CHECK_PRIMITIVE_TYPE(TYPE, RESULT)                                                                   \
+#define CHECK_PRIMITIVE_TYPE(TYPE, METHOD, STATIC_METHOD)                                                    \
     is_the_type = (*env)->CallStaticBooleanMethod(env, jni_helper_class, is_same_type_method, type, (TYPE)); \
     CHECK_JAVA_EXCEPTION_NULL(env);                                                                          \
-    if (is_the_type) return (RESULT);
+    if (is_the_type) return is_static ? (STATIC_METHOD) : (METHOD);
 
-    CHECK_PRIMITIVE_TYPE(void_primitive_type, call_void_java_method);
-    CHECK_PRIMITIVE_TYPE(boolean_primitive_type, call_boolean_java_method);
-    CHECK_PRIMITIVE_TYPE(char_primitive_type, call_char_java_method);
-    CHECK_PRIMITIVE_TYPE(byte_primitive_type, call_byte_java_method);
-    CHECK_PRIMITIVE_TYPE(short_primitive_type, call_short_java_method);
-    CHECK_PRIMITIVE_TYPE(int_primitive_type, call_int_java_method);
-    CHECK_PRIMITIVE_TYPE(long_primitive_type, call_long_java_method);
-    CHECK_PRIMITIVE_TYPE(float_primitive_type, call_float_java_method);
-    CHECK_PRIMITIVE_TYPE(double_primitive_type, call_double_java_method);
+    CHECK_PRIMITIVE_TYPE(void_primitive_type, call_void_java_method, call_void_java_static_method);
+    CHECK_PRIMITIVE_TYPE(boolean_primitive_type, call_boolean_java_method, call_boolean_java_static_method);
+    CHECK_PRIMITIVE_TYPE(char_primitive_type, call_char_java_method, call_char_java_static_method);
+    CHECK_PRIMITIVE_TYPE(byte_primitive_type, call_byte_java_method, call_byte_java_static_method);
+    CHECK_PRIMITIVE_TYPE(short_primitive_type, call_short_java_method, call_short_java_static_method);
+    CHECK_PRIMITIVE_TYPE(int_primitive_type, call_int_java_method, call_int_java_static_method);
+    CHECK_PRIMITIVE_TYPE(long_primitive_type, call_long_java_method, call_long_java_static_method);
+    CHECK_PRIMITIVE_TYPE(float_primitive_type, call_float_java_method, call_float_java_static_method);
+    CHECK_PRIMITIVE_TYPE(double_primitive_type, call_double_java_method, call_double_java_static_method);
+
+#undef CHECK_PRIMITIVE_TYPE
 
     return NULL;
 }
@@ -315,13 +332,14 @@ JSValue QJ_NewJavaFunction(
         JSContext *ctx,
         JNIEnv *env,
         jobject js_context,
-        jobject instance,
+        jboolean is_static,
+        jobject callee,
         jmethodID method,
         jobject return_type,
         int arg_count,
         jobject *arg_types
 ) {
-    JavaMethodCaller caller = select_java_method_caller(env, return_type);
+    JavaMethodCaller caller = select_java_method_caller(env, is_static, return_type);
     if (caller == NULL) return JS_EXCEPTION;
 
     JSRuntime *rt = JS_GetRuntime(ctx);
@@ -330,8 +348,10 @@ JSValue QJ_NewJavaFunction(
 
     data = js_malloc_rt(rt, sizeof(JavaMethodData));
     if (data == NULL) goto oom;
-    arg_types_copy = js_malloc_rt(rt, sizeof(jobject) * arg_count);
-    if (arg_types_copy == NULL) goto oom;
+    if (arg_count > 0) {
+        arg_types_copy = js_malloc_rt(rt, sizeof(jobject) * arg_count);
+        if (arg_types_copy == NULL) goto oom;
+    }
 
     JSValue value = JS_NewObjectClass(ctx, java_method_class_id);
     if (JS_IsException(value)) {
@@ -346,7 +366,7 @@ JSValue QJ_NewJavaFunction(
 
     (*env)->GetJavaVM(env, &data->vm);
     data->js_context = (*env)->NewGlobalRef(env, js_context);
-    data->instance = (*env)->NewGlobalRef(env, instance);
+    data->callee = (*env)->NewGlobalRef(env, callee);
     data->method = method;
     data->return_type = (*env)->NewGlobalRef(env, return_type);
     data->arg_count = arg_count;
@@ -358,7 +378,7 @@ JSValue QJ_NewJavaFunction(
     return value;
 
 oom:
-    if (data != NULL) js_free_rt(rt, data);
-    if (arg_types_copy != NULL) js_free_rt(rt, arg_types_copy);
+    js_free_rt(rt, data);
+    js_free_rt(rt, arg_types_copy);
     return JS_ThrowOutOfMemory(ctx);
 }

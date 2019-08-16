@@ -19,12 +19,33 @@ package com.hippo.quickjs.android;
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 
 /**
  * Represents a java method or a java static method.
  */
 public final class Method {
+
+  @Nullable
+  public static Method create(Type type, java.lang.reflect.Method rawMethod) {
+    Class<?> rawType = Types.getRawType(type);
+    Type returnType = Types.resolve(type, rawType, rawMethod.getGenericReturnType());
+    // It's not resolved
+    if (returnType instanceof TypeVariable) return null;
+
+    String name = rawMethod.getName();
+
+    Type[] originParameterTypes = rawMethod.getGenericParameterTypes();
+    Type[] parameterTypes = new Type[originParameterTypes.length];
+    for (int i = 0; i < parameterTypes.length; i++) {
+      parameterTypes[i] = Types.resolve(type, rawType, originParameterTypes[i]);
+      // It's not resolved
+      if (parameterTypes[i] instanceof TypeVariable) return null;
+    }
+
+    return new Method(returnType, name, parameterTypes);
+  }
 
   final Type returnType;
   final String name;
@@ -68,7 +89,7 @@ public final class Method {
     sb.append("L");
     for (int i = 0; i < name.length(); i++) {
       char c = name.charAt(i);
-      sb.append(c == '.' || c == '$' ? '/' : c);
+      sb.append(c == '.' ? '/' : c);
     }
     sb.append(";");
     return sb.toString();

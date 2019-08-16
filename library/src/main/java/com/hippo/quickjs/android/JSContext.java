@@ -284,7 +284,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   }
 
   /**
-   * Create a JavaScript function from a java method.
+   * Create a JavaScript function from a java non-static method.
    */
   @Override
   public JSFunction createJSFunction(Object instance, Method method) {
@@ -293,6 +293,29 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     synchronized (jsRuntime) {
       checkClosed();
       long val = QuickJS.createValueFunction(pointer, this, instance, method.name, method.getSignature(), method.returnType, method.parameterTypes);
+      return wrapAsJSValue(val).cast(JSFunction.class);
+    }
+  }
+
+  /**
+   * Create a JavaScript function from a java static method.
+   */
+  @Override
+  public JSFunction createJSFunctionS(Class clazz, Method method) {
+    if (clazz == null) throw new NullPointerException("clazz == null");
+    if (method == null) throw new NullPointerException("method == null");
+
+    String name = clazz.getName();
+    StringBuilder sb = new StringBuilder(name.length());
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      sb.append(c == '.' ? '/' : c);
+    }
+    String className = sb.toString();
+
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueFunctionS(pointer, this, className, method.name, method.getSignature(), method.returnType, method.parameterTypes);
       return wrapAsJSValue(val).cast(JSFunction.class);
     }
   }

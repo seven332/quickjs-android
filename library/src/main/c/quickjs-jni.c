@@ -194,13 +194,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueArray(JNIEnv *env, jclass claz
     return (jlong) result;
 }
 
-JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
+static jlong createValueFunction(
         JNIEnv *env,
-        jclass clazz,
         jlong context,
         jobject js_context,
-        jobject instance,
+        jboolean is_static,
+        jobject callee,
         jstring method_name,
         jstring method_sign,
         jobject return_type,
@@ -217,8 +216,13 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
         THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
     }
 
-    jclass instance_class = (*env)->GetObjectClass(env, instance);
-    jmethodID method = (*env)->GetMethodID(env, instance_class, method_name_utf8, method_sign_utf8);
+    jmethodID method = NULL;
+    if (is_static) {
+        method = (*env)->GetStaticMethodID(env, callee, method_name_utf8, method_sign_utf8);
+    } else {
+        jclass callee_class = (*env)->GetObjectClass(env, callee);
+        method = (*env)->GetMethodID(env, callee_class, method_name_utf8, method_sign_utf8);
+    }
     (*env)->ReleaseStringUTFChars(env, method_name, method_name_utf8);
     (*env)->ReleaseStringUTFChars(env, method_sign, method_sign_utf8);
     if (method == NULL) {
@@ -233,11 +237,49 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
     }
 
     JSValue *result = NULL;
-    JSValue val = QJ_NewJavaFunction(ctx, env, js_context, instance, method, return_type, arg_count, arg_types_copy);
+    JSValue val = QJ_NewJavaFunction(ctx, env, js_context, is_static, callee, method, return_type, arg_count, arg_types_copy);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
     return (jlong) result;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jobject js_context,
+        jobject instance,
+        jstring method_name,
+        jstring method_sign,
+        jobject return_type,
+        jobjectArray arg_types
+) {
+    return createValueFunction(env, context, js_context, JNI_FALSE, instance, method_name, method_sign, return_type, arg_types);
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_createValueFunctionS(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jobject js_context,
+        jstring class_name,
+        jstring method_name,
+        jstring method_sign,
+        jobject return_type,
+        jobjectArray arg_types
+) {
+    const char *class_name_utf8 = (*env)->GetStringUTFChars(env, class_name, NULL);
+    CHECK_NULL_RET(env, class_name_utf8, MSG_OOM);
+    jclass callee = (*env)->FindClass(env, class_name_utf8);
+    (*env)->ReleaseStringUTFChars(env, class_name, class_name_utf8);
+    if (callee == NULL) {
+        if ((*env)->ExceptionCheck(env)) return 0;
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, "Can't find class");
+    }
+    return createValueFunction(env, context, js_context, JNI_TRUE, callee, method_name, method_sign, return_type, arg_types);
 }
 
 JNIEXPORT jint JNICALL
