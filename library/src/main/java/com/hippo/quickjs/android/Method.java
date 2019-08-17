@@ -83,6 +83,7 @@ public final class Method {
       if (type == double.class) return "D";
     }
 
+    // Class
     Class clazz = Types.getRawType(type);
     String name = clazz.getName();
     StringBuilder sb = new StringBuilder(name.length() + 2);

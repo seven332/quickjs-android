@@ -146,8 +146,6 @@ public final class TypesTest {
     assertThat(genericInterface.toString()).isEqualTo(mapOfStringIntegerType.toString());
   }
 
-  // TODO getGenericInterfaces
-
   private static final class A {
   }
 

@@ -24,8 +24,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class InterfaceTypeAdapterTest {
 
@@ -38,6 +37,8 @@ public class InterfaceTypeAdapterTest {
             new Method(NullPointerException.class, "getValue", new Type[]{})),
         MapEntry.entry("setValue",
             new Method(void.class, "setValue", new Type[]{ Throwable.class })),
+        MapEntry.entry("setValueResolve",
+            new Method(void.class, "setValueResolve", new Type[]{ Throwable.class })),
         MapEntry.entry("fun1",
             new Method(void.class, "fun1", new Type[]{})),
         MapEntry.entry("fun2",
@@ -53,6 +54,7 @@ public class InterfaceTypeAdapterTest {
   interface InterfaceA<T> {
     T getValue();
     void setValue(T value);
+    void setValueResolve(T value);
     void fun1();
     String fun2(String... args);
   }
@@ -64,6 +66,8 @@ public class InterfaceTypeAdapterTest {
   interface InterfaceC extends InterfaceA<Throwable>, InterfaceB {
     @Override
     NullPointerException getValue();
+    @Override
+    void setValue(Throwable value);
   }
 
   interface InterfaceD {
