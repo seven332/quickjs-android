@@ -70,6 +70,38 @@ public class InterfaceTypeAdapterTest {
     <T> T fun();
   }
 
+  private static class CalculatorImpl implements Calculator {
+    @Override
+    public double plus(double a, double b) { return a + b; }
+    @Override
+    public double minus(double a, double b) { return a - b; }
+    @Override
+    public double multiplies(double a, double b) { return a * b; }
+    @Override
+    public double divides(double a, double b) { return a / b; }
+    @Override
+    public void noop() { }
+  }
+
+  @Test
+  public void toJSValue() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        JSValue calculator = quickJS.getAdapter(Calculator.class).toJSValue(quickJS, context, new CalculatorImpl());
+        context.getGlobalObject().setProperty("calculator", calculator);
+
+        double a = 3243.435;
+        double b = -6541.34;
+
+        assertEquals(a + b, context.evaluate("calculator.plus(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+        assertEquals(a - b, context.evaluate("calculator.minus(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+        assertEquals(a * b, context.evaluate("calculator.multiplies(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+        assertEquals(a / b, context.evaluate("calculator.divides(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+      }
+    }
+  }
+
   @Test
   public void fromJSValue() {
     QuickJS quickJS = new QuickJS.Builder().build();

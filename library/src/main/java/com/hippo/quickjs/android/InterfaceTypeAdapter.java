@@ -89,7 +89,11 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
 
   @Override
   public JSValue toJSValue(Depot depot, Context context, Object value) {
-    throw new IllegalStateException("TODO");
+    JSObject jo = context.createJSObject();
+    for (Method method : methods.values()) {
+      jo.setProperty(method.name, context.createJSFunction(value, method));
+    }
+    return jo;
   }
 
   @Override
