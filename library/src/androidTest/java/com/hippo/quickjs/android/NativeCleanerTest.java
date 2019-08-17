@@ -16,6 +16,7 @@
 
 package com.hippo.quickjs.android;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.BitSet;
@@ -25,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 
 public class NativeCleanerTest {
 
+  @Ignore("There is no guarantee that this test will pass")
   @Test
   public void test() {
     int objectCount = 1234;
