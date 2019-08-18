@@ -108,11 +108,6 @@ public class QuickJS implements TypeAdapter.Depot {
     System.loadLibrary("quickjs-android");
   }
 
-  // TODO Try to call java method in c code
-  //  QuickJS's JSValue is always in stack
-  //  com.hippo.quickjs.android.JSValue require a heap copy
-  //  This is a waste of memory
-
   static native long createRuntime();
   static native void setRuntimeMallocLimit(long runtime, int mallocLimit);
   static native void destroyRuntime(long runtime);
@@ -142,6 +137,8 @@ public class QuickJS implements TypeAdapter.Depot {
   static native int getValueInt(long value);
   static native double getValueFloat64(long value);
   static native String getValueString(long context, long value);
+  static native boolean defineValueProperty(long context, long value, int index, long property, int flags);
+  static native boolean defineValueProperty(long context, long value, String name, long property, int flags);
   static native long invokeValueFunction(long context, long function, long thisObj, long[] args);
   static native void destroyValue(long context, long value);
 

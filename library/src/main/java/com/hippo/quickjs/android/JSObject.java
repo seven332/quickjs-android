@@ -21,6 +21,12 @@ package com.hippo.quickjs.android;
  */
 public class JSObject extends JSValue {
 
+  public static int PROP_FLAG_CONFIGURABLE = 1 << 0;
+  public static int PROP_FLAG_WRITABLE = 1 << 1;
+  public static int PROP_FLAG_ENUMERABLE = 1 << 2;
+
+  private static final int PROP_FLAG_MASK = 0b111;
+
   JSObject(long pointer, JSContext jsContext) {
     super(pointer, jsContext);
   }
@@ -70,6 +76,34 @@ public class JSObject extends JSValue {
     checkSameJSContext(jsValue);
     synchronized (jsContext.jsRuntime) {
       if (!QuickJS.setValueProperty(jsContext.pointer, pointer, name, jsValue.pointer)) {
+        throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
+      }
+    }
+  }
+
+  /**
+   * Defines a new property directly on an object, or modifies an existing property on this object.
+   */
+  public void defineProperty(int index, JSValue jsValue, int flags) {
+    if ((flags & (~PROP_FLAG_MASK)) != 0) {
+      throw new IllegalArgumentException("Invalid flags: " + flags);
+    }
+    synchronized (jsContext.jsRuntime) {
+      if (!QuickJS.defineValueProperty(jsContext.pointer, pointer, index, jsValue.pointer, flags)) {
+        throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
+      }
+    }
+  }
+
+  /**
+   * Defines a new property directly on an object, or modifies an existing property on this object.
+   */
+  public void defineProperty(String name, JSValue jsValue, int flags) {
+    if ((flags & (~PROP_FLAG_MASK)) != 0) {
+      throw new IllegalArgumentException("Invalid flags: " + flags);
+    }
+    synchronized (jsContext.jsRuntime) {
+      if (!QuickJS.defineValueProperty(jsContext.pointer, pointer, name, jsValue.pointer, flags)) {
         throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
       }
     }

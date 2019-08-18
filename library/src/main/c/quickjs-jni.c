@@ -282,6 +282,57 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunctionS(
     return createValueFunction(env, context, js_context, JNI_TRUE, callee, method_name, method_sign, return_type, arg_types);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJIJI(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jlong value,
+        jint index,
+        jlong property,
+        jint flags
+) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    JSValue *prop = (JSValue *) property;
+    CHECK_NULL_RET(env, prop, "Null property");
+
+    JS_DupValue(ctx, *prop);
+
+    return (jboolean) (JS_DefinePropertyValueUint32(ctx, *val, (uint32_t) index, *prop, flags) >= 0);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJLjava_lang_String_2JI(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jlong value,
+        jstring name,
+        jlong property,
+        jint flags
+) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    JSValue *prop = (JSValue *) property;
+    CHECK_NULL_RET(env, prop, "Null property");
+
+    const char *name_utf = (*env)->GetStringUTFChars(env, name, NULL);
+    CHECK_NULL_RET(env, name_utf, MSG_OOM);
+
+    JS_DupValue(ctx, *prop);
+
+    jboolean result = (jboolean) (JS_DefinePropertyValueStr(ctx, *val, name_utf, *prop, flags) >= 0);
+
+    (*env)->ReleaseStringUTFChars(env, name, name_utf);
+
+    return result;
+}
+
 JNIEXPORT jint JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getValueTag(JNIEnv *env, jclass clazz, jlong value) {
     JSValue *val = (JSValue *) value;
