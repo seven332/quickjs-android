@@ -320,6 +320,8 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     }
   }
 
+  // TODO No need to save c pointers of JSNull, JSUndefined, JSBoolean, JSNumber and JSString.
+  //  Just save their types and values.
   /**
    * Wraps a JSValue c pointer as a Java JSValue.
    *
@@ -338,7 +340,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
         jsValue = new JSSymbol(value, this);
         break;
       case TYPE_STRING:
-        jsValue = new JSString(value, this);
+        jsValue = new JSString(value, this, QuickJS.getValueString(pointer, value));
         break;
       case TYPE_OBJECT:
         if (QuickJS.isValueFunction(pointer, value)) {
@@ -350,10 +352,10 @@ public class JSContext implements Closeable, TypeAdapter.Context {
         }
         break;
       case TYPE_INT:
-        jsValue = new JSInt(value, this);
+        jsValue = new JSInt(value, this, QuickJS.getValueInt(value));
         break;
       case TYPE_BOOLEAN:
-        jsValue = new JSBoolean(value, this);
+        jsValue = new JSBoolean(value, this, QuickJS.getValueBoolean(value));
         break;
       case TYPE_NULL:
         jsValue = new JSNull(value, this);
@@ -365,7 +367,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
         QuickJS.destroyValue(pointer, value);
         throw new JSEvaluationException(QuickJS.getException(pointer));
       case TYPE_FLOAT64:
-        jsValue = new JSFloat64(value, this);
+        jsValue = new JSFloat64(value, this, QuickJS.getValueFloat64(value));
         break;
       default:
         jsValue = new JSInternal(value, this);

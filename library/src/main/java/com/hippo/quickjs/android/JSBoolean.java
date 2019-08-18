@@ -21,26 +21,17 @@ package com.hippo.quickjs.android;
  */
 public class JSBoolean extends JSValue {
 
-  private volatile boolean cached = false;
-  private volatile boolean cache;
+  private final boolean value;
 
-  JSBoolean(long pointer, JSContext jsContext) {
+  JSBoolean(long pointer, JSContext jsContext, boolean value) {
     super(pointer, jsContext);
+    this.value = value;
   }
 
   /**
    * Returns boolean value.
    */
   public boolean getBoolean() {
-    if (!cached) {
-      synchronized (jsContext.jsRuntime) {
-        if (!cached) {
-          jsContext.checkClosed();
-          cache = QuickJS.getValueBoolean(pointer);
-          cached = true;
-        }
-      }
-    }
-    return cache;
+    return value;
   }
 }

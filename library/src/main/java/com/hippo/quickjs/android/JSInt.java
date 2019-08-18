@@ -18,15 +18,15 @@ package com.hippo.quickjs.android;
 
 final class JSInt extends JSNumber {
 
-  private volatile boolean cached = false;
-  private volatile int cache;
+  private final int value;
 
-  JSInt(long pointer, JSContext jsContext) {
+  JSInt(long pointer, JSContext jsContext, int value) {
     super(pointer, jsContext);
+    this.value = value;
   }
 
   private int getIntInRange(String javaType, int min, int max) {
-    int value = getInt();
+    int value = this.value;
     if (min <= value && value <= max) {
       return value;
     } else {
@@ -46,30 +46,21 @@ final class JSInt extends JSNumber {
 
   @Override
   public int getInt() {
-    if (!cached) {
-      synchronized (jsContext.jsRuntime) {
-        if (!cached) {
-          jsContext.checkClosed();
-          cache = QuickJS.getValueInt(pointer);
-          cached = true;
-        }
-      }
-    }
-    return cache;
+    return value;
   }
 
   @Override
   public long getLong() {
-    return getInt();
+    return value;
   }
 
   @Override
   public float getFloat() {
-    return getInt();
+    return value;
   }
 
   @Override
   public double getDouble() {
-    return getInt();
+    return value;
   }
 }

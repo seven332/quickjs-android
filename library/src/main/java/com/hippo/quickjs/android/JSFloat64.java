@@ -18,11 +18,11 @@ package com.hippo.quickjs.android;
 
 final class JSFloat64 extends JSNumber {
 
-  private volatile boolean cached = false;
-  private volatile double cache;
+  private final double value;
 
-  JSFloat64(long pointer, JSContext jsContext) {
+  JSFloat64(long pointer, JSContext jsContext, double value) {
     super(pointer, jsContext);
+    this.value = value;
   }
 
   private String wrongNumberMessage(String javaType, double value) {
@@ -31,7 +31,7 @@ final class JSFloat64 extends JSNumber {
 
   @Override
   public byte getByte() {
-    double value = getDouble();
+    double value = this.value;
     byte result = (byte) value;
     if (result != value) {
       throw new JSDataException(wrongNumberMessage("byte", value));
@@ -41,7 +41,7 @@ final class JSFloat64 extends JSNumber {
 
   @Override
   public short getShort() {
-    double value = getDouble();
+    double value = this.value;
     short result = (short) value;
     if (result != value) {
       throw new JSDataException(wrongNumberMessage("short", value));
@@ -51,7 +51,7 @@ final class JSFloat64 extends JSNumber {
 
   @Override
   public int getInt() {
-    double value = getDouble();
+    double value = this.value;
     int result = (int) value;
     if (result != value) {
       throw new JSDataException(wrongNumberMessage("int", value));
@@ -61,7 +61,7 @@ final class JSFloat64 extends JSNumber {
 
   @Override
   public long getLong() {
-    double value = getDouble();
+    double value = this.value;
     long result = (long) value;
     if (result != value) {
       throw new JSDataException(wrongNumberMessage("long", value));
@@ -71,20 +71,11 @@ final class JSFloat64 extends JSNumber {
 
   @Override
   public float getFloat() {
-    return (float) getDouble();
+    return (float) value;
   }
 
   @Override
   public double getDouble() {
-    if (!cached) {
-      synchronized (jsContext.jsRuntime) {
-        if (!cached) {
-          jsContext.checkClosed();
-          cache = QuickJS.getValueFloat64(pointer);
-          cached = true;
-        }
-      }
-    }
-    return cache;
+    return value;
   }
 }

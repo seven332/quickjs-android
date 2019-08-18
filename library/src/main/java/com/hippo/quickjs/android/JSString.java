@@ -21,23 +21,14 @@ package com.hippo.quickjs.android;
  */
 public final class JSString extends JSValue {
 
-  private volatile boolean cached = false;
-  private volatile String cache;
+  private final String value;
 
-  JSString(long pointer, JSContext jsContext) {
+  JSString(long pointer, JSContext jsContext, String value) {
     super(pointer, jsContext);
+    this.value = value;
   }
 
   public String getString() {
-    if (!cached) {
-      synchronized (jsContext.jsRuntime) {
-        if (!cached) {
-          long context = jsContext.checkClosed();
-          cache = QuickJS.getValueString(context, pointer);
-          cached = true;
-        }
-      }
-    }
-    return cache;
+    return value;
   }
 }
