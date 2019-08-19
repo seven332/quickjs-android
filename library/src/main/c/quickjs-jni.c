@@ -2,7 +2,8 @@
 #include <quickjs.h>
 #include <string.h>
 
-#include "quick-java.h"
+#include "java-method.h"
+#include "java-object.h"
 #include "java-helper.h"
 
 #define MSG_OOM "Out of memory"
@@ -60,7 +61,8 @@ Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, 
     JSContext *ctx = JS_NewContext(rt);
     CHECK_NULL_RET(env, ctx, MSG_OOM);
 
-    if (quick_java_init_java(ctx)) THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+    if (java_method_init_context(ctx)) THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+    if (java_object_init_context(ctx)) THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
 
     return (jlong) ctx;
 }
@@ -237,7 +239,7 @@ static jlong createValueFunction(
     }
 
     JSValue *result = NULL;
-    JSValue val = QJ_NewJavaFunction(ctx, env, js_context, is_static, callee, method, return_type, arg_count, arg_types_copy);
+    JSValue val = QJ_NewJavaMethod(ctx, env, js_context, is_static, callee, method, return_type, arg_count, arg_types_copy);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
@@ -280,6 +282,19 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunctionS(
         THROW_ILLEGAL_STATE_EXCEPTION_RET(env, "Can't find class");
     }
     return createValueFunction(env, context, js_context, JNI_TRUE, callee, method_name, method_sign, return_type, arg_types);
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_createValueJavaObject(JNIEnv *env, jclass clazz, jlong context, jobject object) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+
+    JSValue *result = NULL;
+    JSValue val = QJ_NewJavaObject(ctx, env, object);
+    COPY_JS_VALUE(ctx, val, result);
+    CHECK_NULL_RET(env, result, MSG_OOM);
+
+    return (jlong) result;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -521,6 +536,15 @@ Java_com_hippo_quickjs_android_QuickJS_getValueString(JNIEnv *env, jclass clazz,
     return j_str;
 }
 
+JNIEXPORT jobject JNICALL
+Java_com_hippo_quickjs_android_QuickJS_getValueJavaObject(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    return QJ_GetJavaObject(ctx, *val);
+}
+
 JNIEXPORT void JNICALL
 Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, jlong context, jlong value) {
     JSContext *ctx = (JSContext *) context;
@@ -631,7 +655,7 @@ JNI_OnLoad(JavaVM *vm, void* reserved) {
         return JNI_ERR;
     }
 
-    if (quick_java_init(env)) {
+    if (java_method_init(env)) {
         return JNI_ERR;
     }
 

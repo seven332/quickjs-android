@@ -24,7 +24,7 @@ import androidx.annotation.Nullable;
 public final class JSFunction extends JSObject {
 
   JSFunction(long pointer, JSContext jsContext) {
-    super(pointer, jsContext);
+    super(pointer, jsContext, null);
   }
 
   /**

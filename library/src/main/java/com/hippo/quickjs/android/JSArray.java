@@ -22,7 +22,7 @@ package com.hippo.quickjs.android;
 public final class JSArray extends JSObject {
 
   JSArray(long pointer, JSContext jsContext) {
-    super(pointer, jsContext);
+    super(pointer, jsContext, null);
   }
 
   /**

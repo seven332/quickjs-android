@@ -193,4 +193,40 @@ public class InterfaceTypeAdapterTest {
   interface AtomicIntegerHolder {
     AtomicInteger get();
   }
+
+  @Test
+  public void wrapWrappedJSValue() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        JSValue jsValue1 = context.evaluate("" +
+            "a = {\n" +
+            "  plus: function(a, b) { return a + b },\n" +
+            "  minus: function(a, b) { return a - b },\n" +
+            "  multiplies: function(a, b) { return a * b },\n" +
+            "  divides: function(a, b) { return a / b },\n" +
+            "  noop: function() { }\n" +
+            "}", "test.js", JSValue.class);
+
+        TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
+        Calculator calculator = adapter.fromJSValue(quickJS, context, jsValue1);
+        JSValue jsValue2 = adapter.toJSValue(quickJS, context, calculator);
+        assertSame(jsValue1, jsValue2);
+      }
+    }
+  }
+
+  @Test
+  public void wrapWrappedJavaObject() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        Calculator calculator1 = new CalculatorImpl();
+        TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
+        JSValue jsValue = adapter.toJSValue(quickJS, context, calculator1);
+        Calculator calculator2 = adapter.fromJSValue(quickJS, context, jsValue);
+        assertSame(calculator1, calculator2);
+      }
+    }
+  }
 }

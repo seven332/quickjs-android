@@ -1,7 +1,7 @@
-#include <jni.h>
-#include <quickjs.h>
+#include <string.h>
 
-#include "quick-java.h"
+#include "java-method.h"
+#include "java-helper.h"
 
 // TODO append the java exception to the js exception
 #define CHECK_JAVA_EXCEPTION_NO(ENV)      \
@@ -26,15 +26,6 @@
         (*(ENV))->ExceptionClear(ENV);                               \
         return JS_ThrowInternalError((CTX), "Catch java exception"); \
     }
-
-#define OBTAIN_ENV(VM)                                                                              \
-    JNIEnv *env = NULL;                                                                             \
-    int __require_detach__ = 0;                                                                     \
-    (*(VM))->GetEnv((VM), (void **) &env, JNI_VERSION_1_6);                                         \
-    if (env == NULL) __require_detach__ = (*(VM))->AttachCurrentThread((VM), &env, NULL) == JNI_OK;
-
-#define RELEASE_ENV(VM)                                           \
-    if (__require_detach__) (*(VM))->DetachCurrentThread((VM));
 
 static int js_value_to_java_value(JSContext *ctx, JNIEnv *env, jobject js_context, jobject type, JSValueConst value, jvalue *result);
 
@@ -107,7 +98,7 @@ static JSClassDef java_method_class = {
         .finalizer = java_method_finalizer
 };
 
-int quick_java_init_java(JSContext *ctx) {
+int java_method_init_context(JSContext *ctx) {
     JS_NewClassID(&java_method_class_id);
     if (JS_NewClass(JS_GetRuntime(ctx), java_method_class_id, &java_method_class)) return -1;
     return 0;
@@ -144,7 +135,7 @@ jobject long_primitive_type;
 jobject float_primitive_type;
 jobject double_primitive_type;
 
-int quick_java_init(JNIEnv *env) {
+int java_method_init(JNIEnv *env) {
     jni_helper_class = (*env)->FindClass(env, "com/hippo/quickjs/android/JNIHelper");
     jni_helper_class = (*env)->NewGlobalRef(env, jni_helper_class);
     if (jni_helper_class == NULL) return -1;
@@ -328,7 +319,7 @@ static JavaMethodCaller select_java_method_caller(JNIEnv *env, jboolean is_stati
     return NULL;
 }
 
-JSValue QJ_NewJavaFunction(
+JSValue QJ_NewJavaMethod(
         JSContext *ctx,
         JNIEnv *env,
         jobject js_context,

@@ -27,8 +27,15 @@ public class JSObject extends JSValue {
 
   private static final int PROP_FLAG_MASK = 0b111;
 
-  JSObject(long pointer, JSContext jsContext) {
+  private final Object javaObject;
+
+  JSObject(long pointer, JSContext jsContext, Object javaObject) {
     super(pointer, jsContext);
+    this.javaObject = javaObject;
+  }
+
+  public Object getJavaObject() {
+    return javaObject;
   }
 
   /**

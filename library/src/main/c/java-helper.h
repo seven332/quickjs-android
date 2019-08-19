@@ -9,7 +9,7 @@
 #define THROW_EXCEPTION(ENV, EXCEPTION_NAME, ...)                               \
     do {                                                                        \
         throw_exception((ENV), (EXCEPTION_NAME), __VA_ARGS__);                  \
-        return;                                                               \
+        return;                                                                 \
     } while (0)
 
 #define THROW_EXCEPTION_RET(ENV, EXCEPTION_NAME, ...)                           \
@@ -41,5 +41,14 @@
     }
 
 jint throw_exception(JNIEnv *env, const char *exception_name, const char *message, ...);
+
+#define OBTAIN_ENV(VM)                                                                              \
+    JNIEnv *env = NULL;                                                                             \
+    int __require_detach__ = 0;                                                                     \
+    (*(VM))->GetEnv((VM), (void **) &env, JNI_VERSION_1_6);                                         \
+    if (env == NULL) __require_detach__ = (*(VM))->AttachCurrentThread((VM), &env, NULL) == JNI_OK;
+
+#define RELEASE_ENV(VM)                                           \
+    if (__require_detach__) (*(VM))->DetachCurrentThread((VM));
 
 #endif //QUICKJS_ANDROID_JAVA_HELPER_H

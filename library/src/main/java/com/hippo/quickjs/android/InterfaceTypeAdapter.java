@@ -89,7 +89,11 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
 
   @Override
   public JSValue toJSValue(Depot depot, Context context, Object value) {
-    JSObject jo = context.createJSObject();
+    if (value instanceof JSValueHolder) {
+      return ((JSValueHolder) value).getJSValue(JS_VALUE_HOLDER_TAG);
+    }
+
+    JSObject jo = context.createJSObject(value);
     for (Method method : methods.values()) {
       jo.setProperty(method.name, context.createJSFunction(value, method));
     }
@@ -100,10 +104,19 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
   public Object fromJSValue(Depot depot, Context context, JSValue value) {
     JSObject jo = value.cast(JSObject.class);
 
-    return Proxy.newProxyInstance(rawType.getClassLoader(), new Class<?>[]{ rawType }, (proxy, method, args) -> {
+    Object object = jo.getJavaObject();
+    // TODO Check generic
+    if (rawType.isInstance(object)) return object;
+
+    return Proxy.newProxyInstance(rawType.getClassLoader(), new Class<?>[]{ rawType, JSValueHolder.class }, (proxy, method, args) -> {
       // If the method is a method from Object then defer to normal invocation.
       if (method.getDeclaringClass() == Object.class) {
         return method.invoke(this, args);
+      }
+
+      // Check JSValueHolder.getJSValue(JSValueHolderTag)
+      if (args != null && args.length == 1 && args[0] == JS_VALUE_HOLDER_TAG) {
+        return value;
       }
 
       String name = method.getName();
@@ -129,4 +142,10 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       return resultAdapter.fromJSValue(depot, context, result);
     });
   }
+
+  private interface JSValueHolder {
+    JSValue getJSValue(JSValueHolderTag tag);
+  }
+  private static class JSValueHolderTag { }
+  private static final JSValueHolderTag JS_VALUE_HOLDER_TAG = new JSValueHolderTag();
 }

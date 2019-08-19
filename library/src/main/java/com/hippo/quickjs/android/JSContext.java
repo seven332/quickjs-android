@@ -272,6 +272,18 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   }
 
   /**
+   * Creates a JavaScript object holding a java object.
+   */
+  @Override
+  public JSObject createJSObject(Object object) {
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueJavaObject(pointer, object);
+      return wrapAsJSValue(val).cast(JSObject.class);
+    }
+  }
+
+  /**
    * Creates a JavaScript array.
    */
   @Override
@@ -348,7 +360,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
         } else if (QuickJS.isValueArray(pointer, value)) {
           jsValue = new JSArray(value, this);
         } else {
-          jsValue = new JSObject(value, this);
+          jsValue = new JSObject(value, this, QuickJS.getValueJavaObject(pointer, value));
         }
         break;
       case TYPE_INT:

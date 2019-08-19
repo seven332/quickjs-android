@@ -107,6 +107,11 @@ public abstract class TypeAdapter<T> {
     JSObject createJSObject();
 
     /**
+     * Creates a JavaScript object holding a java object.
+     */
+    JSObject createJSObject(Object object);
+
+    /**
      * Creates a JavaScript array.
      */
     JSArray createJSArray();
