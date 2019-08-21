@@ -73,7 +73,7 @@ public class QuickJS implements TypeAdapter.Depot {
   /**
    * Creates a JSRuntime with resources in this QuickJS.
    */
-  JSRuntime createJSRuntime() {
+  public JSRuntime createJSRuntime() {
     long runtime = QuickJS.createRuntime();
     if (runtime == 0) {
       throw new IllegalStateException("Cannot create JSRuntime instance");
