@@ -132,13 +132,13 @@ class Tester(
     runTest("qjs", "tests/test_builtin.js")
     runTest("qjs", "tests/test_loop.js")
     // tmpfile returns null
-    runTest("qjs", "-m tests/test_std.js")
+    runTest("qjs", "tests/test_std.js")
     runTest("qjsbn", "tests/test_closure.js")
     runTest("qjsbn", "tests/test_op.js")
     runTest("qjsbn", "tests/test_builtin.js")
     runTest("qjsbn", "tests/test_loop.js")
     // tmpfile returns null
-    runTest("qjsbn", "-m tests/test_std.js")
+    runTest("qjsbn", "tests/test_std.js")
     runTest("qjsbn", "--qjscalc tests/test_bignum.js")
   }
 
@@ -147,7 +147,7 @@ class Tester(
   }
 
   private fun microbench() {
-    runTest("qjs", "tests/microbench.js")
+    runTest("qjs", "--std tests/microbench.js")
   }
 
   private fun runTest262() {
