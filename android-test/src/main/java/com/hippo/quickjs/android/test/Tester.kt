@@ -126,6 +126,12 @@ class Tester(
     runTest(name, executable, parameter)
   }
 
+  private fun js2c() {
+    runTest("qjsc", "-c -o repl.c -m repl.js")
+    runTest("qjsbnc", "-c -o repl-bn.c -m repl.js")
+    runTest("qjsbnc", "-c -o qjscalc.c qjscalc.js")
+  }
+
   private fun test() {
     runTest("qjs", "tests/test_closure.js")
     runTest("qjs", "tests/test_op.js")
@@ -182,6 +188,8 @@ class Tester(
       try {
         ensureAssetFiles()
         ensureExecutable()
+
+        js2c()
 
         test()
         stats()

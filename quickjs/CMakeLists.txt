@@ -43,7 +43,7 @@ set(QJS_SOURCES
 
 set(QJSBN_SOURCES
         quickjs/qjs.c
-        repl.c
+        repl-bn.c
         qjscalc.c
         ${QJSBN_LIB_SOURCES}
 )
@@ -63,9 +63,17 @@ add_executable(qjs ${QJS_SOURCES})
 target_compile_options(qjs PRIVATE ${COMMON_FLAGS})
 set_target_properties(qjs PROPERTIES OUTPUT_NAME libqjs.so)
 
+add_executable(qjsc quickjs/qjsc.c ${QJS_LIB_SOURCES})
+target_compile_options(qjsc PRIVATE ${COMMON_FLAGS})
+set_target_properties(qjsc PROPERTIES OUTPUT_NAME libqjsc.so)
+
 add_executable(qjsbn ${QJSBN_SOURCES})
 target_compile_options(qjsbn PRIVATE ${COMMON_FLAGS} ${BN_FLAGS})
 set_target_properties(qjsbn PROPERTIES OUTPUT_NAME libqjsbn.so)
+
+add_executable(qjsbnc quickjs/qjsc.c ${QJSBN_LIB_SOURCES})
+target_compile_options(qjsbnc PRIVATE ${COMMON_FLAGS} ${BN_FLAGS})
+set_target_properties(qjsbnc PROPERTIES OUTPUT_NAME libqjsbnc.so)
 
 add_executable(run-test262 quickjs/run-test262.c ${QJS_LIB_SOURCES})
 target_compile_options(run-test262 PRIVATE ${COMMON_FLAGS})
