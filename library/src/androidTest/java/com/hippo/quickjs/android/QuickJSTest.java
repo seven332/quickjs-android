@@ -21,7 +21,10 @@ import org.junit.Test;
 
 import static com.hippo.quickjs.android.Utils.assertException;
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class QuickJSTest {
 
@@ -207,11 +210,11 @@ public class QuickJSTest {
         () -> QuickJS.createValueString(0, null)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null value",
-        () -> QuickJS.createValueString(1, null)
-    );
+        () -> QuickJS.createValueString(context, null)
+    ));
   }
 
   @Test
@@ -292,11 +295,11 @@ public class QuickJSTest {
         () -> QuickJS.isValueArray(0, 0)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null JSValue",
-        () -> QuickJS.isValueArray(1, 0)
-    );
+        () -> QuickJS.isValueArray(context, 0)
+    ));
   }
 
   @Test
@@ -311,11 +314,11 @@ public class QuickJSTest {
         () -> QuickJS.isValueFunction(0, 0)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null JSValue",
-        () -> QuickJS.isValueFunction(1, 0)
-    );
+        () -> QuickJS.isValueFunction(context, 0)
+    ));
   }
 
   private void withProperty(long context, long value, int index, WithPropertyBlock block) {
@@ -355,11 +358,11 @@ public class QuickJSTest {
         () -> QuickJS.getValueProperty(0, 0, 0)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null JSValue",
-        () -> QuickJS.getValueProperty(1, 0, 0)
-    );
+        () -> QuickJS.getValueProperty(context, 0, 0)
+    ));
   }
 
   @Test
@@ -375,17 +378,17 @@ public class QuickJSTest {
         () -> QuickJS.getValueProperty(0, 0, null)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null JSValue",
-        () -> QuickJS.getValueProperty(1, 0, null)
-    );
+        () -> QuickJS.getValueProperty(context, 0, null)
+    ));
 
-    assertException(
+    withRuntimeContextScript("a = {a: 1, b: 'str'}", (runtime, context, value) -> assertException(
         IllegalStateException.class,
         "Null name",
-        () -> QuickJS.getValueProperty(1, 1, null)
-    );
+        () -> QuickJS.getValueProperty(context, value, null)
+    ));
   }
 
   @Test
@@ -409,27 +412,25 @@ public class QuickJSTest {
         )
     );
 
-    withRuntimeContext((runtime, context) ->
-        assertException(
-            IllegalStateException.class,
-            "Null JSContext",
-            () -> QuickJS.setValueProperty(0, 0, 0, 0)
-        )
+    assertException(
+        IllegalStateException.class,
+        "Null JSContext",
+        () -> QuickJS.setValueProperty(0, 0, 0, 0)
     );
 
     withRuntimeContext((runtime, context) ->
         assertException(
             IllegalStateException.class,
             "Null JSValue",
-            () -> QuickJS.setValueProperty(1, 0, 0, 0)
+            () -> QuickJS.setValueProperty(context, 0, 0, 0)
         )
     );
 
-    withRuntimeContext((runtime, context) ->
+    withRuntimeContextScript("a = {}", (runtime, context, value) ->
         assertException(
             IllegalStateException.class,
             "Null property",
-            () -> QuickJS.setValueProperty(1, 1, 0, 0)
+            () -> QuickJS.setValueProperty(context, value, 0, 0)
         )
     );
   }
@@ -456,35 +457,33 @@ public class QuickJSTest {
         )
     );
 
-    withRuntimeContext((runtime, context) ->
-        assertException(
-            IllegalStateException.class,
-            "Null JSContext",
-            () -> QuickJS.setValueProperty(0, 0, null, 0)
-        )
+    assertException(
+        IllegalStateException.class,
+        "Null JSContext",
+        () -> QuickJS.setValueProperty(0, 0, null, 0)
     );
 
     withRuntimeContext((runtime, context) ->
         assertException(
             IllegalStateException.class,
             "Null JSValue",
-            () -> QuickJS.setValueProperty(1, 0, null, 0)
+            () -> QuickJS.setValueProperty(context, 0, null, 0)
         )
     );
 
-    withRuntimeContext((runtime, context) ->
+    withRuntimeContextScript("a = {}", (runtime, context, value) ->
         assertException(
             IllegalStateException.class,
             "Null name",
-            () -> QuickJS.setValueProperty(1, 1, null, 0)
+            () -> QuickJS.setValueProperty(context, value, null, 0)
         )
     );
 
-    withRuntimeContext((runtime, context) ->
+    withRuntimeContextScript("a = {}", (runtime, context, value) ->
         assertException(
             IllegalStateException.class,
             "Null property",
-            () -> QuickJS.setValueProperty(1, 1, "prop", 0)
+            () -> QuickJS.setValueProperty(context, value, "prop", 0)
         )
     );
   }
@@ -566,11 +565,11 @@ public class QuickJSTest {
         () -> QuickJS.getValueString(0, 0)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null JSValue",
-        () -> QuickJS.getValueString(1, 0)
-    );
+        () -> QuickJS.getValueString(context, 0)
+    ));
   }
 
   @Test
@@ -591,17 +590,17 @@ public class QuickJSTest {
         () -> QuickJS.invokeValueFunction(0, 0, 0, null)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null function",
-        () -> QuickJS.invokeValueFunction(1, 0, 0, null)
-    );
+        () -> QuickJS.invokeValueFunction(context, 0, 0, null)
+    ));
 
-    assertException(
+    withRuntimeContextScript("f=function a(i,j){return i*j}", (runtime, context, function) -> assertException(
         IllegalStateException.class,
         "Null arguments",
-        () -> QuickJS.invokeValueFunction(1, 1, 0, null)
-    );
+        () -> QuickJS.invokeValueFunction(context, function, 0, null)
+    ));
   }
 
   @Test
@@ -612,11 +611,11 @@ public class QuickJSTest {
         () -> QuickJS.destroyValue(0, 0)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null JSValue",
-        () -> QuickJS.destroyValue(1, 0)
-    );
+        () -> QuickJS.destroyValue(context, 0)
+    ));
   }
 
   @Test
@@ -687,16 +686,16 @@ public class QuickJSTest {
         () -> QuickJS.evaluate(0, null, null, 0)
     );
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null source code",
-        () -> QuickJS.evaluate(1, null, null, 0)
-    );
+        () -> QuickJS.evaluate(context, null, null, 0)
+    ));
 
-    assertException(
+    withRuntimeContext((runtime, context) -> assertException(
         IllegalStateException.class,
         "Null file name",
-        () -> QuickJS.evaluate(1, "", null, 0)
-    );
+        () -> QuickJS.evaluate(context, "", null, 0)
+    ));
   }
 }
