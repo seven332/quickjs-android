@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <quickjs.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "java-method.h"
 #include "java-object.h"
@@ -11,17 +12,25 @@
 #define MSG_NULL_JS_CONTEXT "Null JSContext"
 #define MSG_NULL_JS_VALUE "Null JSValue"
 
+typedef struct QJRuntime {
+    JSRuntime *rt;
+} QJRuntime;
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
+    QJRuntime *qj_rt = malloc(sizeof(QJRuntime));
+    CHECK_NULL_RET(env, qj_rt, MSG_OOM);
     JSRuntime *rt = JS_NewRuntime();
     CHECK_NULL_RET(env, rt, MSG_OOM);
-    return (jlong) rt;
+    qj_rt->rt = rt;
+    return (jlong) qj_rt;
 }
 
 JNIEXPORT void JNICALL
 Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(JNIEnv *env, jclass clazz, jlong runtime, jint mallocLimit) {
-    JSRuntime *rt = (JSRuntime *) runtime;
-    CHECK_NULL(env, rt, MSG_NULL_JS_RUNTIME);
+    QJRuntime *qj_rt = (QJRuntime *) runtime;
+    CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
+    JSRuntime *rt = qj_rt->rt;
     JS_SetMemoryLimit(rt, (size_t) mallocLimit);
 }
 
@@ -41,8 +50,9 @@ int leak_trigger(const char* _, ...) {
 
 JNIEXPORT void JNICALL
 Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz, jlong runtime) {
-    JSRuntime *rt = (JSRuntime *) runtime;
-    CHECK_NULL(env, rt, MSG_NULL_JS_RUNTIME)
+    QJRuntime *qj_rt = (QJRuntime *) runtime;
+    CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
+    JSRuntime *rt = qj_rt->rt;
 #ifdef LEAK_TRIGGER
     leak_state = 0;
 #endif
@@ -52,12 +62,15 @@ Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz,
         THROW_ILLEGAL_STATE_EXCEPTION(env, "Memory Leak");
     }
 #endif
+    free(qj_rt);
 }
 
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, jlong runtime) {
-    JSRuntime *rt = (JSRuntime *) runtime;
-    CHECK_NULL_RET(env, rt, MSG_NULL_JS_RUNTIME);
+    QJRuntime *qj_rt = (QJRuntime *) runtime;
+    CHECK_NULL_RET(env, qj_rt, MSG_NULL_JS_RUNTIME);
+    JSRuntime *rt = qj_rt->rt;
+
     JSContext *ctx = JS_NewContext(rt);
     CHECK_NULL_RET(env, ctx, MSG_OOM);
 
