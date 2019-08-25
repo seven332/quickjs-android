@@ -75,6 +75,49 @@ public class QuickJSTest {
   }
 
   @Test
+  public void testInterruptHandler() {
+    withRuntimeContext((runtime, context) -> {
+      QuickJS.setRuntimeInterruptHandler(runtime, () -> true);
+
+      // onInterrupt called at once
+      withScript(context, "i = 0", value -> {
+        assertEquals(JSContext.TYPE_EXCEPTION, QuickJS.getValueTag(value));
+        JSException jsException = QuickJS.getException(context);
+        assertTrue(jsException.isError());
+        assertEquals("InternalError: interrupted", jsException.getException());
+        assertNull(jsException.getStack());
+      });
+
+      withScript(context, "i=0;while(true){i++;}", value -> {
+        assertEquals(JSContext.TYPE_EXCEPTION, QuickJS.getValueTag(value));
+        JSException jsException = QuickJS.getException(context);
+        assertTrue(jsException.isError());
+        assertEquals("InternalError: interrupted", jsException.getException());
+        assertEquals("    at <eval> (source.js)\n", jsException.getStack());
+      });
+
+      withScript(context, "i", value -> {
+        assertEquals(JSContext.TYPE_INT, QuickJS.getValueTag(value));
+        assertEquals(9998, QuickJS.getValueInt(value));
+      });
+
+      QuickJS.setRuntimeInterruptHandler(runtime, null);
+
+      withScript(context, "i = 100000;while(i!=0){i--;}", value -> {
+        assertEquals(JSContext.TYPE_INT, QuickJS.getValueTag(value));
+        assertEquals(1, QuickJS.getValueInt(value));
+      });
+
+      QuickJS.setRuntimeInterruptHandler(runtime, null);
+
+      withScript(context, "i = 100000;while(i!=0){i--;}", value -> {
+        assertEquals(JSContext.TYPE_INT, QuickJS.getValueTag(value));
+        assertEquals(1, QuickJS.getValueInt(value));
+      });
+    });
+  }
+
+  @Test
   public void testCreateContext() {
     withRuntime(runtime -> {
       long context = QuickJS.createContext(runtime);

@@ -12,8 +12,16 @@
 #define MSG_NULL_JS_CONTEXT "Null JSContext"
 #define MSG_NULL_JS_VALUE "Null JSValue"
 
+static jmethodID on_interrupt_method;
+
+typedef struct InterruptData {
+    JavaVM *vm;
+    jobject interrupt_handler;
+} InterruptData;
+
 typedef struct QJRuntime {
     JSRuntime *rt;
+    InterruptData *interrupt_date;
 } QJRuntime;
 
 JNIEXPORT jlong JNICALL
@@ -23,15 +31,70 @@ Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) 
     JSRuntime *rt = JS_NewRuntime();
     CHECK_NULL_RET(env, rt, MSG_OOM);
     qj_rt->rt = rt;
+    qj_rt->interrupt_date = NULL;
     return (jlong) qj_rt;
 }
 
 JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(JNIEnv *env, jclass clazz, jlong runtime, jint mallocLimit) {
+Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(JNIEnv *env, jclass clazz, jlong runtime, jint malloc_limit) {
     QJRuntime *qj_rt = (QJRuntime *) runtime;
     CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
-    JSRuntime *rt = qj_rt->rt;
-    JS_SetMemoryLimit(rt, (size_t) mallocLimit);
+    JS_SetMemoryLimit(qj_rt->rt, (size_t) malloc_limit);
+}
+
+static int on_interrupt(JSRuntime *rt, void *opaque) {
+    int result = 0;
+
+    InterruptData *data = opaque;
+
+    OBTAIN_ENV(data->vm);
+
+    if (env != NULL) {
+        result = (*env)->CallBooleanMethod(env, data->interrupt_handler, on_interrupt_method);
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
+            result = 0;
+        }
+    }
+
+    RELEASE_ENV(data->vm);
+
+    return result;
+}
+
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_setRuntimeInterruptHandler(JNIEnv *env, jclass clazz, jlong runtime, jobject interrupt_handler) {
+    QJRuntime *qj_rt = (QJRuntime *) runtime;
+    CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
+
+    InterruptData *data = qj_rt->interrupt_date;
+
+    if (interrupt_handler == NULL) {
+        // Clear interrupt handler
+        if (data != NULL) {
+            (*env)->DeleteGlobalRef(env, data->interrupt_handler);
+            free(data);
+            qj_rt->interrupt_date = NULL;
+            JS_SetInterruptHandler(qj_rt->rt, NULL, NULL);
+        }
+    } else {
+        // Set interrupt handler
+        if (data == NULL) {
+            data = malloc(sizeof(InterruptData));
+            CHECK_NULL(env, data, MSG_OOM);
+        } else {
+            (*env)->DeleteGlobalRef(env, data->interrupt_handler);
+            data->vm = NULL;
+            data->interrupt_handler = NULL;
+        }
+
+        (*env)->GetJavaVM(env, &(data->vm));
+        data->interrupt_handler = (*env)->NewGlobalRef(env, interrupt_handler);
+
+        qj_rt->interrupt_date = data;
+        JS_SetInterruptHandler(qj_rt->rt, on_interrupt, data);
+    }
 }
 
 #ifdef LEAK_TRIGGER
@@ -62,6 +125,11 @@ Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz,
         THROW_ILLEGAL_STATE_EXCEPTION(env, "Memory Leak");
     }
 #endif
+    InterruptData *data = qj_rt->interrupt_date;
+    if (data != NULL) {
+        (*env)->DeleteGlobalRef(env, data->interrupt_handler);
+        free(data);
+    }
     free(qj_rt);
 }
 
@@ -665,6 +733,15 @@ JNI_OnLoad(JavaVM *vm, void* reserved) {
     JNIEnv *env = NULL;
 
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+
+    jclass interrupt_handler_clazz = (*env)->FindClass(env, "com/hippo/quickjs/android/JSRuntime$InterruptHandler");
+    if (interrupt_handler_clazz == NULL) {
+        return JNI_ERR;
+    }
+    on_interrupt_method = (*env)->GetMethodID(env, interrupt_handler_clazz, "onInterrupt", "()Z");
+    if (on_interrupt_method == NULL) {
         return JNI_ERR;
     }
 

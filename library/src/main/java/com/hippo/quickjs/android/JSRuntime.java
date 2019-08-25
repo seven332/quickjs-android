@@ -16,6 +16,8 @@
 
 package com.hippo.quickjs.android;
 
+import androidx.annotation.Nullable;
+
 import java.io.Closeable;
 
 // TODO Check all JSContext closed when closing JSRuntime
@@ -58,6 +60,15 @@ public class JSRuntime implements Closeable {
   }
 
   /**
+   * Set the InterruptHandler for this JSRuntime.
+   * {@link InterruptHandler#onInterrupt()} is called every 10000 js instructions.
+   */
+  public synchronized void setInterruptHandler(@Nullable InterruptHandler interruptHandler) {
+    checkClosed();
+    QuickJS.setRuntimeInterruptHandler(pointer, interruptHandler);
+  }
+
+  /**
    * Creates a JSContext with the memory heap of this JSRuntime.
    */
   public synchronized JSContext createJSContext() {
@@ -76,5 +87,12 @@ public class JSRuntime implements Closeable {
       pointer = 0;
       QuickJS.destroyRuntime(runtimeToClose);
     }
+  }
+
+  public interface InterruptHandler {
+    /**
+     * Returns {@code true} to interrupt.
+     */
+    boolean onInterrupt();
   }
 }
