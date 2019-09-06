@@ -26,7 +26,7 @@ class ArrayTranslator extends Translator<Object> {
     if (elementType == null) return null;
     Class<?> elementClass = Types.getRawType(elementType);
     Translator<Object> elementTranslator = depot.getTranslator(elementType);
-    return ArrayTranslator.create(elementClass, elementTranslator).nullable();
+    return ArrayTranslator.create(elementType, elementClass, elementTranslator).nullable();
   };
 
   private final Class<?> elementClass;
@@ -60,32 +60,25 @@ class ArrayTranslator extends Translator<Object> {
   }
 
   private static Translator<Object> create(
+      Type elementType,
       Class<?> elementClass,
       Translator<Object> elementTranslator
   ) {
-    byte[] pickleCommand = elementTranslator.pickleCommand;
-    byte[] newPickleCommand = new byte[1 + 4 + pickleCommand.length];
-    newPickleCommand[0] = PICKLE_FLAG_TYPE_ARRAY;
-    Bits.writeInt(newPickleCommand, 1, pickleCommand.length);
-    System.arraycopy(pickleCommand, 0, newPickleCommand, 1 + 4, pickleCommand.length);
+    byte[] pickleCommand = new byte[1 + 4 + 1 + 8];
+    pickleCommand[0] = PICKLE_FLAG_TYPE_ARRAY;
+    Bits.writeInt(pickleCommand, 1, 1 + 8);
+    pickleCommand[1 + 4] = PICKLE_FLAG_TYPE_COMMAND;
 
-    byte[] newUnpickleCommand = new byte[0]; // TODO
+    byte[] unpickleCommand = new byte[0]; // TODO
 
-    Placeholder[] placeholders = elementTranslator.placeholders;
-    Placeholder[] newPlaceholders = new Placeholder[placeholders.length];
-    for (int i = 0; i < placeholders.length; i++) {
-      Placeholder placeholder = placeholders[i];
-      newPlaceholders[i] = new Placeholder(
-          placeholder.type,
-          1 + 4 + placeholder.pickleIndex,
-          0 // TODO
-      );
-    }
+    Placeholder[] placeholders = new Placeholder[] {
+        new Placeholder(elementType, 1 + 4 + 1, 0)
+    };
 
     return new ArrayTranslator(
-        newPickleCommand,
-        newUnpickleCommand,
-        newPlaceholders,
+        pickleCommand,
+        unpickleCommand,
+        placeholders,
         elementClass,
         elementTranslator
     );
