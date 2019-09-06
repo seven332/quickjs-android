@@ -24,6 +24,7 @@
 
 typedef struct Stack {
     JSValue *data;
+    size_t start;
     size_t offset;
     size_t size;
 } Stack;
@@ -40,6 +41,7 @@ static Stack *create_stack(size_t size) {
         return NULL;
     }
 
+    stack->start = 0;
     stack->offset = 0;
     stack->size = size;
 
@@ -67,10 +69,31 @@ static bool stack_push(Stack *stack, JSValue val) {
     return true;
 }
 
-static void destroy_stack(Stack *stack, JSContext *ctx) {
-    for (size_t i = 0; i < stack->offset; i++) {
+static size_t stack_mark(Stack *stack) {
+    size_t start = stack->start;
+    stack->start = stack->offset;
+    return start;
+}
+
+static void stack_reset(Stack *stack, size_t start) {
+    stack->start = start;
+}
+
+static bool stack_is_empty(Stack *stack) {
+    return stack->start == stack->offset;
+}
+
+// Keep the JSValue in stack->start
+static void stack_clear(Stack *stack, JSContext *ctx) {
+    for (size_t i = stack->start + 1; i < stack->offset; i++) {
         JS_FreeValue(ctx, stack->data[i]);
     }
+    stack->offset = stack->start;
+}
+
+static void destroy_stack(Stack *stack, JSContext *ctx) {
+    assert(stack->start == 0);
+    assert(stack->offset == 0);
     free(stack->data);
     free(stack);
 }
@@ -176,16 +199,25 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
                         bit_source_reconfig(source, segment_offset, segment_offset + segment_size);
                         JSValue element = JS_GetPropertyUint32(ctx, callee, (uint32_t) i);
                         if (JS_IsException(element)) goto fail;
-                        if (!do_pickle(ctx, element, stack, source, sink)) goto fail;
+
+                        size_t start = stack_mark(stack);
+                        bool pickled = do_pickle(ctx, element, stack, source, sink);
+                        stack_reset(stack, start);
+
+                        JS_FreeValue(ctx, element);
+                        if (!pickled) goto fail;
                     }
                     bit_source_reconfig(source, segment_offset + segment_size, source_size);
                     break;
                 }
                 case FLAG_TYPE_COMMAND: {
                     void *command = (void *) bit_source_next_int64(source);
-                    BitSource *child_source = create_source_bit(command + sizeof(jsize),
-                                                                (size_t) *(jsize *) command);
+                    BitSource *child_source = create_source_bit(command + sizeof(jsize), (size_t) *(jsize *) command);
+
+                    size_t start = stack_mark(stack);
                     bool pickled = do_pickle(ctx, callee, stack, child_source, sink);
+                    stack_reset(stack, start);
+
                     destroy_source(child_source);
                     if (!pickled) goto fail;
                     break;
@@ -200,26 +232,23 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
         }
     }
 
-    JS_FreeValue(ctx, val);
+    stack_clear(stack, ctx);
     return true;
 
 fail:
     if (is_prop) {
         JS_FreeValue(ctx, callee);
     }
-    JS_FreeValue(ctx, val);
+    if (!stack_is_empty(stack)) {
+        JS_FreeValue(ctx, val);
+    }
+    stack_clear(stack, ctx);
     return false;
 }
 
 bool pickle(JSContext *ctx, JSValue val, BitSource *source, BitSink *sink) {
     Stack *stack = create_stack(DEFAULT_STACK_SIZE);
-
     bool result = do_pickle(ctx, val, stack, source, sink);
-
-    if (result) {
-        assert(stack->offset == 0);
-    }
     destroy_stack(stack, ctx);
-
     return result;
 }

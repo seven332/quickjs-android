@@ -795,11 +795,9 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
     JSValue val = JS_Eval(ctx, source_code_utf, (size_t) source_code_length, file_name_utf, flags);
     bool is_exception = (bool) JS_IsException(val);
     if (!is_exception && pickle_pointer != 0) {
-        // pickle() always free val
         pickle_result = pickle(ctx, val, source, sink);
-    } else {
-        JS_FreeValue(ctx, val);
     }
+    JS_FreeValue(ctx, val);
 
     (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
     (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
