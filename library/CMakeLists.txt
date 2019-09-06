@@ -12,6 +12,9 @@ add_subdirectory(../quickjs ${CMAKE_CURRENT_BINARY_DIR}/quickjs)
 
 set(QUICKJS_ANDROID_SOURCES
         src/main/c/quickjs-jni.c
+        src/main/c/bit-source.c
+        src/main/c/bit-sink.c
+        src/main/c/pickle.c
         src/main/c/java-method.c
         src/main/c/java-object.c
         src/main/c/java-helper.c

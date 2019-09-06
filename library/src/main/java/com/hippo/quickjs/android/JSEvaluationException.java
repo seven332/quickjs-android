@@ -16,18 +16,57 @@
 
 package com.hippo.quickjs.android;
 
+import androidx.annotation.Nullable;
+
 /**
  * This exception is raised if QuickJS raises a JavaScript exception.
  */
 public class JSEvaluationException extends RuntimeException {
 
-  private JSException jsException;
+  private boolean isError;
+  private String exception;
+  private String stack;
 
   JSEvaluationException(JSException jsException) {
-    super(jsException.toString());
+    this(jsException.isError(), jsException.getException(), jsException.getStack());
   }
 
-  public JSException getJSException() {
-    return jsException;
+  private JSEvaluationException(boolean isError, String exception, String stack) {
+    super(toMessage(isError, exception, stack));
+    this.isError = isError;
+    this.exception = exception;
+    this.stack = stack;
+  }
+
+  public boolean isError() {
+    return isError;
+  }
+
+  /**
+   * The exception message.
+   */
+  @Nullable
+  public String getException() {
+    return exception;
+  }
+
+  /**
+   * The stack trace.
+   */
+  @Nullable
+  public String getStack() {
+    return stack;
+  }
+
+  private static String toMessage(boolean isError, String exception, String stack) {
+    StringBuilder sb = new StringBuilder();
+    if (!isError) {
+      sb.append("Throw: ");
+    }
+    sb.append(exception).append("\n");
+    if (stack != null) {
+      sb.append(stack);
+    }
+    return sb.toString();
   }
 }

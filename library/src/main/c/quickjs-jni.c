@@ -3,9 +3,12 @@
 #include <string.h>
 #include <malloc.h>
 
+#include "pickle.h"
 #include "java-method.h"
 #include "java-object.h"
 #include "java-helper.h"
+
+#define DEFAULT_SINK_SIZE 16
 
 #define MSG_OOM "Out of memory"
 #define MSG_NULL_JS_RUNTIME "Null JSRuntime"
@@ -13,6 +16,9 @@
 #define MSG_NULL_JS_VALUE "Null JSValue"
 
 static jmethodID on_interrupt_method;
+
+static jclass js_evaluation_exception_class;
+static jmethodID js_evaluation_exception_constructor;
 
 typedef struct InterruptData {
     JavaVM *vm;
@@ -636,6 +642,44 @@ Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, j
     js_free_rt(JS_GetRuntime(ctx), val);
 }
 
+void throw_JSEvaluationException(JNIEnv *env, JSContext *ctx) {
+    const char *exception_str = NULL;
+    const char *stack_str = NULL;
+
+    JSValue exception = JS_GetException(ctx);
+    exception_str = JS_ToCString(ctx, exception);
+    jboolean is_error = (jboolean) JS_IsError(ctx, exception);
+    if (is_error) {
+        JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
+        if (!JS_IsUndefined(stack)) {
+            stack_str = JS_ToCString(ctx, stack);
+        }
+        JS_FreeValue(ctx, stack);
+    }
+    JS_FreeValue(ctx, exception);
+
+    jstring exception_j_str = (exception_str != NULL) ? (*env)->NewStringUTF(env, exception_str) : NULL;
+    jstring stack_j_str = (stack_str != NULL) ? (*env)->NewStringUTF(env, stack_str) : NULL;
+
+    if (exception_str != NULL) {
+        JS_FreeCString(ctx, exception_str);
+    }
+    if (stack_str != NULL) {
+        JS_FreeCString(ctx, stack_str);
+    }
+
+    jobject throwable = (*env)->NewObject(
+            env,
+            js_evaluation_exception_class,
+            js_evaluation_exception_constructor,
+            is_error,
+            exception_j_str,
+            stack_j_str
+    );
+    CHECK_NULL(env, throwable, "Can't create instance of JSEvaluationException");
+    (*env)->Throw(env, throwable);
+}
+
 JNIEXPORT jobject JNICALL
 Java_com_hippo_quickjs_android_QuickJS_getException(JNIEnv *env, jclass clazz, jlong context) {
     JSContext *ctx = (JSContext *) context;
@@ -693,39 +737,164 @@ Java_com_hippo_quickjs_android_QuickJS_getGlobalObject(JNIEnv *env, jclass clazz
     return (jlong) result;
 }
 
-JNIEXPORT jlong JNICALL
+static jbyteArray bit_sink_to_jbyte_array(JNIEnv *env, BitSink *sink) {
+    size_t length = bit_sink_get_length(sink);
+    jbyteArray array = (*env)->NewByteArray(env, length);
+    if (array == NULL) return NULL;
+    void *data = bit_sink_get_data(sink);
+    (*env)->SetByteArrayRegion(env, array, 0, length, data);
+    return array;
+}
+
+JNIEXPORT jbyteArray JNICALL
 Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
-        jlong context, jstring source_code, jstring file_name, jint flags) {
+        jlong context, jstring source_code, jstring file_name, jint flags, jlong pickle_pointer) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     CHECK_NULL_RET(env, source_code, "Null source code");
     CHECK_NULL_RET(env, file_name, "Null file name");
 
+    BitSource *source = NULL;
+    BitSink *sink = NULL;
+
+    if (pickle_pointer != 0) {
+        void *pickler = (void *) pickle_pointer;
+        source = create_source_bit(pickler + sizeof(jsize), (size_t) *(jsize *) pickler);
+        CHECK_NULL_RET(env, source, MSG_OOM);
+        sink = create_bit_sink(DEFAULT_SINK_SIZE);
+        if (sink == NULL) {
+            destroy_source(source);
+            THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+        }
+    }
+
     const char *source_code_utf = NULL;
     jsize source_code_length = 0;
     const char *file_name_utf = NULL;
-    JSValue *result = NULL;
 
     source_code_utf = (*env)->GetStringUTFChars(env, source_code, NULL);
     source_code_length = (*env)->GetStringUTFLength(env, source_code);
     file_name_utf = (*env)->GetStringUTFChars(env, file_name, NULL);
 
-    if (source_code_utf != NULL && file_name_utf != NULL) {
-        JSValue val = JS_Eval(ctx, source_code_utf, (size_t) source_code_length, file_name_utf, flags);
-
-        COPY_JS_VALUE(ctx, val, result);
+    if (source_code_utf == NULL || file_name_utf == NULL) {
+        if (pickle_pointer != 0) {
+            destroy_source(source);
+            destroy_bit_sink(sink);
+        }
+        if (source_code_utf != NULL) {
+            (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
+        }
+        if (file_name_utf != NULL) {
+            (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
+        }
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
     }
 
-    if (source_code_utf != NULL) {
-        (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
-    }
-    if (file_name_utf != NULL) {
-        (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
+    bool pickle_result = false;
+
+    JSValue val = JS_Eval(ctx, source_code_utf, (size_t) source_code_length, file_name_utf, flags);
+    bool is_exception = (bool) JS_IsException(val);
+    if (!is_exception && pickle_pointer != 0) {
+        // pickle() always free val
+        pickle_result = pickle(ctx, val, source, sink);
+    } else {
+        JS_FreeValue(ctx, val);
     }
 
-    CHECK_NULL_RET(env, result, MSG_OOM);
+    (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
+    (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
 
-    return (jlong) result;
+    jbyteArray result = NULL;
+
+    if (pickle_pointer != 0) {
+        if (pickle_result) {
+            result = bit_sink_to_jbyte_array(env, sink);
+        }
+
+        destroy_source(source);
+        destroy_bit_sink(sink);
+
+        if (is_exception) {
+            throw_JSEvaluationException(env, ctx);
+            return NULL;
+        } else if (pickle_result && result == NULL) {
+            THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+        } else if (result == NULL) {
+            THROW_JS_DATA_EXCEPTION_RET(env, "Can't pickle the JSValue");
+        }
+    } else {
+        if (is_exception) {
+            throw_JSEvaluationException(env, ctx);
+            return NULL;
+        }
+    }
+
+    return result;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_hippo_quickjs_android_QuickJS_pushCommand(JNIEnv *env, jclass clazz, jbyteArray command) {
+    jsize size = (*env)->GetArrayLength(env, command);
+    void *copy = malloc(sizeof(jsize) + size);
+    CHECK_NULL_RET(env, copy, MSG_OOM);
+    *(jsize *) copy = size;
+    (*env)->GetByteArrayRegion(env, command, 0, size, copy + sizeof(jsize));
+    return (jlong) copy;
+}
+
+JNIEXPORT jlongArray JNICALL
+Java_com_hippo_quickjs_android_QuickJS_pushCommands(JNIEnv *env, jclass clazz, jobjectArray commands) {
+    jsize command_size = (*env)->GetArrayLength(env, commands);
+    jlong pointers[command_size];
+
+    for (jsize i = 0; i < command_size; i++) {
+        jbyteArray command = (*env)->GetObjectArrayElement(env, commands, i);
+        jsize size = (*env)->GetArrayLength(env, command);
+
+        void *copy = malloc(sizeof(jsize) + size);
+        if (copy == NULL) {
+            // Free previous pointers
+            for (int j = 0; j < i; j++) {
+                free((void *) pointers[j]);
+            }
+            THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+        }
+
+        *(jsize *) copy = size;
+        (*env)->GetByteArrayRegion(env, command, 0, size, copy + sizeof(jsize));
+
+        pointers[i] = (jlong) copy;
+    }
+
+    jlongArray result = (*env)->NewLongArray(env, command_size);
+    (*env)->SetLongArrayRegion(env, result, 0, command_size, pointers);
+    return result;
+}
+
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_updateCommands(JNIEnv *env, jclass clazz, jlongArray pointers, jobjectArray commands) {
+    jsize command_size = (*env)->GetArrayLength(env, commands);
+    jlong pointer_array[command_size];
+    (*env)->GetLongArrayRegion(env, pointers, 0, command_size, pointer_array);
+
+    for (jsize i = 0; i < command_size; i++) {
+        jbyte *pointer = (jbyte *) pointer_array[i];
+        jbyteArray command = (*env)->GetObjectArrayElement(env, commands, i);
+        jsize size = (*env)->GetArrayLength(env, command);
+        (*env)->GetByteArrayRegion(env, command, 0, size, pointer + sizeof(jsize));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_popCommands(JNIEnv *env, jclass clazz, jlongArray pointers) {
+    jsize pointer_size = (*env)->GetArrayLength(env, pointers);
+    jlong pointer_array[pointer_size];
+    (*env)->GetLongArrayRegion(env, pointers, 0, pointer_size, pointer_array);
+
+    for (jsize i = 0; i < pointer_size; i++) {
+        void *pointer = (jbyte *) pointer_array[i];
+        free(pointer);
+    }
 }
 
 JNIEXPORT jint JNICALL
@@ -742,6 +911,16 @@ JNI_OnLoad(JavaVM *vm, void* reserved) {
     }
     on_interrupt_method = (*env)->GetMethodID(env, interrupt_handler_clazz, "onInterrupt", "()Z");
     if (on_interrupt_method == NULL) {
+        return JNI_ERR;
+    }
+
+    js_evaluation_exception_class = (*env)->FindClass(env, "com/hippo/quickjs/android/JSEvaluationException");
+    js_evaluation_exception_class = (*env)->NewGlobalRef(env, js_evaluation_exception_class);
+    if (js_evaluation_exception_class == NULL) {
+        return JNI_ERR;
+    }
+    js_evaluation_exception_constructor = (*env)->GetMethodID(env, js_evaluation_exception_class, "<init>", "(ZLjava/lang/String;Ljava/lang/String;)V");
+    if (js_evaluation_exception_constructor == NULL) {
         return JNI_ERR;
     }
 

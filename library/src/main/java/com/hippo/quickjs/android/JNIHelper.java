@@ -31,20 +31,21 @@ class JNIHelper {
   private static Type DOUBLE_PRIMITIVE_TYPE = double.class;
 
   private static Object jsValueToJavaValue(JSContext jsContext, Type type, long value) {
-    synchronized (jsContext.jsRuntime) {
-      TypeAdapter<Object> adapter = null;
-      try {
-        jsContext.checkClosed();
-        adapter = jsContext.quickJS.getAdapter(type);
-      } finally {
-        if (adapter == null) {
-          QuickJS.destroyValue(jsContext.pointer, value);
-        }
-      }
-
-      JSValue jsValue = jsContext.wrapAsJSValue(value);
-      return adapter.fromJSValue(jsContext.quickJS, jsContext, jsValue);
-    }
+    throw new IllegalStateException("TODO");
+//    synchronized (jsContext.jsRuntime) {
+//      TypeAdapter<Object> adapter = null;
+//      try {
+//        jsContext.checkClosed();
+//        adapter = jsContext.quickJS.getAdapter(type);
+//      } finally {
+//        if (adapter == null) {
+//          QuickJS.destroyValue(jsContext.pointer, value);
+//        }
+//      }
+//
+//      JSValue jsValue = jsContext.wrapAsJSValue(value);
+//      return adapter.fromJSValue(jsContext.quickJS, jsContext, jsValue);
+//    }
   }
 
   private static long javaValueToJSValue(JSContext jsContext, Type type, boolean value) { return javaValueToJSValue(jsContext, type, (Boolean) value); }
@@ -56,11 +57,12 @@ class JNIHelper {
   private static long javaValueToJSValue(JSContext jsContext, Type type, float value) { return javaValueToJSValue(jsContext, type, (Float) value); }
   private static long javaValueToJSValue(JSContext jsContext, Type type, double value) { return javaValueToJSValue(jsContext, type, (Double) value); }
   private static long javaValueToJSValue(JSContext jsContext, Type type, Object value) {
-    synchronized (jsContext.jsRuntime) {
-      jsContext.checkClosed();
-      TypeAdapter<Object> adapter = jsContext.quickJS.getAdapter(type);
-      return adapter.toJSValue(jsContext.quickJS, jsContext, value).pointer;
-    }
+    throw new IllegalStateException("TODO");
+//    synchronized (jsContext.jsRuntime) {
+//      jsContext.checkClosed();
+//      TypeAdapter<Object> adapter = jsContext.quickJS.getAdapter(type);
+//      return adapter.toJSValue(jsContext.quickJS, jsContext, value).pointer;
+//    }
   }
 
   private static boolean isPrimitiveType(Type type) {

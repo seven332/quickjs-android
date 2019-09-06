@@ -16,58 +16,119 @@
 
 package com.hippo.quickjs.android;
 
+import java.io.Closeable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Stack;
 
 /**
  * QuickJS is a resources container to create {@link JSRuntime}s.
  */
-public class QuickJS implements TypeAdapter.Depot {
+public class QuickJS implements Translator.Depot, Closeable {
 
-  private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(4);
+  private static final List<Translator.Factory> BUILT_IN_FACTORIES = new ArrayList<>(2);
 
   static {
-    BUILT_IN_FACTORIES.add(StandardTypeAdapters.FACTORY);
-    BUILT_IN_FACTORIES.add(JSValueAdapter.FACTORY);
-    BUILT_IN_FACTORIES.add(ArrayTypeAdapter.FACTORY);
-    BUILT_IN_FACTORIES.add(InterfaceTypeAdapter.FACTORY);
+    BUILT_IN_FACTORIES.add(StandardTranslators.FACTORY);
+    BUILT_IN_FACTORIES.add(ArrayTranslator.FACTORY);
   }
 
-  private final List<TypeAdapter.Factory> factories;
-  private final Map<Type, TypeAdapter<?>> adapterCache;
+  private final List<Translator.Factory> factories;
+  private final Map<Type, Translator<?>> translatorCache;
 
   private QuickJS(QuickJS.Builder builder) {
-    List<TypeAdapter.Factory> factories = new ArrayList<>(builder.factories.size() + BUILT_IN_FACTORIES.size());
+    List<Translator.Factory> factories = new ArrayList<>(builder.factories.size() + BUILT_IN_FACTORIES.size());
     factories.addAll(builder.factories);
     factories.addAll(BUILT_IN_FACTORIES);
     this.factories = Collections.unmodifiableList(factories);
-    this.adapterCache = new ConcurrentHashMap<>();
+    this.translatorCache = new HashMap<>();
+  }
+
+  private Translator<?> getUncachedTranslator(Type type) {
+    for (int i = 0, size = factories.size(); i < size; i++) {
+      Translator<?> translator = factories.get(i).create(this, type);
+      if (translator != null) {
+        return translator;
+      }
+    }
+    return null;
+  }
+
+  private void cacheTranslator(Type type, Translator<?> translator) {
+    Stack<Translator<?>> stack = new Stack<>();
+    stack.add(translator);
+
+    Map<Type, Translator<?>> toCache = new HashMap<>();
+    toCache.put(type, translator);
+
+    // Get all translators related to this translator
+    while (!stack.isEmpty()) {
+      Translator<?> tr = stack.pop();
+      for (Translator.Placeholder ph : tr.placeholders) {
+        Type t = ph.type;
+        if (translatorCache.containsKey(t) || toCache.containsKey(t)) {
+          continue;
+        }
+        Translator<?> newTr = getUncachedTranslator(t);
+        if (newTr == null) {
+          throw new IllegalStateException("Can't get translator for type: " + type);
+        }
+        stack.push(newTr);
+        toCache.put(t, newTr);
+      }
+    }
+
+    // Push all commands
+    byte[][] pickleCommands = new byte[toCache.size()][];
+    Iterator<Translator<?>> iterator = toCache.values().iterator();
+    for (int i = 0, n = toCache.size(); i < n; i++) {
+      pickleCommands[i] = iterator.next().pickleCommand;
+    }
+    long[] picklePointers = QuickJS.pushCommands(pickleCommands);
+    iterator = toCache.values().iterator();
+    for (int i = 0, n = toCache.size(); i < n; i++) {
+      iterator.next().picklePointer = picklePointers[i];
+    }
+
+    // Back fill
+    translatorCache.putAll(toCache);
+    iterator = toCache.values().iterator();
+    while (iterator.hasNext()) {
+      Translator<?> tr = iterator.next();
+      for (Translator.Placeholder placeholder : tr.placeholders) {
+        Translator<?> child = translatorCache.get(placeholder.type);
+        if (child == null) {
+          throw new IllegalStateException("Internal error: Can't get translator for type: " + placeholder.type);
+        }
+        Bits.writeLong(tr.pickleCommand, placeholder.pickleIndex, child.picklePointer);
+      }
+    }
+    QuickJS.updateCommands(picklePointers, pickleCommands);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> TypeAdapter<T> getAdapter(Type type) {
+  public <T> Translator<T> getTranslator(Type type) {
     // Canonicalize type
     Type newType = Types.removeSubtypeWildcard(Types.canonicalize(type));
 
-    TypeAdapter<?> adapter = adapterCache.get(newType);
-    if (adapter != null) {
-      return (TypeAdapter<T>) adapter;
+    Translator<?> translator = translatorCache.get(newType);
+    if (translator != null) {
+      return (Translator<T>) translator;
     }
 
-    for (int i = 0, size = factories.size(); i < size; i++) {
-      adapter = factories.get(i).create(this, newType);
-      if (adapter != null) {
-        adapterCache.put(newType, adapter);
-        return (TypeAdapter<T>) adapter;
-      }
+    translator = getUncachedTranslator(type);
+    if (translator != null) {
+      cacheTranslator(type, translator);
+      return (Translator<T>) translator;
     }
 
-    throw new IllegalArgumentException("Can't find TypeAdapter for " + type);
+    throw new IllegalArgumentException("Can't find Translator for " + type);
   }
 
   /**
@@ -81,20 +142,36 @@ public class QuickJS implements TypeAdapter.Depot {
     return new JSRuntime(runtime, this);
   }
 
+  @Override
+  public void close() {
+    // TODO Check all JSRuntime closed
+    long[] picklePointers = new long[translatorCache.size()];
+    Iterator<Translator<?>> iterator = translatorCache.values().iterator();
+    for (int i = 0, n = translatorCache.size(); i < n; i++) {
+      picklePointers[i] = iterator.next().picklePointer;
+    }
+
+    QuickJS.popCommands(picklePointers);
+
+    for (Translator<?> translator : translatorCache.values()) {
+      translator.picklePointer = 0;
+    }
+  }
+
   public static class Builder {
 
-    private List<TypeAdapter.Factory> factories = new ArrayList<>();
+    private List<Translator.Factory> factories = new ArrayList<>();
 
-    public <T> Builder registerTypeAdapter(final Type type, final TypeAdapter<T> adapter) {
-      return registerTypeAdapterFactory((depot, targetType) -> {
+    public <T> Builder addTranslator(Type type, Translator<T> translator) {
+      return addTranslatorFactory((depot, targetType) -> {
         if (Types.equals(type, targetType)) {
-          return adapter;
+          return translator;
         }
         return null;
       });
     }
 
-    public Builder registerTypeAdapterFactory(TypeAdapter.Factory factory) {
+    public Builder addTranslatorFactory(Translator.Factory factory) {
       factories.add(factory);
       return this;
     }
@@ -148,5 +225,10 @@ public class QuickJS implements TypeAdapter.Depot {
   static native JSException getException(long context);
   static native long getGlobalObject(long context);
 
-  static native long evaluate(long context, String sourceCode, String fileName, int flags);
+  static native byte[] evaluate(long context, String sourceCode, String fileName, int flags, long pickle);
+
+  static native long pushCommand(byte[] command);
+  static native long[] pushCommands(byte[][] commands);
+  static native void updateCommands(long[] pointers, byte[][] commands);
+  static native void popCommands(long[] pointers);
 }

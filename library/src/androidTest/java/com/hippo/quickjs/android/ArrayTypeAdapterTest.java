@@ -18,44 +18,128 @@ package com.hippo.quickjs.android;
 
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class ArrayTypeAdapterTest {
 
-  @Test
-  public void convert() {
+  private void assertEquivalent(String script, boolean[] except, Class<boolean[]> clazz) {
     QuickJS quickJS = new QuickJS.Builder().build();
     try (JSRuntime runtime = quickJS.createJSRuntime()) {
       try (JSContext context = runtime.createJSContext()) {
-
-        ArrayPipe pipe = context.evaluate("" +
-            "a = {\n" +
-            "  intArray: function(a) { return a },\n" +
-            "  integerArray: function(a) { return a },\n" +
-            "  intArray2: function(a) { return a },\n" +
-            "  stringArray: function(a) { return a },\n" +
-            "}", "test.js", ArrayPipe.class);
-
-        assertThat(pipe.intArray(new int[] {1, 2, 3})).containsExactly(1, 2, 3);
-        assertThat(pipe.intArray(new int[] {})).isEmpty();
-        assertThat(pipe.intArray(null)).isNull();
-        assertThat(pipe.integerArray(new Integer[] {1, 2, null})).containsExactly(1, 2, null);
-        assertThat(pipe.integerArray(new Integer[] {})).isEmpty();
-        assertThat(pipe.integerArray(null)).isNull();
-        assertThat(pipe.intArray2(new int[][] {new int[] {1, 2}, null, new int[] {}})).containsExactly(new int[] {1, 2}, null, new int[] {});
-        assertThat(pipe.intArray2(new int[][] {})).isEmpty();
-        assertThat(pipe.intArray2(null)).isNull();
-        assertThat(pipe.stringArray(new String[] {"str", "ing", null})).containsExactly("str", "ing", null);
-        assertThat(pipe.stringArray(new String[] {})).isEmpty();
-        assertThat(pipe.stringArray(null)).isNull();
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
       }
     }
   }
 
-  interface ArrayPipe {
-    int[] intArray(int[] a);
-    Integer[] integerArray(Integer[] a);
-    int[][] intArray2(int[][] a);
-    String[] stringArray(String[] a);
+  private void assertEquivalent(String script, byte[] except, Class<byte[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
+      }
+    }
+  }
+
+  private void assertEquivalent(String script, char[] except, Class<char[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
+      }
+    }
+  }
+
+  private void assertEquivalent(String script, short[] except, Class<short[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
+      }
+    }
+  }
+
+  private void assertEquivalent(String script, int[] except, Class<int[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
+      }
+    }
+  }
+
+  private void assertEquivalent(String script, long[] except, Class<long[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
+      }
+    }
+  }
+
+  private void assertEquivalent(String script, float[] except, Class<float[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz), 0.0f);
+      }
+    }
+  }
+
+  private void assertEquivalent(String script, double[] except, Class<double[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz), 0.0);
+      }
+    }
+  }
+
+  private <T> void assertEquivalent(String script, T[] except, Class<T[]> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", clazz));
+      }
+    }
+  }
+
+  private void assertException(String script, String message, Class<?> clazz) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        try {
+          context.evaluate(script, "test.js", clazz);
+          fail();
+        } catch (JSDataException e) {
+          assertEquals(message, e.getMessage());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void booleanArray() {
+
+  }
+
+  @Test
+  public void intArray() {
+    assertEquivalent("[1, 2, 3]", new int[] { 1, 2, 3 }, int[].class);
+    assertException("[1, null, 3]", "Can't pickle the JSValue", int[].class);
+    assertException("[1, 2.1, 3]", "Can't treat 2.1 as int", int[].class);
+    assertEquivalent("[]", new int[] { }, int[].class);
+    assertEquivalent("null", null, int[].class);
+    assertEquivalent("undefined", null, int[].class);
+    assertException("false", "Can't pickle the JSValue", int[].class);
+
+    assertEquivalent("[1, 2, 3]", new Integer[] { 1, 2, 3 }, Integer[].class);
+    assertEquivalent("[1, null, 3]", new Integer[] { 1, null, 3 }, Integer[].class);
+    assertException("[1, 2.1, 3]", "Can't treat 2.1 as int", Integer[].class);
+    assertEquivalent("[]", new Integer[] { }, Integer[].class);
+    assertEquivalent("null", null, Integer[].class);
+    assertEquivalent("undefined", null, Integer[].class);
+    assertException("false", "Can't pickle the JSValue", Integer[].class);
   }
 }

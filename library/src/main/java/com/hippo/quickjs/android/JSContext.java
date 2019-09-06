@@ -26,7 +26,7 @@ import java.io.Closeable;
  *
  * @see JSRuntime
  */
-public class JSContext implements Closeable, TypeAdapter.Context {
+public class JSContext implements Closeable, Translator.Context {
 
   static final int TYPE_SYMBOL = -8;
   static final int TYPE_STRING = -7;
@@ -113,15 +113,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Returns the result as the java class.
    */
   public <T> T evaluate(String script, String fileName, Class<T> clazz) {
-    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getAdapter(clazz));
-  }
-
-  /**
-   * Evaluates the script in this JSContext.
-   * Returns the result converted by the TypeAdapter.
-   */
-  public <T> T evaluate(String script, String fileName, TypeAdapter<T> adapter) {
-    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, adapter);
+    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getTranslator(clazz));
   }
 
   /**
@@ -132,21 +124,10 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
    */
   public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
-    return evaluateInternal(script, fileName, type, flags, quickJS.getAdapter(clazz));
+    return evaluateInternal(script, fileName, type, flags, quickJS.getTranslator(clazz));
   }
 
-  /**
-   * Evaluates the script in this JSContext.
-   * Returns the result converted by the TypeAdapter.
-   *
-   * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
-   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
-   */
-  public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
-    return evaluateInternal(script, fileName, type, flags, adapter);
-  }
-
-  private <T> T evaluateInternal(String script, String fileName, int type, int flags, @Nullable TypeAdapter<T> adapter) {
+  private <T> T evaluateInternal(String script, String fileName, int type, int flags, @Nullable Translator<T> adapter) {
     if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
       throw new IllegalArgumentException("Invalid type: " + type);
     }
@@ -156,23 +137,8 @@ public class JSContext implements Closeable, TypeAdapter.Context {
 
     synchronized (jsRuntime) {
       checkClosed();
-
-      long value = QuickJS.evaluate(pointer, script, fileName, type | flags);
-
-      if (adapter != null) {
-        JSValue jsValue = wrapAsJSValue(value);
-        return adapter.fromJSValue(quickJS, this, jsValue);
-      } else {
-        // Only check exception
-        try {
-          if (QuickJS.getValueTag(value) == TYPE_EXCEPTION) {
-            throw new JSEvaluationException(QuickJS.getException(pointer));
-          }
-        } finally {
-          QuickJS.destroyValue(pointer, value);
-        }
-        return null;
-      }
+      byte[] bytes = QuickJS.evaluate(pointer, script, fileName, type | flags, adapter != null ? adapter.picklePointer : 0);
+      return adapter != null ? adapter.unpickle(bytes) : null;
     }
   }
 
