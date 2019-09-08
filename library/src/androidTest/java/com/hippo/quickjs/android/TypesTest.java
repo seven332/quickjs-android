@@ -20,13 +20,15 @@ import org.junit.Test;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.hippo.quickjs.android.Utils.assertException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TypesTest {
@@ -44,7 +46,7 @@ public final class TypesTest {
 
   @Test
   public void parameterizedTypeWithRequiredOwnerMissing() {
-    assertException(
+    Utils.assertException(
         IllegalArgumentException.class,
         "unexpected owner type for " + A.class + ": null",
         () -> Types.newParameterizedType(A.class, B.class)
@@ -53,7 +55,7 @@ public final class TypesTest {
 
   @Test
   public void parameterizedTypeWithUnnecessaryOwnerProvided() {
-    assertException(
+    Utils.assertException(
         IllegalArgumentException.class,
         "unexpected owner type for " + List.class + ": " + A.class,
         () -> Types.newParameterizedTypeWithOwner(A.class, List.class, B.class)
@@ -62,7 +64,7 @@ public final class TypesTest {
 
   @Test
   public void parameterizedTypeWithIncorrectOwnerProvided() {
-    assertException(
+    Utils.assertException(
         IllegalArgumentException.class,
         "unexpected owner type for " + D.class + ": " + A.class,
         () -> Types.newParameterizedTypeWithOwner(A.class, D.class, B.class)
@@ -79,10 +81,22 @@ public final class TypesTest {
   List<? extends CharSequence> listSubtype;
   List<? super String> listSupertype;
 
+  private static Type collectionElementType(Type context) {
+    Type collectionType = Types.getSupertype(context, Collection.class);
+
+    if (collectionType instanceof WildcardType) {
+      collectionType = ((WildcardType) collectionType).getUpperBounds()[0];
+    }
+    if (collectionType instanceof ParameterizedType) {
+      return ((ParameterizedType) collectionType).getActualTypeArguments()[0];
+    }
+    return Object.class;
+  }
+
   @Test
   public void subtypeOf() throws Exception {
     Type listOfWildcardType = TypesTest.class.getDeclaredField("listSubtype").getGenericType();
-    Type expected = Types.collectionElementType(listOfWildcardType, List.class);
+    Type expected = collectionElementType(listOfWildcardType);
     Type subtype = Types.subtypeOf(CharSequence.class);
     assertThat(subtype).isEqualTo(expected);
     assertThat(subtype.hashCode()).isEqualTo(expected.hashCode());
@@ -92,7 +106,7 @@ public final class TypesTest {
   @Test
   public void supertypeOf() throws Exception {
     Type listOfWildcardType = TypesTest.class.getDeclaredField("listSupertype").getGenericType();
-    Type expected = Types.collectionElementType(listOfWildcardType, List.class);
+    Type expected = collectionElementType(listOfWildcardType);
     Type supertype = Types.supertypeOf(String.class);
     assertThat(supertype).isEqualTo(expected);
     assertThat(supertype.hashCode()).isEqualTo(expected.hashCode());
@@ -199,28 +213,8 @@ public final class TypesTest {
         "arrayListOfMapOfStringInteger").getGenericType();
     Type mapOfStringIntegerType = TypesTest.class.getDeclaredField(
         "mapOfStringInteger").getGenericType();
-    assertThat(Types.collectionElementType(arrayListOfMapOfStringIntegerType, List.class))
+    assertThat(collectionElementType(arrayListOfMapOfStringIntegerType))
         .isEqualTo(mapOfStringIntegerType);
-  }
-
-  @Test
-  public void mapKeyAndValueTypes() throws Exception {
-    Type mapOfStringIntegerType = TypesTest.class.getDeclaredField(
-        "mapOfStringInteger").getGenericType();
-    assertThat(Types.mapKeyAndValueTypes(mapOfStringIntegerType, Map.class))
-        .containsExactly(String.class, Integer.class);
-  }
-
-  @Test
-  public void propertiesTypes() {
-    assertThat(Types.mapKeyAndValueTypes(Properties.class, Properties.class))
-        .containsExactly(String.class, String.class);
-  }
-
-  @Test
-  public void fixedVariablesTypes() {
-    assertThat(Types.mapKeyAndValueTypes(StringIntegerMap.class, StringIntegerMap.class))
-        .containsExactly(String.class, Integer.class);
   }
 
   @Test
@@ -233,22 +227,70 @@ public final class TypesTest {
 
   @Test
   public void parameterizedAndWildcardTypesCannotHavePrimitiveArguments() {
-    assertException(
+    Utils.assertException(
         IllegalArgumentException.class,
         "Unexpected primitive int. Use the boxed type.",
         () -> Types.newParameterizedType(List.class, int.class)
     );
 
-    assertException(
+    Utils.assertException(
         IllegalArgumentException.class,
         "Unexpected primitive byte. Use the boxed type.",
         () -> Types.subtypeOf(byte.class)
     );
 
-    assertException(
+    Utils.assertException(
         IllegalArgumentException.class,
         "Unexpected primitive boolean. Use the boxed type.",
         () -> Types.subtypeOf(boolean.class)
     );
+  }
+
+  @Test
+  public void getRawTypeForNonNull() {
+    assertThat(Types.getRawType(Types.nonNullOf(List.class)))
+        .isEqualTo(List.class);
+    assertThat(Types.getRawType(Types.nonNullOf(Types.newParameterizedType(List.class, String.class))))
+        .isEqualTo(List.class);
+    assertThat(Types.getRawType(Types.nonNullOf(Types.newParameterizedType(List.class, Types.nonNullOf(String.class)))))
+        .isEqualTo(List.class);
+  }
+
+  @Test
+  public void equalsForNonNull() {
+    assertThat(Types.equals(Types.nonNullOf(List.class), Types.nonNullOf(List.class))).isTrue();
+    assertThat(Types.equals(Types.nonNullOf(List.class), Types.nonNullOf(Set.class))).isFalse();
+    assertThat(Types.equals(Types.nonNullOf(List.class), List.class)).isFalse();
+    assertThat(Types.equals(Types.nonNullOf(List.class), Set.class)).isFalse();
+    assertThat(Types.equals(Types.nonNullOf(List.class), null)).isFalse();
+  }
+
+  @Test
+  public void getSupertypeForNonNull() throws NoSuchFieldException {
+    Type listOfWildcardType = TypesTest.class.getDeclaredField("listSubtype").getGenericType();
+    Type nonNullListOfWildcardType = Types.nonNullOf(listOfWildcardType);
+    assertThat(Types.getSupertype(nonNullListOfWildcardType, Iterable.class))
+        .isEqualTo(Types.nonNullOf(Types.newParameterizedType(Iterable.class, Types.subtypeOf(CharSequence.class))));
+  }
+
+  @Test
+  public void getGenericSuperclassForNonNull() {
+    Type type = Types.nonNullOf(Types.newParameterizedType(ArrayList.class, String.class));
+    assertThat(Types.getGenericSuperclass(type))
+        .isEqualTo(Types.nonNullOf(Types.newParameterizedType(AbstractList.class, String.class)));
+  }
+
+  @Test
+  public void getGenericInterfacesForNonNull() {
+    Type type = Types.nonNullOf(Types.newParameterizedType(List.class, String.class));
+    assertThat(Types.getGenericInterfaces(type))
+        .isEqualTo(new Type[] { Types.nonNullOf(Types.newParameterizedType(Collection.class, String.class)) });
+  }
+
+  @Test
+  public void arrayComponentTypeForNonNull() {
+    Type type = Types.nonNullOf(Types.arrayOf(String.class));
+    assertThat(Types.arrayComponentType(type))
+        .isEqualTo(String.class);
   }
 }

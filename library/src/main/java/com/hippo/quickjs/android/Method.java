@@ -18,6 +18,7 @@ package com.hippo.quickjs.android;
 
 import androidx.annotation.Nullable;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
@@ -66,8 +67,8 @@ public final class Method {
 
   private static String getTypeSignature(Type type) {
     // Array
-    if (type instanceof Types.GenericArrayTypeImpl) {
-      return "[" + getTypeSignature(((Types.GenericArrayTypeImpl) type).getGenericComponentType());
+    if (type instanceof GenericArrayType) {
+      return "[" + getTypeSignature(((GenericArrayType) type).getGenericComponentType());
     }
 
     // Primitive
