@@ -22,11 +22,12 @@ import java.lang.reflect.Type;
 class ArrayTranslator extends Translator<Object> {
 
   public static final Factory FACTORY = (depot, type) -> {
+    if (!Types.isNonNull(type)) return null;
     Type elementType = Types.arrayComponentType(type);
     if (elementType == null) return null;
     Class<?> elementClass = Types.getRawType(elementType);
     Translator<Object> elementTranslator = depot.getTranslator(elementType);
-    return ArrayTranslator.create(elementType, elementClass, elementTranslator).nullable();
+    return ArrayTranslator.create(elementType, elementClass, elementTranslator);
   };
 
   private final Class<?> elementClass;
@@ -59,7 +60,7 @@ class ArrayTranslator extends Translator<Object> {
     throw new IllegalStateException("TODO");
   }
 
-  private static Translator<Object> create(
+  private static Translator<Object> createInvoke(
       Type elementType,
       Class<?> elementClass,
       Translator<Object> elementTranslator
@@ -82,5 +83,55 @@ class ArrayTranslator extends Translator<Object> {
         elementClass,
         elementTranslator
     );
+  }
+
+  private static Translator<Object> createInline(
+      Class<?> elementClass,
+      Translator<Object> elementTranslator
+  ) {
+    byte[] pickleCommand = elementTranslator.pickleCommand;
+    byte[] newPickleCommand = new byte[1 + 4 + pickleCommand.length];
+    newPickleCommand[0] = PICKLE_FLAG_TYPE_ARRAY;
+    Bits.writeInt(newPickleCommand, 1, pickleCommand.length);
+    System.arraycopy(pickleCommand, 0, newPickleCommand, 1 + 4, pickleCommand.length);
+
+    byte[] newUnpickleCommand = new byte[0]; // TODO
+
+    Placeholder[] placeholders = elementTranslator.placeholders;
+    Placeholder[] newPlaceholders;
+    if (placeholders.length == 0) {
+      newPlaceholders = EMPTY_PLACEHOLDER_ARRAY;
+    } else {
+      newPlaceholders = new Placeholder[placeholders.length];
+      for (int i = 0; i < placeholders.length; i++) {
+        Placeholder placeholder = placeholders[i];
+        newPlaceholders[i] = new Placeholder(
+            placeholder.type,
+            1 + 4 + placeholder.pickleIndex,
+            0 // TODO
+        );
+      }
+    }
+
+    return new ArrayTranslator(
+        newPickleCommand,
+        newUnpickleCommand,
+        newPlaceholders,
+        elementClass,
+        elementTranslator
+    );
+  }
+
+  private static Translator<Object> create(
+      Type elementType,
+      Class<?> elementClass,
+      Translator<Object> elementTranslator
+  ) {
+    if (elementTranslator.pickleCommand.length > MAX_INLINE_SIZE ||
+        elementTranslator.unpickleCommand.length > MAX_INLINE_SIZE) {
+      return createInvoke(elementType, elementClass, elementTranslator);
+    } else {
+      return createInline(elementClass, elementTranslator);
+    }
   }
 }

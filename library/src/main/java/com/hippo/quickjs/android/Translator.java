@@ -26,7 +26,8 @@ import java.lang.reflect.Type;
  */
 public abstract class Translator<T> {
 
-  private static final Placeholder[] EMPTY_PLACEHOLDER_ARRAY = new Placeholder[0];
+  static final Placeholder[] EMPTY_PLACEHOLDER_ARRAY = new Placeholder[0];
+  static final int MAX_INLINE_SIZE = 8 * 1024; // TODO A better number
 
   public static final byte PICKLE_FLAG_PROP_INT          = (byte) 0b00000000;
   public static final byte PICKLE_FLAG_PROP_STR          = (byte) 0b00000001;
@@ -81,59 +82,6 @@ public abstract class Translator<T> {
       this.type = type;
       this.pickleIndex = pickleIndex;
       this.unpickleIndex = unpickleIndex;
-    }
-  }
-
-  public final Translator<T> nullable() {
-    return NullableTranslator.create(this);
-  }
-
-  private static class NullableTranslator<T> extends Translator<T> {
-
-    private final Translator<T> delegate;
-
-    private NullableTranslator(
-        byte[] pickleCommand,
-        byte[] unpickleCommand,
-        Placeholder[] placeholders,
-        Translator<T> delegate
-    ) {
-      super(pickleCommand, unpickleCommand, placeholders);
-      this.delegate = delegate;
-    }
-
-    @Override
-    protected T unpickle(BitSource source) {
-      if (source.nextIfNull()) return null;
-      else return delegate.unpickle(source);
-    }
-
-    @Override
-    protected void pickle(T value, BitSink sink) {
-      throw new IllegalStateException("TODO");
-    }
-
-    private static <T> Translator<T> create(Translator<T> translator) {
-      byte[] pickleCommand = translator.pickleCommand;
-      byte[] newPickleCommand = new byte[1 + 4 + pickleCommand.length];
-      newPickleCommand[0] = PICKLE_FLAG_ATTR_NULLABLE;
-      Bits.writeInt(newPickleCommand, 1, pickleCommand.length);
-      System.arraycopy(pickleCommand, 0, newPickleCommand, 1 + 4, pickleCommand.length);
-
-      byte[] newUnpickleCommand = new byte[0]; // TODO
-
-      Placeholder[] placeholders = translator.placeholders;
-      Placeholder[] newPlaceholders = new Placeholder[placeholders.length];
-      for (int i = 0; i < placeholders.length; i++) {
-        Placeholder placeholder = placeholders[i];
-        newPlaceholders[i] = new Placeholder(
-            placeholder.type,
-            1 + 4 + placeholder.pickleIndex,
-            0 // TODO
-        );
-      }
-
-      return new NullableTranslator<>(newPickleCommand, newUnpickleCommand, newPlaceholders, translator);
     }
   }
 

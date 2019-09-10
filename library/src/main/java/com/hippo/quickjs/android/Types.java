@@ -38,25 +38,49 @@ class Types {
 
   private static final Type[] EMPTY_TYPE_ARRAY = new Type[] {};
 
-  private static final Map<Type, Type> PRIMITIVE_TYPE_MAP = new HashMap<>(9);
+  private static final Map<Type, Type> UNBOX_MAP = new HashMap<>(8);
+  private static final Map<Type, Type> BOX_MAP = new HashMap<>(8);
 
   static {
-    PRIMITIVE_TYPE_MAP.put(Boolean.class,   boolean.class);
-    PRIMITIVE_TYPE_MAP.put(Byte.class,      byte.class);
-    PRIMITIVE_TYPE_MAP.put(Character.class, char.class);
-    PRIMITIVE_TYPE_MAP.put(Short.class,     short.class);
-    PRIMITIVE_TYPE_MAP.put(Integer.class,   int.class);
-    PRIMITIVE_TYPE_MAP.put(Long.class,      long.class);
-    PRIMITIVE_TYPE_MAP.put(Float.class,     float.class);
-    PRIMITIVE_TYPE_MAP.put(Double.class,    double.class);
-    PRIMITIVE_TYPE_MAP.put(Void.class,      void.class);
+    // We treat void and Void as nonnull
+    UNBOX_MAP.put(Boolean.class,   boolean.class);
+    UNBOX_MAP.put(Byte.class,      byte.class);
+    UNBOX_MAP.put(Character.class, char.class);
+    UNBOX_MAP.put(Short.class,     short.class);
+    UNBOX_MAP.put(Integer.class,   int.class);
+    UNBOX_MAP.put(Long.class,      long.class);
+    UNBOX_MAP.put(Float.class,     float.class);
+    UNBOX_MAP.put(Double.class,    double.class);
+
+    BOX_MAP.put(boolean.class, Boolean.class);
+    BOX_MAP.put(byte.class,    Byte.class);
+    BOX_MAP.put(char.class,    Character.class);
+    BOX_MAP.put(short.class,   Short.class);
+    BOX_MAP.put(int.class,     Integer.class);
+    BOX_MAP.put(long.class,    Long.class);
+    BOX_MAP.put(float.class,   Float.class);
+    BOX_MAP.put(double.class,  Double.class);
   }
 
   /**
    * Returns {@code true} if the type is non-null.
    */
   public static boolean isNonNull(Type type) {
-    return type instanceof NonNullType || PRIMITIVE_TYPE_MAP.values().contains(type);
+    return type instanceof NonNullType || BOX_MAP.keySet().contains(type);
+  }
+
+  /**
+   * Returns the nullable type of the type.
+   */
+  public static Type nullableOf(Type type) {
+    if (type instanceof NonNullType) {
+      return ((NonNullType) type).getNullableType();
+    } else if (type instanceof Class) {
+      Type boxedType = BOX_MAP.get(type);
+      return boxedType != null ? boxedType : type;
+    } else {
+      return type;
+    }
   }
 
   /**
@@ -68,9 +92,9 @@ class Types {
       if (clazz.isPrimitive()) {
         return clazz;
       } else {
-        Type primitiveType = PRIMITIVE_TYPE_MAP.get(type);
-        if (primitiveType != null) {
-          return primitiveType;
+        Type unboxedType = UNBOX_MAP.get(type);
+        if (unboxedType != null) {
+          return unboxedType;
         } else {
           return new NonNullTypeImpl(type);
         }

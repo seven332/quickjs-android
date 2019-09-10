@@ -27,6 +27,7 @@ class StandardTranslators {
     @Override
     public Translator<?> create(Translator.Depot depot, Type type) {
       if (type == void.class) return VOID_TRANSLATOR;
+      if (type == Void.class) return VOID_TRANSLATOR;
       if (type == boolean.class) return BOOLEAN_TRANSLATOR;
       if (type == byte.class) return BYTE_TRANSLATOR;
       if (type == char.class) return CHAR_TRANSLATOR;
@@ -35,16 +36,10 @@ class StandardTranslators {
       if (type == long.class) return LONG_TRANSLATOR;
       if (type == float.class) return FLOAT_TRANSLATOR;
       if (type == double.class) return DOUBLE_TRANSLATOR;
-      if (type == Void.class) return VOID_TRANSLATOR;
-      if (type == Boolean.class) return BOOLEAN_TRANSLATOR.nullable();
-      if (type == Byte.class) return BYTE_TRANSLATOR.nullable();
-      if (type == Character.class) return CHAR_TRANSLATOR.nullable();
-      if (type == Short.class) return SHORT_TRANSLATOR.nullable();
-      if (type == Integer.class) return INT_TRANSLATOR.nullable();
-      if (type == Long.class) return LONG_TRANSLATOR.nullable();
-      if (type == Float.class) return FLOAT_TRANSLATOR.nullable();
-      if (type == Double.class) return DOUBLE_TRANSLATOR.nullable();
-      if (type == String.class) return STRING_TRANSLATOR.nullable();
+      if (type instanceof NonNullType) {
+        Type nullableType = ((NonNullType) type).getNullableType();
+        if (nullableType == String.class) return STRING_TRANSLATOR;
+      }
       return null;
     }
   };
