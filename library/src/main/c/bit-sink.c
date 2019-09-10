@@ -9,30 +9,6 @@
 #define TYPE_DOUBLE  3
 #define TYPE_STRING  4
 
-struct BitSink {
-    void *data;
-    size_t offset;
-    size_t size;
-};
-
-BitSink *create_bit_sink(size_t size) {
-    BitSink *sink = malloc(sizeof(BitSink));
-    if (sink == NULL) {
-        return NULL;
-    }
-
-    sink->data = malloc(size);
-    if (sink->data == NULL) {
-        free(sink);
-        return NULL;
-    }
-
-    sink->offset = 0;
-    sink->size = size;
-
-    return sink;
-}
-
 static bool ensure_size(BitSink *sink, size_t size) {
     if (sink->offset + size <= sink->size) {
         return true;
@@ -96,17 +72,4 @@ bool bit_sink_write_string_len(BitSink *sink, const char *value, size_t length) 
     strncpy(sink->data + sink->offset, value, length);
     sink->offset += length;
     return true;
-}
-
-size_t bit_sink_get_length(BitSink *sink) {
-    return sink->offset;
-}
-
-void *bit_sink_get_data(BitSink *sink) {
-    return sink->data;
-}
-
-void destroy_bit_sink(BitSink *sink) {
-    free(sink->data);
-    free(sink);
 }

@@ -2,10 +2,22 @@
 #define QUICKJS_ANDROID_BIT_SOURCE_H
 
 #include <stdbool.h>
+#include <assert.h>
 
-typedef struct BitSource BitSource;
+#include "common.h"
 
-BitSource *create_source_bit(void *data, size_t size);
+#define CREATE_COMMAND_BIT_SOURCE(COMMAND)    \
+    (BitSource) {                             \
+        .data = (COMMAND) + sizeof(jsize),    \
+        .offset = 0,                          \
+        .size = (size_t) *(jsize *) (COMMAND) \
+    }
+
+typedef struct BitSource {
+    void *data;
+    size_t offset;
+    size_t size;
+} BitSource;
 
 int8_t bit_source_next_int8(BitSource *source);
 
@@ -17,16 +29,26 @@ double bit_source_next_double(BitSource *source);
 
 const char *bit_source_next_string(BitSource *source);
 
-bool bit_source_has_next(BitSource *source);
+static force_inline bool bit_source_has_next(BitSource *source) {
+    return source->offset < source->size;
+}
 
-void bit_source_skip(BitSource *source, size_t step);
+static force_inline void bit_source_skip(BitSource *source, size_t step) {
+    assert(source->offset + step <= source->size);
+    source->offset += step;
+}
 
-size_t bit_source_get_offset(BitSource *source);
+static force_inline size_t bit_source_get_offset(BitSource *source) {
+    return source->offset;
+}
 
-size_t bit_source_get_size(BitSource *source);
+static force_inline size_t bit_source_get_size(BitSource *source) {
+    return source->size;
+}
 
-void bit_source_reconfig(BitSource *source, size_t offset, size_t size);
-
-void destroy_source(BitSource *source);
+static force_inline void bit_source_reconfig(BitSource *source, size_t offset, size_t size) {
+    source->offset = offset;
+    source->size = size;
+}
 
 #endif //QUICKJS_ANDROID_BIT_SOURCE_H

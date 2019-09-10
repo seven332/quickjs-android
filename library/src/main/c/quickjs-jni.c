@@ -754,16 +754,13 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
     CHECK_NULL_RET(env, source_code, "Null source code");
     CHECK_NULL_RET(env, file_name, "Null file name");
 
-    BitSource *source = NULL;
-    BitSink *sink = NULL;
+    BitSource source;
+    BitSink sink;
 
     if (pickle_pointer != 0) {
         void *pickler = (void *) pickle_pointer;
-        source = create_source_bit(pickler + sizeof(jsize), (size_t) *(jsize *) pickler);
-        CHECK_NULL_RET(env, source, MSG_OOM);
-        sink = create_bit_sink(DEFAULT_SINK_SIZE);
-        if (sink == NULL) {
-            destroy_source(source);
+        source = CREATE_COMMAND_BIT_SOURCE(pickler);
+        if (!create_bit_sink(&sink, DEFAULT_SINK_SIZE)) {
             THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
         }
     }
@@ -778,8 +775,7 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
 
     if (source_code_utf == NULL || file_name_utf == NULL) {
         if (pickle_pointer != 0) {
-            destroy_source(source);
-            destroy_bit_sink(sink);
+            destroy_bit_sink(&sink);
         }
         if (source_code_utf != NULL) {
             (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
@@ -795,7 +791,7 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
     JSValue val = JS_Eval(ctx, source_code_utf, (size_t) source_code_length, file_name_utf, flags);
     bool is_exception = (bool) JS_IsException(val);
     if (!is_exception && pickle_pointer != 0) {
-        pickle_result = pickle(ctx, val, source, sink);
+        pickle_result = pickle(ctx, val, &source, &sink);
     }
     JS_FreeValue(ctx, val);
 
@@ -806,11 +802,10 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
 
     if (pickle_pointer != 0) {
         if (pickle_result) {
-            result = bit_sink_to_jbyte_array(env, sink);
+            result = bit_sink_to_jbyte_array(env, &sink);
         }
 
-        destroy_source(source);
-        destroy_bit_sink(sink);
+        destroy_bit_sink(&sink);
 
         if (is_exception) {
             throw_JSEvaluationException(env, ctx);

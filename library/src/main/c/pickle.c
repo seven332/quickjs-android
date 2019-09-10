@@ -212,13 +212,10 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
                 }
                 case FLAG_TYPE_COMMAND: {
                     void *command = (void *) bit_source_next_int64(source);
-                    BitSource *child_source = create_source_bit(command + sizeof(jsize), (size_t) *(jsize *) command);
-
+                    BitSource child_source = CREATE_COMMAND_BIT_SOURCE(command);
                     size_t start = stack_mark(stack);
-                    bool pickled = do_pickle(ctx, callee, stack, child_source, sink);
+                    bool pickled = do_pickle(ctx, callee, stack, &child_source, sink);
                     stack_reset(stack, start);
-
-                    destroy_source(child_source);
                     if (!pickled) goto fail;
                     break;
                 }
