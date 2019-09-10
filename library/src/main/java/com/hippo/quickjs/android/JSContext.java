@@ -118,13 +118,32 @@ public class JSContext implements Closeable, Translator.Context {
 
   /**
    * Evaluates the script in this JSContext.
+   * Returns the result as the java type.
+   */
+  public <T> T evaluate(String script, String fileName, GenericType<T> javaType) {
+    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getTranslator(javaType.type));
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
    * Returns the result as the java class.
    *
    * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
    * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
    */
-  public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
-    return evaluateInternal(script, fileName, type, flags, quickJS.getTranslator(clazz));
+  public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> javaClass) {
+    return evaluateInternal(script, fileName, type, flags, quickJS.getTranslator(javaClass));
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
+   * Returns the result as the java type.
+   *
+   * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
+   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
+   */
+  public <T> T evaluate(String script, String fileName, int type, int flags, GenericType<T> javaType) {
+    return evaluateInternal(script, fileName, type, flags, quickJS.getTranslator(javaType.type));
   }
 
   private <T> T evaluateInternal(String script, String fileName, int type, int flags, @Nullable Translator<T> adapter) {
