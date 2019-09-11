@@ -33,4 +33,142 @@ public class Utils {
   public interface Block {
     void run();
   }
+
+  public static <T> void assertEquivalent(String script, T except, Class<T> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static <T> void assertEquivalent(String script, T except, GenericType<T> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, boolean[] except, Class<boolean[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, byte[] except, Class<byte[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, char[] except, Class<char[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, short[] except, Class<short[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, int[] except, Class<int[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, long[] except, Class<long[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, float[] except, Class<float[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type), 0.0f);
+      }
+    }
+  }
+
+  public static void assertEquivalent(String script, double[] except, Class<double[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type), 0.0);
+      }
+    }
+  }
+
+  public static <T> void assertEquivalent(String script, T[] except, Class<T[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static <T> void assertEquivalent(String script, T[] except, GenericType<T[]> type) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        assertArrayEquals(except, context.evaluate(script, "test.js", type));
+      }
+    }
+  }
+
+  public static <T> void assertException(String script, Class<T> type, Class<?> exception, String message) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        try {
+          context.evaluate(script, "test.js", type);
+          fail("Unreached");
+        } catch (Throwable e) {
+          assertEquals(exception, e.getClass());
+          assertEquals(message, e.getMessage());
+        }
+      }
+    }
+  }
+
+  public static <T> void assertException(String script, GenericType<T> type, Class<?> exception, String message) {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        try {
+          context.evaluate(script, "test.js", type);
+          fail("Unreached");
+        } catch (Throwable e) {
+          assertEquals(exception, e.getClass());
+          assertEquals(message, e.getMessage());
+        }
+      }
+    }
+  }
 }

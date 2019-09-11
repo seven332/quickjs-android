@@ -18,34 +18,10 @@ package com.hippo.quickjs.android;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static com.hippo.quickjs.android.Utils.assertEquivalent;
+import static com.hippo.quickjs.android.Utils.assertException;
 
 public class NullableTranslatorTest {
-
-  private <T> void assertEquivalent(String script, T[] except, GenericType<T[]> type) {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        assertArrayEquals(except, context.evaluate(script, "test.js", type));
-      }
-    }
-  }
-
-  private <T> void assertException(String script, String message, GenericType<T[]> type) {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        try {
-          context.evaluate(script, "test.js", type);
-          fail();
-        } catch (JSDataException e) {
-          assertEquals(message, e.getMessage());
-        }
-      }
-    }
-  }
 
   @Test
   public void nonNullElement() {
@@ -61,16 +37,8 @@ public class NullableTranslatorTest {
 
     assertEquivalent("['str', 'ing']", new String[] { "str", "ing" }, type);
 
-    assertException(
-        "null",
-        "Can't pickle the JSValue",
-        type
-    );
+    assertException("null", type, JSDataException.class, "Can't pickle the JSValue");
 
-    assertException(
-        "['str', null, 'ing']",
-        "Can't pickle the JSValue",
-        type
-    );
+    assertException("['str', null, 'ing']", type, JSDataException.class, "Can't pickle the JSValue");
   }
 }
