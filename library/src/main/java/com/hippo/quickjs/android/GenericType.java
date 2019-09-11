@@ -26,6 +26,14 @@ public class GenericType<T> implements Type {
 
   final Type type;
 
+  /**
+   * Create a GenericType with the type.
+   * It's unsafe. The type and the generic type {@code T} must match.
+   */
+  public GenericType(Type type) {
+    this.type = type;
+  }
+
   protected GenericType() {
     Type superclass = getClass().getGenericSuperclass();
     if (!(superclass instanceof ParameterizedType)) {
