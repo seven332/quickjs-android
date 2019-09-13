@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "common.h"
 

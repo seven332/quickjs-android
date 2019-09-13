@@ -3,6 +3,7 @@
 #include <jni.h>
 
 #include "pickle.h"
+#include "js-value-stack.h"
 
 #define DEFAULT_STACK_SIZE 8
 
@@ -22,82 +23,6 @@
 #define FLAG_OPT_PUSH              ((int8_t) 0b11000000)
 #define FLAG_OPT_POP               ((int8_t) 0b11000001)
 
-typedef struct Stack {
-    JSValue *data;
-    size_t start;
-    size_t offset;
-    size_t size;
-} Stack;
-
-static Stack *create_stack(size_t size) {
-    Stack *stack = malloc(sizeof(Stack));
-    if (stack == NULL) {
-        return NULL;
-    }
-
-    stack->data = malloc(size * sizeof(JSValue));
-    if (stack->data == NULL) {
-        free(stack);
-        return NULL;
-    }
-
-    stack->start = 0;
-    stack->offset = 0;
-    stack->size = size;
-
-    return stack;
-}
-
-static JSValue stack_pop(Stack *stack) {
-    assert(stack->offset > 0);
-    return stack->data[--stack->offset];
-}
-
-static bool stack_push(Stack *stack, JSValue val) {
-    if (stack->offset + 1 > stack->size) {
-        // TODO Overflow
-        size_t new_size = (stack->offset + 1) << 2U;
-        void *new_data = realloc(stack->data, new_size * sizeof(JSValue));
-        if (new_data == NULL) {
-            return false;
-        }
-        stack->data = new_data;
-        stack->size = new_size;
-    }
-
-    stack->data[stack->offset++] = val;
-    return true;
-}
-
-static size_t stack_mark(Stack *stack) {
-    size_t start = stack->start;
-    stack->start = stack->offset;
-    return start;
-}
-
-static void stack_reset(Stack *stack, size_t start) {
-    stack->start = start;
-}
-
-static bool stack_is_empty(Stack *stack) {
-    return stack->start == stack->offset;
-}
-
-// Keep the JSValue in stack->start
-static void stack_clear(Stack *stack, JSContext *ctx) {
-    for (size_t i = stack->start + 1; i < stack->offset; i++) {
-        JS_FreeValue(ctx, stack->data[i]);
-    }
-    stack->offset = stack->start;
-}
-
-static void destroy_stack(Stack *stack, JSContext *ctx) {
-    assert(stack->start == 0);
-    assert(stack->offset == 0);
-    free(stack->data);
-    free(stack);
-}
-
 // Returns -1 if fail
 static int JS_GetArrayLength(JSContext *ctx, JSValue val) {
     if (!JS_IsArray(ctx, val)) return -1;
@@ -106,28 +31,28 @@ static int JS_GetArrayLength(JSContext *ctx, JSValue val) {
     return JS_VALUE_GET_INT(length);
 }
 
-bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, BitSink *sink) {
+bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *command, BitSink *sink) {
     JSValue callee;
     bool is_prop;
 
-    while (bit_source_has_next(source)) {
-        int8_t flag = bit_source_next_int8(source);
+    while (bit_source_has_next(command)) {
+        int8_t flag = bit_source_next_int8(command);
 
         if (flag == FLAG_OPT_POP) {
             JS_FreeValue(ctx, val);
-            val = stack_pop(stack);
+            val = js_value_stack_pop(stack);
             continue;
         }
 
         switch (flag) {
             case FLAG_PROP_INT:
-                callee = JS_GetPropertyUint32(ctx, val, (uint32_t) bit_source_next_int32(source));
-                flag = bit_source_next_int8(source);
+                callee = JS_GetPropertyUint32(ctx, val, (uint32_t) bit_source_next_int32(command));
+                flag = bit_source_next_int8(command);
                 is_prop = true;
                 break;
             case FLAG_PROP_STR:
-                callee = JS_GetPropertyStr(ctx, val, bit_source_next_string(source));
-                flag = bit_source_next_int8(source);
+                callee = JS_GetPropertyStr(ctx, val, bit_source_next_string(command));
+                flag = bit_source_next_int8(command);
                 is_prop = true;
                 break;
             default:
@@ -141,13 +66,13 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
         bool skipped = false;
 
         if (flag == FLAG_ATTR_NULLABLE) {
-            int32_t segment_size = bit_source_next_int32(source);
+            int32_t segment_size = bit_source_next_int32(command);
             if (tag == JS_TAG_NULL || tag == JS_TAG_UNDEFINED) {
                 if (!bit_sink_write_null(sink)) goto fail;
-                bit_source_skip(source, (size_t) segment_size);
+                bit_source_skip(command, (size_t) segment_size);
                 skipped = true;
             } else {
-                flag = bit_source_next_int8(source);
+                flag = bit_source_next_int8(command);
             }
         }
 
@@ -155,7 +80,7 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
             switch (flag) {
                 case FLAG_OPT_PUSH:
                     assert(is_prop);
-                    stack_push(stack, val);
+                    js_value_stack_push(stack, val);
                     val = callee;
                     pushed = true;
                     break;
@@ -192,30 +117,30 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
                     if (len < 0) goto fail;
                     if (!bit_sink_write_int(sink, len)) goto fail;
 
-                    size_t segment_size = (size_t) bit_source_next_int32(source);
-                    size_t segment_offset = bit_source_get_offset(source);
-                    size_t source_size = bit_source_get_size(source);
+                    size_t segment_size = (size_t) bit_source_next_int32(command);
+                    size_t segment_offset = bit_source_get_offset(command);
+                    size_t command_size = bit_source_get_size(command);
                     for (int32_t i = 0; i < len; i++) {
-                        bit_source_reconfig(source, segment_offset, segment_offset + segment_size);
+                        bit_source_reconfig(command, segment_offset, segment_offset + segment_size);
                         JSValue element = JS_GetPropertyUint32(ctx, callee, (uint32_t) i);
                         if (JS_IsException(element)) goto fail;
 
-                        size_t start = stack_mark(stack);
-                        bool pickled = do_pickle(ctx, element, stack, source, sink);
-                        stack_reset(stack, start);
+                        size_t start = js_value_stack_mark(stack);
+                        bool pickled = do_pickle(ctx, element, stack, command, sink);
+                        js_value_stack_reset(stack, start);
 
                         JS_FreeValue(ctx, element);
                         if (!pickled) goto fail;
                     }
-                    bit_source_reconfig(source, segment_offset + segment_size, source_size);
+                    bit_source_reconfig(command, segment_offset + segment_size, command_size);
                     break;
                 }
                 case FLAG_TYPE_COMMAND: {
-                    void *command = (void *) bit_source_next_int64(source);
-                    BitSource child_source = CREATE_COMMAND_BIT_SOURCE(command);
-                    size_t start = stack_mark(stack);
+                    void *child = (void *) bit_source_next_int64(command);
+                    BitSource child_source = CREATE_COMMAND_BIT_SOURCE(child);
+                    size_t start = js_value_stack_mark(stack);
                     bool pickled = do_pickle(ctx, callee, stack, &child_source, sink);
-                    stack_reset(stack, start);
+                    js_value_stack_reset(stack, start);
                     if (!pickled) goto fail;
                     break;
                 }
@@ -229,23 +154,24 @@ bool do_pickle(JSContext *ctx, JSValue val, Stack* stack, BitSource *source, Bit
         }
     }
 
-    stack_clear(stack, ctx);
+    js_value_stack_clear(stack, ctx);
     return true;
 
 fail:
     if (is_prop) {
         JS_FreeValue(ctx, callee);
     }
-    if (!stack_is_empty(stack)) {
+    if (!js_value_stack_is_empty(stack)) {
         JS_FreeValue(ctx, val);
     }
-    stack_clear(stack, ctx);
+    js_value_stack_clear(stack, ctx);
     return false;
 }
 
 bool pickle(JSContext *ctx, JSValue val, BitSource *source, BitSink *sink) {
-    Stack *stack = create_stack(DEFAULT_STACK_SIZE);
-    bool result = do_pickle(ctx, val, stack, source, sink);
-    destroy_stack(stack, ctx);
+    JSValueStack stack;
+    if (!create_js_value_stack(&stack, DEFAULT_STACK_SIZE)) return false;
+    bool result = do_pickle(ctx, val, &stack, source, sink);
+    destroy_js_value_stack(&stack, ctx);
     return result;
 }

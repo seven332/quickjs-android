@@ -2,6 +2,7 @@
 #define QUICKJS_ANDROID_PICKLE_H
 
 #include <quickjs.h>
+#include <stdbool.h>
 
 #include "bit-source.h"
 #include "bit-sink.h"
