@@ -20,6 +20,8 @@ import java.nio.charset.Charset;
 
 public class BitSource {
 
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
+
   private static final byte TYPE_NULL    = 0;
   private static final byte TYPE_BOOLEAN = 1;
   private static final byte TYPE_INT     = 2;
@@ -76,7 +78,7 @@ public class BitSource {
   private String readString() {
     final int size = readInt();
     checkSize(size);
-    String result = new String(buffer, offset, size, Charset.forName("UTF-8"));
+    String result = new String(buffer, offset, size, UTF_8);
     offset += size;
     return result;
   }
@@ -218,7 +220,7 @@ public class BitSource {
     return readString();
   }
 
-  public void checkEOF() {
+  void checkEOF() {
     if (offset != buffer.length) {
       throw new IllegalStateException("Not EOF");
     }

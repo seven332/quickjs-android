@@ -31,7 +31,6 @@ public abstract class Translator<T> {
 
   public static final byte PICKLE_FLAG_PROP_INT          = (byte) 0b00000000;
   public static final byte PICKLE_FLAG_PROP_STR          = (byte) 0b00000001;
-
   public static final byte PICKLE_FLAG_TYPE_NULL         = (byte) 0b10000000;
   public static final byte PICKLE_FLAG_TYPE_BOOLEAN      = (byte) 0b10000001;
   public static final byte PICKLE_FLAG_TYPE_NUMBER       = (byte) 0b10000010;
@@ -39,11 +38,23 @@ public abstract class Translator<T> {
   public static final byte PICKLE_FLAG_TYPE_OBJECT       = (byte) 0b10000100;
   public static final byte PICKLE_FLAG_TYPE_ARRAY        = (byte) 0b10000101;
   public static final byte PICKLE_FLAG_TYPE_COMMAND      = (byte) 0b10000110;
-
   public static final byte PICKLE_FLAG_ATTR_NULLABLE     = (byte) 0b01000000;
-
   public static final byte PICKLE_FLAG_OPT_PUSH          = (byte) 0b11000000;
   public static final byte PICKLE_FLAG_OPT_POP           = (byte) 0b11000001;
+
+  public static final byte UNPICKLE_FLAG_PROP_INT         = (byte) 0b00000000;
+  public static final byte UNPICKLE_FLAG_PROP_STR         = (byte) 0b00000001;
+  public static final byte UNPICKLE_FLAG_TYPE_NULL        = (byte) 0b10000000;
+  public static final byte UNPICKLE_FLAG_TYPE_BOOLEAN     = (byte) 0b10000001;
+  public static final byte UNPICKLE_FLAG_TYPE_INT         = (byte) 0b10000010;
+  public static final byte UNPICKLE_FLAG_TYPE_DOUBLE      = (byte) 0b10000011;
+  public static final byte UNPICKLE_FLAG_TYPE_STRING      = (byte) 0b10000100;
+  public static final byte UNPICKLE_FLAG_TYPE_OBJECT      = (byte) 0b10000101;
+  public static final byte UNPICKLE_FLAG_TYPE_ARRAY       = (byte) 0b10000110;
+  public static final byte UNPICKLE_FLAG_TYPE_COMMAND     = (byte) 0b10000111;
+  public static final byte UNPICKLE_FLAG_ATTR_NULLABLE    = (byte) 0b01000000;
+  public static final byte UNPICKLE_FLAG_OPT_PUSH         = (byte) 0b11000000;
+  public static final byte UNPICKLE_FLAG_OPT_POP          = (byte) 0b11000001;
 
   final byte[] pickleCommand;
   final byte[] unpickleCommand;
@@ -72,6 +83,12 @@ public abstract class Translator<T> {
   }
 
   protected abstract void pickle(T value, BitSink sink);
+
+  final BitSink pickle(T value) {
+    BitSink sink = new BitSink();
+    pickle(value, sink);
+    return sink;
+  }
 
   public static class Placeholder {
     public final Type type;

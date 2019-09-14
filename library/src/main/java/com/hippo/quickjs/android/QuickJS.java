@@ -85,15 +85,20 @@ public class QuickJS implements Translator.Depot, Closeable {
     }
 
     // Push all commands
-    byte[][] pickleCommands = new byte[toCache.size()][];
+    int toCacheSize = toCache.size();
+    byte[][] commands = new byte[toCacheSize * 2][];
     Iterator<Translator<?>> iterator = toCache.values().iterator();
-    for (int i = 0, n = toCache.size(); i < n; i++) {
-      pickleCommands[i] = iterator.next().pickleCommand;
+    for (int i = 0; i < toCacheSize; i++) {
+      Translator<?> tr = iterator.next();
+      commands[i * 2] = tr.pickleCommand;
+      commands[i * 2 + 1] = tr.unpickleCommand;
     }
-    long[] picklePointers = QuickJS.pushCommands(pickleCommands);
+    long[] pointers = QuickJS.pushCommands(commands);
     iterator = toCache.values().iterator();
-    for (int i = 0, n = toCache.size(); i < n; i++) {
-      iterator.next().picklePointer = picklePointers[i];
+    for (int i = 0; i < toCacheSize; i++) {
+      Translator<?> tr = iterator.next();
+      tr.picklePointer = pointers[i * 2];
+      tr.unpicklePointer = pointers[i * 2 + 1];
     }
 
     // Back fill
@@ -104,12 +109,13 @@ public class QuickJS implements Translator.Depot, Closeable {
       for (Translator.Placeholder placeholder : tr.placeholders) {
         Translator<?> child = translatorCache.get(placeholder.type);
         if (child == null) {
-          throw new IllegalStateException("Internal error: Can't get translator for type: " + placeholder.type);
+          throw new RuntimeException("Internal error: Can't get translator for type: " + placeholder.type);
         }
         Bits.writeLong(tr.pickleCommand, placeholder.pickleIndex, child.picklePointer);
+        Bits.writeLong(tr.unpickleCommand, placeholder.unpickleIndex, child.unpicklePointer);
       }
     }
-    QuickJS.updateCommands(picklePointers, pickleCommands);
+    QuickJS.updateCommands(pointers, commands);
   }
 
   @SuppressWarnings("unchecked")
@@ -146,16 +152,20 @@ public class QuickJS implements Translator.Depot, Closeable {
   @Override
   public void close() {
     // TODO Check all JSRuntime closed
-    long[] picklePointers = new long[translatorCache.size()];
+    int translatorCacheSize = translatorCache.size();
+    long[] pointers = new long[translatorCacheSize * 2];
     Iterator<Translator<?>> iterator = translatorCache.values().iterator();
-    for (int i = 0, n = translatorCache.size(); i < n; i++) {
-      picklePointers[i] = iterator.next().picklePointer;
+    for (int i = 0; i < translatorCacheSize; i++) {
+      Translator<?> translator = iterator.next();
+      pointers[i * 2] = translator.picklePointer;
+      pointers[i * 2 + 1] = translator.unpicklePointer;
     }
 
-    QuickJS.popCommands(picklePointers);
+    QuickJS.popCommands(pointers);
 
     for (Translator<?> translator : translatorCache.values()) {
       translator.picklePointer = 0;
+      translator.unpicklePointer = 0;
     }
   }
 
@@ -193,6 +203,8 @@ public class QuickJS implements Translator.Depot, Closeable {
 
   static native long createContext(long runtime);
   static native void destroyContext(long context);
+
+  static native void setContextValue(long context, String name, long unpickCommand, byte[] bytes, int byteSize);
 
   static native long createValueUndefined(long context);
   static native long createValueNull(long context);

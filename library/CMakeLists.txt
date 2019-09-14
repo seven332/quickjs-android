@@ -15,6 +15,7 @@ set(QUICKJS_ANDROID_SOURCES
         src/main/c/bit-source.c
         src/main/c/bit-sink.c
         src/main/c/pickle.c
+        src/main/c/unpickle.c
         src/main/c/java-method.c
         src/main/c/java-object.c
         src/main/c/java-helper.c
@@ -28,4 +29,4 @@ endif (LEAK_TRIGGER)
 
 add_library(quickjs-android SHARED ${QUICKJS_ANDROID_SOURCES})
 target_compile_options(quickjs-android PRIVATE ${COMMON_FLAGS})
-target_link_libraries(quickjs-android PRIVATE quickjs)
+target_link_libraries(quickjs-android PRIVATE quickjs log)

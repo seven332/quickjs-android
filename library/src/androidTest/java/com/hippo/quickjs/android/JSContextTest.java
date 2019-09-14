@@ -16,6 +16,7 @@
 
 package com.hippo.quickjs.android;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -26,6 +27,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public class JSContextTest {
+
+  private interface Tester<T> {
+    void assertEquals(T excepted, T actual);
+  }
+
+  private static class SetData<T> {
+    String name;
+    GenericType<T> type;
+    T value;
+    Tester<T> tester;
+    SetData(String name, GenericType<T> type, T value, Tester<T> tester) {
+      this.name = name;
+      this.type = type;
+      this.value = value;
+      this.tester = tester;
+    }
+  }
+
+  private static SetData<?>[] ALL_SET_DATA = {
+      new SetData<>("boolean true", new GenericType<>(boolean.class), true, Assert::assertEquals),
+      new SetData<>("byte -21", new GenericType<>(byte.class), (byte) -21, Assert::assertEquals),
+      new SetData<>("char z", new GenericType<>(char.class), 'z', Assert::assertEquals),
+      new SetData<>("short 321", new GenericType<>(short.class), (short) 321, Assert::assertEquals),
+      new SetData<>("int 32432562", new GenericType<>(int.class), 32432562, Assert::assertEquals),
+      new SetData<>("long 3243256234234L", new GenericType<>(long.class), 3243256234234L, Assert::assertEquals),
+      new SetData<>("float 324.5436f", new GenericType<>(float.class), 324.5436f, Assert::assertEquals),
+      new SetData<>("double 56245.6234", new GenericType<>(double.class), 56245.6234, Assert::assertEquals),
+      new SetData<>("String strings", new GenericType<>(Types.nonNullOf(String.class)), "strings", Assert::assertEquals),
+  };
+
+  private  <T> void testSet(JSContext context, SetData<T> data) {
+    context.set("_set_data_", data.type, data.value);
+    data.tester.assertEquals(data.value, context.evaluate("_set_data_", "test.js", data.type));
+  }
+
+  @Test
+  public void set() {
+    try (QuickJS quickJS = new QuickJS.Builder().build()) {
+      try (JSRuntime runtime = quickJS.createJSRuntime()) {
+        try (JSContext context = runtime.createJSContext()) {
+          for (SetData<?> data : ALL_SET_DATA) {
+            testSet(context, data);
+          }
+        }
+      }
+    }
+  }
 
   @Ignore("There is no guarantee that this test will pass")
   @Test

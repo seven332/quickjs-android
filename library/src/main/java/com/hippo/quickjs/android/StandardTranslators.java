@@ -47,7 +47,7 @@ class StandardTranslators {
   private static final Translator<Void> VOID_TRANSLATOR =
       new Translator<Void>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NULL },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_NULL }
       ) {
         @Override
         protected Void unpickle(BitSource source) {
@@ -56,15 +56,13 @@ class StandardTranslators {
         }
 
         @Override
-        protected void pickle(Void value, BitSink sink) {
-          throw new IllegalStateException("TODO");
-        }
+        protected void pickle(Void value, BitSink sink) { }
       };
 
   private static final Translator<Boolean> BOOLEAN_TRANSLATOR =
       new Translator<Boolean>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_BOOLEAN },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_BOOLEAN }
       ) {
         @Override
         protected Boolean unpickle(BitSource source) {
@@ -73,14 +71,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Boolean value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeBoolean(value);
         }
       };
 
   private static final Translator<Byte> BYTE_TRANSLATOR =
       new Translator<Byte>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_INT }
       ) {
         @Override
         protected Byte unpickle(BitSource source) {
@@ -89,14 +87,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Byte value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeInt(value);
         }
       };
 
   private static final Translator<Character> CHAR_TRANSLATOR =
       new Translator<Character>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_STRING },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_STRING }
       ) {
         @Override
         protected Character unpickle(BitSource source) {
@@ -105,14 +103,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Character value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeString(value.toString());
         }
       };
 
   private static final Translator<Short> SHORT_TRANSLATOR =
       new Translator<Short>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_INT }
       ) {
         @Override
         protected Short unpickle(BitSource source) {
@@ -121,14 +119,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Short value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeInt(value);
         }
       };
 
   private static final Translator<Integer> INT_TRANSLATOR =
       new Translator<Integer>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_INT }
       ) {
         @Override
         protected Integer unpickle(BitSource source) {
@@ -137,14 +135,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Integer value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeInt(value);
         }
       };
 
   private static final Translator<Long> LONG_TRANSLATOR =
       new Translator<Long>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_DOUBLE }
       ) {
         @Override
         protected Long unpickle(BitSource source) {
@@ -153,14 +151,15 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Long value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          // TODO Loss of precision
+          sink.writeDouble(value);
         }
       };
 
   private static final Translator<Float> FLOAT_TRANSLATOR =
       new Translator<Float>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_DOUBLE }
       ) {
         @Override
         protected Float unpickle(BitSource source) {
@@ -169,14 +168,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Float value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeDouble(value);
         }
       };
 
   private static final Translator<Double> DOUBLE_TRANSLATOR =
       new Translator<Double>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_DOUBLE }
       ) {
         @Override
         protected Double unpickle(BitSource source) {
@@ -185,14 +184,14 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Double value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeDouble(value);
         }
       };
 
   private static final Translator<String> STRING_TRANSLATOR =
       new Translator<String>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_STRING },
-          new byte[] {} // TODO
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_STRING }
       ) {
         @Override
         protected String unpickle(BitSource source) {
@@ -201,7 +200,7 @@ class StandardTranslators {
 
         @Override
         protected void pickle(String value, BitSink sink) {
-          throw new IllegalStateException("TODO");
+          sink.writeString(value);
         }
       };
 }

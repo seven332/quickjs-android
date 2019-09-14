@@ -6,6 +6,13 @@
 
 #include "common.h"
 
+#define CREATE_BIT_SOURCE(DATA, SIZE) \
+    (BitSource) {                     \
+        .data = (DATA),               \
+        .offset = 0,                  \
+        .size = (SIZE)                \
+    }
+
 #define CREATE_COMMAND_BIT_SOURCE(COMMAND)    \
     (BitSource) {                             \
         .data = (COMMAND) + sizeof(jsize),    \

@@ -91,6 +91,22 @@ public class JSContext implements Closeable, Translator.Context {
     return pointer;
   }
 
+  public <T> void set(String name, Class<T> javaClass, T object) {
+    setInternal(name, quickJS.getTranslator(javaClass), object);
+  }
+
+  public <T> void set(String name, GenericType<T> javaType, T object) {
+    setInternal(name, quickJS.getTranslator(javaType.type), object);
+  }
+
+  private <T> void setInternal(String name, Translator<T> translator, T object) {
+    synchronized (jsRuntime) {
+      checkClosed();
+      BitSink sink = translator.pickle(object);
+      QuickJS.setContextValue(pointer, name, translator.unpicklePointer, sink.getBytes(), sink.getSize());
+    }
+  }
+
   /**
    * Evaluates the script in this JSContext.
    */

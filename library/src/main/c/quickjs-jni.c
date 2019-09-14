@@ -4,6 +4,7 @@
 #include <malloc.h>
 
 #include "pickle.h"
+#include "unpickle.h"
 #include "java-method.h"
 #include "java-object.h"
 #include "java-helper.h"
@@ -159,6 +160,44 @@ Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz,
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL(env, ctx, MSG_NULL_JS_CONTEXT);
     JS_FreeContext(ctx);
+}
+
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_setContextValue(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jstring name,
+        jlong unpick_command,
+        jbyteArray bytes,
+        jint byte_size
+) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL(env, ctx, MSG_NULL_JS_CONTEXT);
+    CHECK_NULL(env, name, "Null name");
+    void *command_ptr = (void *) unpick_command;
+    CHECK_NULL(env, command_ptr, "Null command");
+    CHECK_NULL(env, bytes, "Null bytes");
+
+    // Unpickle
+    void *source_ptr = malloc((size_t) byte_size);
+    CHECK_NULL(env, bytes, MSG_OOM);
+    (*env)->GetByteArrayRegion(env, bytes, 0, byte_size, source_ptr);
+    BitSource source = CREATE_BIT_SOURCE(source_ptr, (size_t) byte_size);
+    BitSource command = CREATE_COMMAND_BIT_SOURCE(command_ptr);
+    JSValue val = unpickle(ctx, &command, &source);
+    free(source_ptr);
+
+    const char *name_utf_8 = (*env)->GetStringUTFChars(env, name, NULL);
+    if (name_utf_8 == NULL) {
+        JS_FreeValue(ctx, val);
+        THROW_ILLEGAL_STATE_EXCEPTION(env, MSG_OOM);
+    }
+
+    JSValue global_obj = JS_GetGlobalObject(ctx);
+    JS_SetPropertyStr(ctx, global_obj, name_utf_8, val);
+    JS_FreeValue(ctx, global_obj);
+    (*env)->ReleaseStringUTFChars(env, name, name_utf_8);
 }
 
 #define COPY_JS_VALUE(JS_CONTEXT, JS_VALUE, RESULT)                                    \
