@@ -1,6 +1,3 @@
-#include <malloc.h>
-#include <uchar.h>
-
 #include "bit-source.h"
 
 #define FUNCTION_NEXT_DATA(NAME, TYPE, SIZE)                 \

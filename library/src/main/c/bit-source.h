@@ -2,22 +2,23 @@
 #define QUICKJS_ANDROID_BIT_SOURCE_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <assert.h>
 
 #include "common.h"
 
 #define CREATE_BIT_SOURCE(DATA, SIZE) \
     (BitSource) {                     \
-        .data = (DATA),               \
+        .data = (void *) (DATA),      \
         .offset = 0,                  \
         .size = (SIZE)                \
     }
 
-#define CREATE_COMMAND_BIT_SOURCE(COMMAND)    \
-    (BitSource) {                             \
-        .data = (COMMAND) + sizeof(jsize),    \
-        .offset = 0,                          \
-        .size = (size_t) *(jsize *) (COMMAND) \
+#define CREATE_COMMAND_BIT_SOURCE(COMMAND)          \
+    (BitSource) {                                   \
+        .data = (void *) (COMMAND) + sizeof(jsize), \
+        .offset = 0,                                \
+        .size = (size_t) *(jsize *) (COMMAND)       \
     }
 
 typedef struct BitSource {
