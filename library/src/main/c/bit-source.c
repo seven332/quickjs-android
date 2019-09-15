@@ -17,7 +17,7 @@ FUNCTION_NEXT_DATA(bit_source_next_int32, int32_t, 4);
 
 FUNCTION_NEXT_DATA(bit_source_next_int64, int64_t, 8);
 
-FUNCTION_NEXT_DATA(bit_source_next_double, double, 4);
+FUNCTION_NEXT_DATA(bit_source_next_double, double, 8);
 
 const char *bit_source_next_string(BitSource *source) {
     int32_t len = bit_source_next_int32(source);
