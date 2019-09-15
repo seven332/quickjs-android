@@ -1,5 +1,3 @@
-#include <assert.h>
-#include <malloc.h>
 #include <jni.h>
 
 #include "pickle.h"

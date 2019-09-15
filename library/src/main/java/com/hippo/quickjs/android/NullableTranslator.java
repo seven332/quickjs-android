@@ -44,9 +44,15 @@ class NullableTranslator<T> extends Translator<T> {
     else return delegate.unpickle(source);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void pickle(Object value, BitSink sink) {
-    throw new IllegalStateException("TODO");
+    if (value == null) {
+      sink.writeBoolean(false);
+    } else {
+      sink.writeBoolean(true);
+      delegate.pickle((T) value, sink);
+    }
   }
 
   private static <T> Translator<T> createInvoke(Type nonNullType, Translator<T> nonNullTranslator) {
@@ -55,10 +61,13 @@ class NullableTranslator<T> extends Translator<T> {
     Bits.writeInt(pickleCommand, 1, 1 + 8);
     pickleCommand[1 + 4] = PICKLE_FLAG_TYPE_COMMAND;
 
-    byte[] unpickleCommand = new byte[0]; // TODO
+    byte[] unpickleCommand = new byte[1 + 4 + 1 + 8];
+    unpickleCommand[0] = UNPICKLE_FLAG_ATTR_NULLABLE;
+    Bits.writeInt(unpickleCommand, 1, 1 + 8);
+    unpickleCommand[1 + 4] = UNPICKLE_FLAG_TYPE_COMMAND;
 
     Placeholder[] placeholders = new Placeholder[] {
-        new Placeholder(nonNullType, 1 + 4 + 1, 0)
+        new Placeholder(nonNullType, 1 + 4 + 1, 1 + 4 + 1)
     };
 
     return new NullableTranslator<>(
@@ -76,7 +85,11 @@ class NullableTranslator<T> extends Translator<T> {
     Bits.writeInt(newPickleCommand, 1, pickleCommand.length);
     System.arraycopy(pickleCommand, 0, newPickleCommand, 1 + 4, pickleCommand.length);
 
-    byte[] newUnpickleCommand = new byte[0]; // TODO
+    byte[] unpickleCommand = translator.unpickleCommand;
+    byte[] newUnpickleCommand = new byte[1 + 4 + unpickleCommand.length];
+    newUnpickleCommand[0] = UNPICKLE_FLAG_ATTR_NULLABLE;
+    Bits.writeInt(newUnpickleCommand, 1, unpickleCommand.length);
+    System.arraycopy(unpickleCommand, 0, newUnpickleCommand, 1 + 4, unpickleCommand.length);
 
     Placeholder[] placeholders = translator.placeholders;
     Placeholder[] newPlaceholders;
@@ -89,7 +102,7 @@ class NullableTranslator<T> extends Translator<T> {
         newPlaceholders[i] = new Placeholder(
             placeholder.type,
             1 + 4 + placeholder.pickleIndex,
-            0 // TODO
+            1 + 4 + placeholder.unpickleIndex
         );
       }
     }

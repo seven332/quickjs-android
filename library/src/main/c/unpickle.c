@@ -1,3 +1,5 @@
+#include <jni.h>
+
 #include "unpickle.h"
 #include "js-value-stack.h"
 
@@ -72,12 +74,22 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
                         bit_source_reconfig(command, segment_offset, segment_offset + segment_size);
                         size_t start = js_value_stack_mark(stack);
 
+                        // TODO Check JS_EXCEPTION
                         JSValue element = do_unpickle(ctx, stack, command, source);
                         JS_SetPropertyUint32(ctx, val, (uint32_t) i, element);
 
                         js_value_stack_reset(stack, start);
                     }
                     bit_source_reconfig(command, segment_offset + segment_size, command_size);
+                    break;
+                }
+                case FLAG_TYPE_COMMAND: {
+                    void *child = (void *) bit_source_next_int64(command);
+                    BitSource child_command = CREATE_COMMAND_BIT_SOURCE(child);
+                    size_t start = js_value_stack_mark(stack);
+                    // TODO Check JS_EXCEPTION
+                    val = do_unpickle(ctx, stack, &child_command, source);
+                    js_value_stack_reset(stack, start);
                     break;
                 }
                 case FLAG_OPT_POP: {
@@ -126,6 +138,8 @@ JSValue unpickle(JSContext *ctx, BitSource *command, BitSource *source) {
     JSValueStack stack;
     if (!create_js_value_stack(&stack, DEFAULT_STACK_SIZE)) return false;
     JSValue result = do_unpickle(ctx, &stack, command, source);
+    // Source must be consumed
+    assert(!bit_source_has_next(source));
     destroy_js_value_stack(&stack, ctx);
     return result;
 }

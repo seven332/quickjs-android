@@ -54,7 +54,20 @@ public class JSContextTest {
       new SetData<>("long 3243256234234L", new GenericType<>(long.class), 3243256234234L, Assert::assertEquals),
       new SetData<>("float 324.5436f", new GenericType<>(float.class), 324.5436f, Assert::assertEquals),
       new SetData<>("double 56245.6234", new GenericType<>(double.class), 56245.6234, Assert::assertEquals),
-      new SetData<>("String strings", new GenericType<>(Types.nonNullOf(String.class)), "strings", Assert::assertEquals),
+      new SetData<>("NonNull String strings", new GenericType<>(Types.nonNullOf(String.class)), "strings", Assert::assertEquals),
+
+      new SetData<>("Boolean true", new GenericType<>(Boolean.class), true, Assert::assertEquals),
+      new SetData<>("Boolean null", new GenericType<>(Boolean.class), null, Assert::assertEquals),
+
+      new SetData<>("String array", new GenericType<>(String[].class), new String[] { "str", null, "ing" }, Assert::assertArrayEquals),
+      new SetData<String[]>("String array null", new GenericType<>(String[].class), null, Assert::assertArrayEquals),
+
+      new SetData<>(
+          "String array array",
+          new GenericType<>(String[][].class),
+          new String[][] { new String[]{"str", "ing"}, new String[]{"st", "ri", "ng"} },
+          Assert::assertArrayEquals
+      ),
   };
 
   private  <T> void testSet(JSContext context, SetData<T> data) {
@@ -68,7 +81,11 @@ public class JSContextTest {
       try (JSRuntime runtime = quickJS.createJSRuntime()) {
         try (JSContext context = runtime.createJSContext()) {
           for (SetData<?> data : ALL_SET_DATA) {
-            testSet(context, data);
+            try {
+              testSet(context, data);
+            } catch (Throwable e) {
+              throw new AssertionError("<" + data.name + "> failed", e);
+            }
           }
         }
       }

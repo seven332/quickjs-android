@@ -31,7 +31,7 @@ public class GenericType<T> implements Type {
    * It's unsafe. The type and the generic type {@code T} must match.
    */
   public GenericType(Type type) {
-    this.type = type;
+    this.type = Types.canonicalize(type);
   }
 
   protected GenericType() {

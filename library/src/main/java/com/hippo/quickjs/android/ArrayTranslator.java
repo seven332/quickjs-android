@@ -48,16 +48,21 @@ class ArrayTranslator extends Translator<Object> {
   @Override
   protected Object unpickle(BitSource source) {
     int length = source.nextInt();
-    Object result = Array.newInstance(elementClass, length);
+    Object value = Array.newInstance(elementClass, length);
     for (int i = 0; i < length; i++) {
-      Array.set(result, i, elementTranslator.unpickle(source));
+      Array.set(value, i, elementTranslator.unpickle(source));
     }
-    return result;
+    return value;
   }
 
   @Override
   protected void pickle(Object value, BitSink sink) {
-    throw new IllegalStateException("TODO");
+    int length = Array.getLength(value);
+    sink.writeInt(length);
+    for (int i = 0; i < length; i++) {
+      Object element = Array.get(value, i);
+      elementTranslator.pickle(element, sink);
+    }
   }
 
   private static Translator<Object> createInvoke(
@@ -70,10 +75,13 @@ class ArrayTranslator extends Translator<Object> {
     Bits.writeInt(pickleCommand, 1, 1 + 8);
     pickleCommand[1 + 4] = PICKLE_FLAG_TYPE_COMMAND;
 
-    byte[] unpickleCommand = new byte[0]; // TODO
+    byte[] unpickleCommand = new byte[1 + 4 + 1 + 8];
+    unpickleCommand[0] = UNPICKLE_FLAG_TYPE_ARRAY;
+    Bits.writeInt(unpickleCommand, 1, 1 + 8);
+    unpickleCommand[1 + 4] = UNPICKLE_FLAG_TYPE_COMMAND;
 
     Placeholder[] placeholders = new Placeholder[] {
-        new Placeholder(elementType, 1 + 4 + 1, 0)
+        new Placeholder(elementType, 1 + 4 + 1, 1 + 4 + 1)
     };
 
     return new ArrayTranslator(
@@ -95,7 +103,11 @@ class ArrayTranslator extends Translator<Object> {
     Bits.writeInt(newPickleCommand, 1, pickleCommand.length);
     System.arraycopy(pickleCommand, 0, newPickleCommand, 1 + 4, pickleCommand.length);
 
-    byte[] newUnpickleCommand = new byte[0]; // TODO
+    byte[] unpickleCommand = elementTranslator.unpickleCommand;
+    byte[] newUnpickleCommand = new byte[1 + 4 + unpickleCommand.length];
+    newUnpickleCommand[0] = UNPICKLE_FLAG_TYPE_ARRAY;
+    Bits.writeInt(newUnpickleCommand, 1, unpickleCommand.length);
+    System.arraycopy(unpickleCommand, 0, newUnpickleCommand, 1 + 4, unpickleCommand.length);
 
     Placeholder[] placeholders = elementTranslator.placeholders;
     Placeholder[] newPlaceholders;
@@ -108,7 +120,7 @@ class ArrayTranslator extends Translator<Object> {
         newPlaceholders[i] = new Placeholder(
             placeholder.type,
             1 + 4 + placeholder.pickleIndex,
-            0 // TODO
+            1 + 4 + placeholder.unpickleIndex
         );
       }
     }

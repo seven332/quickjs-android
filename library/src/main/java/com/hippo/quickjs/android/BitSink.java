@@ -92,9 +92,9 @@ public class BitSink {
   public void writeString(String value) {
     byte[] strBytes = value.getBytes(UTF_8);
     final int length = strBytes.length;
-    writeInt(length);
-
     final int size = length + 1;
+    writeInt(size);
+
     ensureSize(size);
     System.arraycopy(strBytes, 0, this.bytes, offset, length);
     bytes[offset + length] = 0;
