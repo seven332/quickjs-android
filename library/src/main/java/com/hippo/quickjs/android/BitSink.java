@@ -17,6 +17,7 @@
 package com.hippo.quickjs.android;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  * BitSink pickles java value.
@@ -35,14 +36,24 @@ public class BitSink {
     offset = 0;
   }
 
-  private void ensureSize(int size) {
-    int newSize = offset + size;
-    if (newSize > bytes.length) {
-      // TODO check overflow
-      newSize = newSize << 1;
-      byte[] newBuffer = new byte[newSize];
-      System.arraycopy(bytes, 0, newBuffer, 0, offset);
-      bytes = newBuffer;
+  private void ensureRemainSize(int remain) {
+    int oldSize = bytes.length;
+    int minSize = offset + remain;
+
+    if (minSize - oldSize > 0) {
+      int newSize = oldSize + (oldSize >> 1);
+      if (newSize - minSize < 0) {
+        newSize = minSize;
+      }
+      if (newSize - Integer.MAX_VALUE > 0) {
+        if (minSize < 0) {
+          // overflow
+          throw new OutOfMemoryError();
+        }
+        newSize = Integer.MAX_VALUE;
+      }
+
+      bytes = Arrays.copyOf(bytes, newSize);
     }
   }
 
@@ -51,7 +62,7 @@ public class BitSink {
    */
   public void writeBoolean(boolean value) {
     final int size = 1;
-    ensureSize(size);
+    ensureRemainSize(size);
     bytes[offset] = value ? (byte) 1 : (byte) 0;
     offset += size;
   }
@@ -61,18 +72,8 @@ public class BitSink {
    */
   public void writeInt(int value) {
     final int size = 4;
-    ensureSize(size);
+    ensureRemainSize(size);
     Bits.writeInt(bytes, offset, value);
-    offset += size;
-  }
-
-  /**
-   * Writes a long value.
-   */
-  public void writeLong(long value) {
-    final int size = 8;
-    ensureSize(size);
-    Bits.writeLong(bytes, offset, value);
     offset += size;
   }
 
@@ -81,7 +82,7 @@ public class BitSink {
    */
   public void writeDouble(double value) {
     final int size = 8;
-    ensureSize(size);
+    ensureRemainSize(size);
     Bits.writeLong(bytes, offset, Double.doubleToRawLongBits(value));
     offset += size;
   }
@@ -95,7 +96,7 @@ public class BitSink {
     final int size = length + 1;
     writeInt(size);
 
-    ensureSize(size);
+    ensureRemainSize(size);
     System.arraycopy(strBytes, 0, this.bytes, offset, length);
     bytes[offset + length] = 0;
     offset += size;
