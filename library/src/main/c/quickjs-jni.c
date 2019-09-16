@@ -140,6 +140,44 @@ Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz,
     free(qj_rt);
 }
 
+void throw_JSEvaluationException(JNIEnv *env, JSContext *ctx) {
+    const char *exception_str = NULL;
+    const char *stack_str = NULL;
+
+    JSValue exception = JS_GetException(ctx);
+    exception_str = JS_ToCString(ctx, exception);
+    jboolean is_error = (jboolean) JS_IsError(ctx, exception);
+    if (is_error) {
+        JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
+        if (!JS_IsUndefined(stack)) {
+            stack_str = JS_ToCString(ctx, stack);
+        }
+        JS_FreeValue(ctx, stack);
+    }
+    JS_FreeValue(ctx, exception);
+
+    jstring exception_j_str = (exception_str != NULL) ? (*env)->NewStringUTF(env, exception_str) : NULL;
+    jstring stack_j_str = (stack_str != NULL) ? (*env)->NewStringUTF(env, stack_str) : NULL;
+
+    if (exception_str != NULL) {
+        JS_FreeCString(ctx, exception_str);
+    }
+    if (stack_str != NULL) {
+        JS_FreeCString(ctx, stack_str);
+    }
+
+    jobject throwable = (*env)->NewObject(
+            env,
+            js_evaluation_exception_class,
+            js_evaluation_exception_constructor,
+            is_error,
+            exception_j_str,
+            stack_j_str
+    );
+    CHECK_NULL(env, throwable, "Can't create instance of JSEvaluationException");
+    (*env)->Throw(env, throwable);
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, jlong runtime) {
     QJRuntime *qj_rt = (QJRuntime *) runtime;
@@ -187,6 +225,11 @@ Java_com_hippo_quickjs_android_QuickJS_setContextValue(
     BitSource command = CREATE_COMMAND_BIT_SOURCE(command_ptr);
     JSValue val = unpickle(ctx, &command, &source);
     free(source_ptr);
+
+    if (JS_IsException(val)) {
+        throw_JSEvaluationException(env, ctx);
+        return;
+    }
 
     const char *name_utf_8 = (*env)->GetStringUTFChars(env, name, NULL);
     if (name_utf_8 == NULL) {
@@ -679,44 +722,6 @@ Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, j
     CHECK_NULL(env, val, MSG_NULL_JS_VALUE);
     JS_FreeValue(ctx, *val);
     js_free_rt(JS_GetRuntime(ctx), val);
-}
-
-void throw_JSEvaluationException(JNIEnv *env, JSContext *ctx) {
-    const char *exception_str = NULL;
-    const char *stack_str = NULL;
-
-    JSValue exception = JS_GetException(ctx);
-    exception_str = JS_ToCString(ctx, exception);
-    jboolean is_error = (jboolean) JS_IsError(ctx, exception);
-    if (is_error) {
-        JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
-        if (!JS_IsUndefined(stack)) {
-            stack_str = JS_ToCString(ctx, stack);
-        }
-        JS_FreeValue(ctx, stack);
-    }
-    JS_FreeValue(ctx, exception);
-
-    jstring exception_j_str = (exception_str != NULL) ? (*env)->NewStringUTF(env, exception_str) : NULL;
-    jstring stack_j_str = (stack_str != NULL) ? (*env)->NewStringUTF(env, stack_str) : NULL;
-
-    if (exception_str != NULL) {
-        JS_FreeCString(ctx, exception_str);
-    }
-    if (stack_str != NULL) {
-        JS_FreeCString(ctx, stack_str);
-    }
-
-    jobject throwable = (*env)->NewObject(
-            env,
-            js_evaluation_exception_class,
-            js_evaluation_exception_constructor,
-            is_error,
-            exception_j_str,
-            stack_j_str
-    );
-    CHECK_NULL(env, throwable, "Can't create instance of JSEvaluationException");
-    (*env)->Throw(env, throwable);
 }
 
 JNIEXPORT jobject JNICALL

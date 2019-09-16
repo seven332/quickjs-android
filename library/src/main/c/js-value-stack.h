@@ -72,6 +72,13 @@ static force_inline void js_value_stack_clear(JSValueStack *stack, JSContext *ct
     stack->offset = stack->start;
 }
 
+static force_inline void js_value_stack_clear2(JSValueStack *stack, JSContext *ctx) {
+    for (size_t i = stack->start; i < stack->offset; i++) {
+        JS_FreeValue(ctx, stack->data[i]);
+    }
+    stack->offset = stack->start;
+}
+
 static force_inline void destroy_js_value_stack(JSValueStack *stack, JSContext *ctx) {
     assert(stack->start == 0);
     assert(stack->offset == 0);
