@@ -10,9 +10,13 @@ TYPE NAME(BitSource *source) {                               \
 
 FUNCTION_NEXT_DATA(bit_source_next_int8, int8_t, 1);
 
+FUNCTION_NEXT_DATA(bit_source_next_int16, int16_t, 2);
+
 FUNCTION_NEXT_DATA(bit_source_next_int32, int32_t, 4);
 
 FUNCTION_NEXT_DATA(bit_source_next_int64, int64_t, 8);
+
+FUNCTION_NEXT_DATA(bit_source_next_float, float, 4);
 
 FUNCTION_NEXT_DATA(bit_source_next_double, double, 8);
 

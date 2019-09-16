@@ -78,7 +78,7 @@ class StandardTranslators {
   private static final Translator<Byte> BYTE_TRANSLATOR =
       new Translator<Byte>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] { Translator.UNPICKLE_FLAG_TYPE_INT }
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_BYTE }
       ) {
         @Override
         protected Byte unpickle(BitSource source) {
@@ -87,7 +87,7 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Byte value, BitSink sink) {
-          sink.writeInt(value);
+          sink.writeByte(value);
         }
       };
 
@@ -110,7 +110,7 @@ class StandardTranslators {
   private static final Translator<Short> SHORT_TRANSLATOR =
       new Translator<Short>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] { Translator.UNPICKLE_FLAG_TYPE_INT }
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_SHORT }
       ) {
         @Override
         protected Short unpickle(BitSource source) {
@@ -119,7 +119,7 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Short value, BitSink sink) {
-          sink.writeInt(value);
+          sink.writeShort(value);
         }
       };
 
@@ -159,7 +159,7 @@ class StandardTranslators {
   private static final Translator<Float> FLOAT_TRANSLATOR =
       new Translator<Float>(
           new byte[] { Translator.PICKLE_FLAG_TYPE_NUMBER },
-          new byte[] { Translator.UNPICKLE_FLAG_TYPE_DOUBLE }
+          new byte[] { Translator.UNPICKLE_FLAG_TYPE_FLOAT }
       ) {
         @Override
         protected Float unpickle(BitSource source) {
@@ -168,7 +168,7 @@ class StandardTranslators {
 
         @Override
         protected void pickle(Float value, BitSink sink) {
-          sink.writeDouble(value);
+          sink.writeFloat(value);
         }
       };
 

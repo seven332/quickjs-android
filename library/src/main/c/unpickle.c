@@ -10,12 +10,15 @@
 
 #define FLAG_TYPE_NULL             ((int8_t) 0b10000000)
 #define FLAG_TYPE_BOOLEAN          ((int8_t) 0b10000001)
-#define FLAG_TYPE_INT              ((int8_t) 0b10000010)
-#define FLAG_TYPE_DOUBLE           ((int8_t) 0b10000011)
-#define FLAG_TYPE_STRING           ((int8_t) 0b10000100)
-#define FLAG_TYPE_OBJECT           ((int8_t) 0b10000101)
-#define FLAG_TYPE_ARRAY            ((int8_t) 0b10000110)
-#define FLAG_TYPE_COMMAND          ((int8_t) 0b10000111)
+#define FLAG_TYPE_BYTE             ((int8_t) 0b10000010)
+#define FLAG_TYPE_SHORT            ((int8_t) 0b10000011)
+#define FLAG_TYPE_INT              ((int8_t) 0b10000100)
+#define FLAG_TYPE_FLOAT            ((int8_t) 0b10000101)
+#define FLAG_TYPE_DOUBLE           ((int8_t) 0b10000110)
+#define FLAG_TYPE_STRING           ((int8_t) 0b10000111)
+#define FLAG_TYPE_OBJECT           ((int8_t) 0b10001000)
+#define FLAG_TYPE_ARRAY            ((int8_t) 0b10001001)
+#define FLAG_TYPE_COMMAND          ((int8_t) 0b10001010)
 
 #define FLAG_ATTR_NULLABLE         ((int8_t) 0b01000000)
 
@@ -55,8 +58,17 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
                 case FLAG_TYPE_BOOLEAN:
                     val = JS_NewBool(ctx, bit_source_next_int8(source));
                     break;
+                case FLAG_TYPE_BYTE:
+                    val = JS_NewInt32(ctx, bit_source_next_int8(source));
+                    break;
+                case FLAG_TYPE_SHORT:
+                    val = JS_NewInt32(ctx, bit_source_next_int16(source));
+                    break;
                 case FLAG_TYPE_INT:
                     val = JS_NewInt32(ctx, bit_source_next_int32(source));
+                    break;
+                case FLAG_TYPE_FLOAT:
+                    val = JS_NewFloat64(ctx, bit_source_next_float(source));
                     break;
                 case FLAG_TYPE_DOUBLE:
                     val = JS_NewFloat64(ctx, bit_source_next_double(source));

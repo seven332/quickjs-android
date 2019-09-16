@@ -29,9 +29,13 @@ typedef struct BitSource {
 
 int8_t bit_source_next_int8(BitSource *source);
 
+int16_t bit_source_next_int16(BitSource *source);
+
 int32_t bit_source_next_int32(BitSource *source);
 
 int64_t bit_source_next_int64(BitSource *source);
+
+float bit_source_next_float(BitSource *source);
 
 double bit_source_next_double(BitSource *source);
 

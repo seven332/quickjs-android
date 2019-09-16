@@ -63,7 +63,27 @@ public class BitSink {
   public void writeBoolean(boolean value) {
     final int size = 1;
     ensureRemainSize(size);
-    bytes[offset] = value ? (byte) 1 : (byte) 0;
+    Bits.writeByte(bytes, offset, value ? (byte) 1 : (byte) 0);
+    offset += size;
+  }
+
+  /**
+   * Writes a byte value.
+   */
+  public void writeByte(byte value) {
+    final int size = 1;
+    ensureRemainSize(size);
+    Bits.writeByte(bytes, offset, value);
+    offset += size;
+  }
+
+  /**
+   * Writes a short value.
+   */
+  public void writeShort(short value) {
+    final int size = 2;
+    ensureRemainSize(size);
+    Bits.writeShort(bytes, offset, value);
     offset += size;
   }
 
@@ -78,12 +98,22 @@ public class BitSink {
   }
 
   /**
+   * Writes a float value.
+   */
+  public void writeFloat(float value) {
+    final int size = 4;
+    ensureRemainSize(size);
+    Bits.writeFloat(bytes, offset, value);
+    offset += size;
+  }
+
+  /**
    * Writes a double value.
    */
   public void writeDouble(double value) {
     final int size = 8;
     ensureRemainSize(size);
-    Bits.writeLong(bytes, offset, Double.doubleToRawLongBits(value));
+    Bits.writeDouble(bytes, offset, value);
     offset += size;
   }
 
