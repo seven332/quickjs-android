@@ -40,8 +40,11 @@ class NullableTranslator<T> extends Translator<T> {
 
   @Override
   protected T unpickle(BitSource source) {
-    if (source.nextIfNull()) return null;
-    else return delegate.unpickle(source);
+    if (source.readBoolean()) {
+      return delegate.unpickle(source);
+    } else {
+      return null;
+    }
   }
 
   @SuppressWarnings("unchecked")

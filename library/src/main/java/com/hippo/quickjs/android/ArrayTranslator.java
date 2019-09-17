@@ -47,7 +47,7 @@ class ArrayTranslator extends Translator<Object> {
 
   @Override
   protected Object unpickle(BitSource source) {
-    int length = source.nextInt();
+    int length = source.readArrayLength();
     Object value = Array.newInstance(elementClass, length);
     for (int i = 0; i < length; i++) {
       Array.set(value, i, elementTranslator.unpickle(source));

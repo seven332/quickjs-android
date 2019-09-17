@@ -21,13 +21,13 @@ static force_inline bool create_bit_sink(BitSink *sink, size_t size) {
     return true;
 }
 
-bool bit_sink_write_null(BitSink *sink);
-
 bool bit_sink_write_boolean(BitSink *sink, int8_t value);
 
-bool bit_sink_write_int(BitSink *sink, int32_t value);
+bool bit_sink_write_array_length(BitSink *sink, int32_t value);
 
-bool bit_sink_write_double(BitSink *sink, double value);
+bool bit_sink_write_number_int(BitSink *sink, int32_t value);
+
+bool bit_sink_write_number_double(BitSink *sink, double value);
 
 bool bit_sink_write_string_len(BitSink *sink, const char *value, size_t length);
 

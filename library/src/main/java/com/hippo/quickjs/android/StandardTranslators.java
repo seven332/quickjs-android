@@ -51,7 +51,6 @@ class StandardTranslators {
       ) {
         @Override
         protected Void unpickle(BitSource source) {
-          source.nextNull();
           return null;
         }
 
@@ -66,7 +65,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Boolean unpickle(BitSource source) {
-          return source.nextBoolean();
+          return source.readBoolean();
         }
 
         @Override
@@ -82,7 +81,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Byte unpickle(BitSource source) {
-          return source.nextByte();
+          return source.readByte();
         }
 
         @Override
@@ -98,7 +97,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Character unpickle(BitSource source) {
-          return source.nextChar();
+          return source.readChar();
         }
 
         @Override
@@ -114,7 +113,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Short unpickle(BitSource source) {
-          return source.nextShort();
+          return source.readShort();
         }
 
         @Override
@@ -130,7 +129,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Integer unpickle(BitSource source) {
-          return source.nextInt();
+          return source.readInt();
         }
 
         @Override
@@ -146,7 +145,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Long unpickle(BitSource source) {
-          return source.nextLong();
+          return source.readLong();
         }
 
         @Override
@@ -163,7 +162,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Float unpickle(BitSource source) {
-          return source.nextFloat();
+          return source.readFloat();
         }
 
         @Override
@@ -179,7 +178,7 @@ class StandardTranslators {
       ) {
         @Override
         protected Double unpickle(BitSource source) {
-          return source.nextDouble();
+          return source.readDouble();
         }
 
         @Override
@@ -195,7 +194,7 @@ class StandardTranslators {
       ) {
         @Override
         protected String unpickle(BitSource source) {
-          return source.nextString();
+          return source.readString();
         }
 
         @Override

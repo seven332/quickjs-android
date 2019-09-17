@@ -81,10 +81,11 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
         if (flag == FLAG_ATTR_NULLABLE) {
             int32_t segment_size = bit_source_next_int32(command);
             if (tag == JS_TAG_NULL || tag == JS_TAG_UNDEFINED) {
-                if (unlikely(!bit_sink_write_null(sink))) GO_TO_FAIL_OOM;
+                if (unlikely(!bit_sink_write_boolean(sink, false))) GO_TO_FAIL_OOM;
                 bit_source_skip(command, (size_t) segment_size);
                 skipped = true;
             } else {
+                if (unlikely(!bit_sink_write_boolean(sink, true))) GO_TO_FAIL_OOM;
                 flag = bit_source_next_int8(command);
             }
         }
@@ -93,7 +94,7 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
             switch (flag) {
                 case FLAG_TYPE_NULL:
                     if (unlikely(tag != JS_TAG_NULL && tag != JS_TAG_UNDEFINED)) GO_TO_FAIL_UNEXPECTED_TAG;
-                    if (unlikely(!bit_sink_write_null(sink))) GO_TO_FAIL_OOM;
+                    // Write nothing to sink
                     break;
                 case FLAG_TYPE_BOOLEAN:
                     if (unlikely(tag != JS_TAG_BOOL)) GO_TO_FAIL_UNEXPECTED_TAG;
@@ -102,10 +103,10 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
                 case FLAG_TYPE_NUMBER:
                     switch (tag) {
                         case JS_TAG_INT:
-                            if (unlikely(!bit_sink_write_int(sink, (int32_t) JS_VALUE_GET_INT(val)))) GO_TO_FAIL_OOM;
+                            if (unlikely(!bit_sink_write_number_int(sink, (int32_t) JS_VALUE_GET_INT(val)))) GO_TO_FAIL_OOM;
                             break;
                         case JS_TAG_FLOAT64:
-                            if (unlikely(!bit_sink_write_double(sink, JS_VALUE_GET_FLOAT64(val)))) GO_TO_FAIL_OOM;
+                            if (unlikely(!bit_sink_write_number_double(sink, JS_VALUE_GET_FLOAT64(val)))) GO_TO_FAIL_OOM;
                             break;
                         default:
                             GO_TO_FAIL_UNEXPECTED_TAG;
@@ -122,7 +123,7 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
                 case FLAG_TYPE_ARRAY: {
                     int32_t len = JS_GetArrayLength(ctx, val);
                     if (unlikely(len < 0)) GO_TO_FAIL_UNEXPECTED_TAG;
-                    if (unlikely(!bit_sink_write_int(sink, len))) GO_TO_FAIL_OOM;
+                    if (unlikely(!bit_sink_write_array_length(sink, len))) GO_TO_FAIL_OOM;
 
                     size_t segment_size = (size_t) bit_source_next_int32(command);
                     size_t segment_offset = bit_source_get_offset(command);

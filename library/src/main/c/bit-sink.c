@@ -3,11 +3,8 @@
 
 #include "bit-sink.h"
 
-#define TYPE_NULL    0
-#define TYPE_BOOLEAN 1
-#define TYPE_INT     2
-#define TYPE_DOUBLE  3
-#define TYPE_STRING  4
+#define TYPE_INT    0
+#define TYPE_DOUBLE 1
 
 static bool ensure_size(BitSink *sink, size_t size) {
     if (sink->offset + size <= sink->size) {
@@ -28,45 +25,42 @@ static bool ensure_size(BitSink *sink, size_t size) {
     return true;
 }
 
-bool bit_sink_write_null(BitSink *sink) {
-    if (!ensure_size(sink, 1)) {
-        return false;
-    }
-    // Type
-    *((int8_t *) (sink->data + sink->offset)) = (int8_t) TYPE_NULL;
+bool bit_sink_write_boolean(BitSink *sink, int8_t value) {
+    if (!ensure_size(sink, 1)) return false;
+    *((int8_t *) (sink->data + sink->offset)) = value;
     sink->offset += 1;
     return true;
 }
 
-#define FUNCTION_WRITE_DATA(NAME, TYPE, TYPE_I, SIZE)              \
-bool NAME(BitSink *sink, TYPE value) {                             \
-    if (!ensure_size(sink, 1 + (SIZE))) {                          \
-        return false;                                              \
-    }                                                              \
-    *((int8_t *) (sink->data + sink->offset)) = (int8_t) (TYPE_I); \
-    sink->offset += 1;                                             \
-    *((TYPE *) (sink->data + sink->offset)) = value;               \
-    sink->offset += (SIZE);                                        \
-    return true;                                                   \
+bool bit_sink_write_array_length(BitSink *sink, int32_t value) {
+    if (!ensure_size(sink, 4)) return false;
+    *((int32_t *) (sink->data + sink->offset)) = value;
+    sink->offset += 4;
+    return true;
 }
 
-FUNCTION_WRITE_DATA(bit_sink_write_boolean, int8_t, TYPE_BOOLEAN, 1);
+bool bit_sink_write_number_int(BitSink *sink, int32_t value) {
+    if (!ensure_size(sink, 1 + 4)) return false;
+    *((int8_t *) (sink->data + sink->offset)) = (int8_t) TYPE_INT;
+    sink->offset += 1;
+    *((int32_t *) (sink->data + sink->offset)) = value;
+    sink->offset += 4;
+    return true;
+}
 
-FUNCTION_WRITE_DATA(bit_sink_write_int, int32_t, TYPE_INT, 4);
-
-FUNCTION_WRITE_DATA(bit_sink_write_double, double, TYPE_DOUBLE, 8);
+bool bit_sink_write_number_double(BitSink *sink, double value) {
+    if (!ensure_size(sink, 1 + 8)) return false;
+    *((int8_t *) (sink->data + sink->offset)) = (int8_t) TYPE_DOUBLE;
+    sink->offset += 1;
+    *((double *) (sink->data + sink->offset)) = value;
+    sink->offset += 8;
+    return true;
+}
 
 bool bit_sink_write_string_len(BitSink *sink, const char *value, size_t length) {
-    if (!ensure_size(sink, 1 + 4 + length)) {
-        return false;
-    }
-    // Type
-    *((int8_t *) (sink->data + sink->offset)) = (int8_t) TYPE_STRING;
-    sink->offset += 1;
-    // Length
+    if (!ensure_size(sink, 4 + length)) return false;
     *((int32_t *) (sink->data + sink->offset)) = (int32_t) length;
     sink->offset += 4;
-    // String
     // Use strncpy instead of strlcpy, because ending zero isn't welcome here.
     // The length of string is saved.
     strncpy(sink->data + sink->offset, value, length);

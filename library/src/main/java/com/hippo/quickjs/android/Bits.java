@@ -18,6 +18,37 @@ package com.hippo.quickjs.android;
 
 class Bits {
 
+  static byte readByte(byte[] bytes, int offset) {
+    return bytes[offset];
+  }
+
+  static short readShort(byte[] bytes, int offset) {
+    return (short) (((bytes[offset + 1] & 0xff) <<  8) |
+                    ((bytes[offset    ] & 0xff)      ));
+  }
+
+  static int readInt(byte[] bytes, int offset) {
+    return (((bytes[offset + 3]       ) << 24) |
+            ((bytes[offset + 2] & 0xff) << 16) |
+            ((bytes[offset + 1] & 0xff) <<  8) |
+            ((bytes[offset    ] & 0xff)      ));
+  }
+
+  static long readLong(byte[] bytes, int offset) {
+    return ((((long) bytes[offset + 7]       ) << 56) |
+            (((long) bytes[offset + 6] & 0xff) << 48) |
+            (((long) bytes[offset + 5] & 0xff) << 40) |
+            (((long) bytes[offset + 4] & 0xff) << 32) |
+            (((long) bytes[offset + 3] & 0xff) << 24) |
+            (((long) bytes[offset + 2] & 0xff) << 16) |
+            (((long) bytes[offset + 1] & 0xff) <<  8) |
+            (((long) bytes[offset    ] & 0xff)      ));
+  }
+
+  static double readDouble(byte[] bytes, int offset) {
+    return Double.longBitsToDouble(readLong(bytes, offset));
+  }
+
   static void writeByte(byte[] bytes, int offset, byte value) {
     bytes[offset] = value;
   }

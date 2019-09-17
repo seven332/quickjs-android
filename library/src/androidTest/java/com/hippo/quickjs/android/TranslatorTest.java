@@ -82,12 +82,12 @@ public class TranslatorTest {
 
     @Override
     protected TestEntry unpickle(BitSource source) {
-      int length = source.nextInt();
+      int length = source.readArrayLength();
       String[] strings = new String[length];
       for (int i = 0; i < length; i++) {
-        strings[i] = source.nextString();
+        strings[i] = source.readString();
       }
-      double d = source.nextDouble();
+      double d = source.readDouble();
 
       TestEntry entry = new TestEntry();
       entry.strings = strings;
