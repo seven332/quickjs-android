@@ -33,7 +33,7 @@ public class TranslatorTest {
             "a = {};" +
             "a.strings = ['str', 'ing'];" +
             "a[32] = 432.123;" +
-            "a" +
+            "a;" +
             "", "test.js", TestEntry.class);
 
         assertArrayEquals(new String[] { "str", "ing" }, entry.strings);
@@ -45,6 +45,7 @@ public class TranslatorTest {
   private static class TestTranslator extends Translator<TestEntry> {
 
     private static final byte[] PICKLE_COMMAND = {
+        PICKLE_FLAG_OPT_PUSH,
         PICKLE_FLAG_PROP_STR,
         8,
         0,
@@ -69,7 +70,8 @@ public class TranslatorTest {
         0,
         0,
         0,
-        PICKLE_FLAG_TYPE_NUMBER
+        PICKLE_FLAG_TYPE_NUMBER,
+        PICKLE_FLAG_OPT_POP,
     };
 
     private static final byte[] UNPICKLE_COMMAND = { };

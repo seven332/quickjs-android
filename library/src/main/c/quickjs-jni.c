@@ -836,8 +836,9 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
     bool is_exception = (bool) JS_IsException(val);
     if (!is_exception && pickle_pointer != 0) {
         pickle_result = pickle(ctx, val, &source, &sink);
+    } else {
+        JS_FreeValue(ctx, val);
     }
-    JS_FreeValue(ctx, val);
 
     (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
     (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
@@ -851,13 +852,13 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
 
         destroy_bit_sink(&sink);
 
-        if (is_exception) {
-            throw_JSEvaluationException(env, ctx);
-            return NULL;
-        } else if (pickle_result && result == NULL) {
-            THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
-        } else if (result == NULL) {
-            THROW_JS_DATA_EXCEPTION_RET(env, "Can't pickle the JSValue");
+        if (result == NULL) {
+            if (pickle_result) {
+                THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+            } else {
+                throw_JSEvaluationException(env, ctx);
+                return NULL;
+            }
         }
     } else {
         if (is_exception) {
