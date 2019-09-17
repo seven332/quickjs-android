@@ -29,13 +29,13 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
     JSValue val;
 
     while (true) {
-        int flag = bit_source_next_int8(command);
+        int8_t flag = bit_source_next_int8(command);
 
         if (flag == FLAG_OPT_PUSH) {
             val = JS_NewObject(ctx);
             if (JS_IsException(val)) goto fail;
             if (!js_value_stack_push(stack, val)) goto fail;
-            break;
+            continue;
         }
 
         bool skipped = false;
@@ -116,7 +116,8 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
                     break;
                 }
                 default:
-                    assert(false && "Unknown unpickle flag");
+                    assert(false && "Unexpected unpickle flag");
+                    break;
             }
         }
 
@@ -150,13 +151,14 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
                 break;
             }
             default:
-                assert(false && "Unknown unpickle flag");
+                assert(false && "Unexpected unpickle flag");
+                break;
         }
     }
 
 fail:
     JS_FreeValue(ctx, val);
-    js_value_stack_clear2(stack, ctx);
+    js_value_stack_clear(stack, ctx);
     return JS_EXCEPTION;
 }
 
