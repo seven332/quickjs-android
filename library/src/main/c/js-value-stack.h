@@ -27,13 +27,13 @@ static force_inline bool create_js_value_stack(JSValueStack * stack, size_t size
 }
 
 static force_inline JSValue js_value_stack_pop(JSValueStack *stack) {
-    assert(stack->offset > 0);
+    assert(stack->offset > stack->start);
     return stack->data[--stack->offset];
 }
 
 static force_inline JSValue js_value_stack_peek(JSValueStack *stack) {
-    assert(stack->offset > 0);
-    return stack->data[stack->offset];
+    assert(stack->offset > stack->start);
+    return stack->data[stack->offset - 1];
 }
 
 static force_inline bool js_value_stack_push(JSValueStack *stack, JSValue val) {
@@ -66,13 +66,6 @@ static force_inline bool js_value_stack_is_empty(JSValueStack *stack) {
 }
 
 static force_inline void js_value_stack_clear(JSValueStack *stack, JSContext *ctx) {
-    for (size_t i = stack->start + 1; i < stack->offset; i++) {
-        JS_FreeValue(ctx, stack->data[i]);
-    }
-    stack->offset = stack->start;
-}
-
-static force_inline void js_value_stack_clear2(JSValueStack *stack, JSContext *ctx) {
     for (size_t i = stack->start; i < stack->offset; i++) {
         JS_FreeValue(ctx, stack->data[i]);
     }
