@@ -37,8 +37,18 @@ public class NullableTranslatorTest {
 
     assertEquivalent("['str', 'ing']", new String[] { "str", "ing" }, type);
 
-    assertException("null", type, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        type,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_ARRAY
+    );
 
-    assertException("['str', null, 'ing']", type, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "['str', null, 'ing']",
+        type,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_STRING
+    );
   }
 }

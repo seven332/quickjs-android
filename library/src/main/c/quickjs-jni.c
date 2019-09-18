@@ -10,6 +10,7 @@
 #include "java-helper.h"
 
 #define DEFAULT_SINK_SIZE 16
+#define ERROR_MSG_SIZE 256
 
 #define MSG_OOM "Out of memory"
 #define MSG_NULL_JS_RUNTIME "Null JSRuntime"
@@ -176,6 +177,31 @@ void throw_JSEvaluationException(JNIEnv *env, JSContext *ctx) {
     );
     CHECK_NULL(env, throwable, "Can't create instance of JSEvaluationException");
     (*env)->Throw(env, throwable);
+}
+
+void throw_error(int error_type, const char* error_msg, JNIEnv *env, JSContext *ctx) {
+    if (error_type == ERROR_TYPE_JS_EVALUATION) {
+        throw_JSEvaluationException(env, ctx);
+    } else {
+        const char *exception_name;
+        switch (error_type) {
+            case ERROR_TYPE_OOM:
+                exception_name = CLASS_NAME_OUT_OF_MEMORY_ERROR;
+                error_msg = EMPTY_STRING;
+                break;
+            case ERROR_TYPE_JS_DATA:
+                exception_name = CLASS_NAME_JS_DATA_EXCEPTION;
+                break;
+            case ERROR_TYPE_ILLEGAL_ARGUMENT:
+                exception_name = CLASS_NAME_ILLEGAL_ARGUMENT_EXCEPTION;
+                break;
+            case ERROR_TYPE_ILLEGAL_STATE:
+            default:
+                exception_name = CLASS_NAME_ILLEGAL_STATE_EXCEPTION;
+                break;
+        }
+        throw_exception(env, exception_name, error_msg);
+    }
 }
 
 JNIEXPORT jlong JNICALL
@@ -791,8 +817,15 @@ static jbyteArray bit_sink_to_jbyte_array(JNIEnv *env, BitSink *sink) {
 }
 
 JNIEXPORT jbyteArray JNICALL
-Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
-        jlong context, jstring source_code, jstring file_name, jint flags, jlong pickle_pointer) {
+Java_com_hippo_quickjs_android_QuickJS_evaluate(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jstring source_code,
+        jstring file_name,
+        jint flags,
+        jlong pickle_pointer
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     CHECK_NULL_RET(env, source_code, "Null source code");
@@ -809,64 +842,42 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
         }
     }
 
-    const char *source_code_utf = NULL;
-    jsize source_code_length = 0;
-    const char *file_name_utf = NULL;
-
-    source_code_utf = (*env)->GetStringUTFChars(env, source_code, NULL);
-    source_code_length = (*env)->GetStringUTFLength(env, source_code);
-    file_name_utf = (*env)->GetStringUTFChars(env, file_name, NULL);
+    const char *source_code_utf = (*env)->GetStringUTFChars(env, source_code, NULL);
+    jsize source_code_length = (*env)->GetStringUTFLength(env, source_code);
+    const char *file_name_utf = (*env)->GetStringUTFChars(env, file_name, NULL);
 
     if (source_code_utf == NULL || file_name_utf == NULL) {
-        if (pickle_pointer != 0) {
-            destroy_bit_sink(&sink);
-        }
-        if (source_code_utf != NULL) {
-            (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
-        }
-        if (file_name_utf != NULL) {
-            (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
-        }
+        if (pickle_pointer != 0) destroy_bit_sink(&sink);
+        if (source_code_utf != NULL) (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
+        if (file_name_utf != NULL) (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
         THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
     }
 
-    bool pickle_result = false;
-
     JSValue val = JS_Eval(ctx, source_code_utf, (size_t) source_code_length, file_name_utf, flags);
-    bool is_exception = (bool) JS_IsException(val);
-    if (!is_exception && pickle_pointer != 0) {
-        pickle_result = pickle(ctx, val, &source, &sink);
-    } else {
-        JS_FreeValue(ctx, val);
-    }
-
     (*env)->ReleaseStringUTFChars(env, source_code, source_code_utf);
     (*env)->ReleaseStringUTFChars(env, file_name, file_name_utf);
 
-    jbyteArray result = NULL;
-
-    if (pickle_pointer != 0) {
-        if (pickle_result) {
-            result = bit_sink_to_jbyte_array(env, &sink);
-        }
-
-        destroy_bit_sink(&sink);
-
-        if (result == NULL) {
-            if (pickle_result) {
-                THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
-            } else {
-                throw_JSEvaluationException(env, ctx);
-                return NULL;
-            }
-        }
-    } else {
-        if (is_exception) {
-            throw_JSEvaluationException(env, ctx);
-            return NULL;
-        }
+    if (JS_IsException(val)) {
+        throw_JSEvaluationException(env, ctx);
+        return NULL;
     }
 
+    if (pickle_pointer == 0) {
+        // No pickle pointer
+        // Return null now
+        JS_FreeValue(ctx, val);
+        return NULL;
+    }
+
+    int error_type = ERROR_TYPE_JS_EVALUATION;
+    char error_msg[ERROR_MSG_SIZE];
+    if (!pickle(ctx, val, &source, &sink, &error_type, error_msg, ERROR_MSG_SIZE)) {
+        throw_error(error_type, error_msg, env, ctx);
+        return NULL;
+    }
+
+    jbyteArray result = bit_sink_to_jbyte_array(env, &sink);
+    if (result == NULL) THROW_OUT_OF_MEMORY_ERROR_RET(env, EMPTY_STRING);
     return result;
 }
 

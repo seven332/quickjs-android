@@ -27,15 +27,35 @@ public class StandardTranslatorsTest {
   public void testBoolean() {
     assertEquivalent("false", false, boolean.class);
     assertEquivalent("true", true, boolean.class);
-    assertException("null", boolean.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", boolean.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("1", boolean.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        boolean.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_BOOLEAN
+    );
+    assertException(
+        "undefined",
+        boolean.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_BOOLEAN
+    );
+    assertException(
+        "1",
+        boolean.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_INT + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_BOOLEAN
+    );
 
     assertEquivalent("false", false, Boolean.class);
     assertEquivalent("true", true, Boolean.class);
     assertEquivalent("null", null, Boolean.class);
     assertEquivalent("undefined", null, Boolean.class);
-    assertException("1", Boolean.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "1",
+        Boolean.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_INT + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_BOOLEAN
+    );
   }
 
   @Test
@@ -49,9 +69,24 @@ public class StandardTranslatorsTest {
     assertException("128", byte.class, JSDataException.class, "Can't treat 128 as byte");
     assertException("-129", byte.class, JSDataException.class, "Can't treat -129 as byte");
     assertException("1.1", byte.class, JSDataException.class, "Can't treat 1.1 as byte");
-    assertException("null", byte.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", byte.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", byte.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        byte.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "undefined",
+        byte.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "false",
+        byte.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
 
     assertEquivalent("0", (byte) 0, Byte.class);
     assertEquivalent("1", (byte) 1, Byte.class);
@@ -64,7 +99,12 @@ public class StandardTranslatorsTest {
     assertException("1.1", Byte.class, JSDataException.class, "Can't treat 1.1 as byte");
     assertEquivalent("null", null, Byte.class);
     assertEquivalent("undefined", null, Byte.class);
-    assertException("false", Byte.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Byte.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
   }
 
   @Test
@@ -72,16 +112,36 @@ public class StandardTranslatorsTest {
     assertEquivalent("'a'", 'a', char.class);
     assertException("'abc'", char.class, JSDataException.class, "Can't treat \"abc\" as char");
     assertException("''", char.class, JSDataException.class, "Can't treat \"\" as char");
-    assertException("null", char.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", char.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", char.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        char.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_STRING
+    );
+    assertException(
+        "undefined",
+        char.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_STRING
+    );
+    assertException(
+        "false",
+        char.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_STRING
+    );
 
     assertEquivalent("'a'", 'a', Character.class);
     assertException("'abc'", Character.class, JSDataException.class, "Can't treat \"abc\" as char");
     assertException("''", Character.class, JSDataException.class, "Can't treat \"\" as char");
     assertEquivalent("null", null, Character.class);
     assertEquivalent("undefined", null, Character.class);
-    assertException("false", Character.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Character.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_STRING
+    );
   }
 
   @Test
@@ -95,9 +155,24 @@ public class StandardTranslatorsTest {
     assertException("32768", short.class, JSDataException.class, "Can't treat 32768 as short");
     assertException("-32769", short.class, JSDataException.class, "Can't treat -32769 as short");
     assertException("1.1", short.class, JSDataException.class, "Can't treat 1.1 as short");
-    assertException("null", short.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", short.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", short.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        short.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "undefined",
+        short.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "false",
+        short.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
 
     assertEquivalent("0", (short) 0, Short.class);
     assertEquivalent("1", (short) 1, Short.class);
@@ -110,7 +185,12 @@ public class StandardTranslatorsTest {
     assertException("1.1", Short.class, JSDataException.class, "Can't treat 1.1 as short");
     assertEquivalent("null", null, Short.class);
     assertEquivalent("undefined", null, Short.class);
-    assertException("false", Short.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Short.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
   }
 
   @Test
@@ -123,9 +203,24 @@ public class StandardTranslatorsTest {
     assertEquivalent("-2147483648", Integer.MIN_VALUE, int.class);
     assertException("2147483648", int.class, JSDataException.class, "Can't treat 2.147483648E9 as int");
     assertException("-2147483649", int.class, JSDataException.class, "Can't treat -2.147483649E9 as int");
-    assertException("null", int.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", int.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", int.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        int.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "undefined",
+        int.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "false",
+        int.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
 
     assertEquivalent("0", 0, Integer.class);
     assertEquivalent("0.0", 0, Integer.class);
@@ -137,7 +232,12 @@ public class StandardTranslatorsTest {
     assertException("-2147483649", Integer.class, JSDataException.class, "Can't treat -2.147483649E9 as int");
     assertEquivalent("null", null, Integer.class);
     assertEquivalent("undefined", null, Integer.class);
-    assertException("false", Integer.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Integer.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
   }
 
   @Test
@@ -160,9 +260,24 @@ public class StandardTranslatorsTest {
     assertEquivalent("-9223372036854775809", -9223372036854775808L, long.class);
     assertException("0.000001", long.class, JSDataException.class, "Can't treat 1.0E-6 as long");
     assertException("9923372036854775809", long.class, JSDataException.class, "Can't treat 9.923372036854776E18 as long");
-    assertException("null", long.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", long.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", long.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        long.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "undefined",
+        long.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "false",
+        long.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
 
     assertEquivalent("0", 0L, Long.class);
     assertEquivalent("0.0", 0L, Long.class);
@@ -184,7 +299,12 @@ public class StandardTranslatorsTest {
     assertException("9923372036854775809", Long.class, JSDataException.class, "Can't treat 9.923372036854776E18 as long");
     assertEquivalent("null", null, Long.class);
     assertEquivalent("undefined", null, Long.class);
-    assertException("false", Long.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Long.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
   }
 
   @Test
@@ -197,9 +317,24 @@ public class StandardTranslatorsTest {
     assertEquivalent("Number.MAX_VALUE", Float.POSITIVE_INFINITY, float.class);
     assertEquivalent("Number.MIN_VALUE", 0.0f, float.class);
     assertEquivalent("Number.NaN", Float.NaN, float.class);
-    assertException("null", float.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", float.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", float.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        float.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "undefined",
+        float.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "false",
+        float.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
 
     assertEquivalent("0", 0.0f, Float.class);
     assertEquivalent("0.0", 0.0f, Float.class);
@@ -211,7 +346,12 @@ public class StandardTranslatorsTest {
     assertEquivalent("Number.NaN", Float.NaN, Float.class);
     assertEquivalent("null", null, Float.class);
     assertEquivalent("undefined", null, Float.class);
-    assertException("false", Float.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Float.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
   }
 
   @Test
@@ -226,9 +366,24 @@ public class StandardTranslatorsTest {
     assertEquivalent("Number.POSITIVE_INFINITY", Double.POSITIVE_INFINITY, double.class);
     assertEquivalent("Number.NEGATIVE_INFINITY", Double.NEGATIVE_INFINITY, double.class);
     assertEquivalent("Number.NaN", Double.NaN, double.class);
-    assertException("null", double.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("undefined", double.class, JSDataException.class, "Can't pickle the JSValue");
-    assertException("false", double.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "null",
+        double.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_NULL + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "undefined",
+        double.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_UNDEFINED + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
+    assertException(
+        "false",
+        double.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
 
     assertEquivalent("0", 0.0, Double.class);
     assertEquivalent("0.0", 0.0, Double.class);
@@ -242,7 +397,12 @@ public class StandardTranslatorsTest {
     assertEquivalent("Number.NaN", Double.NaN, Double.class);
     assertEquivalent("null", null, Double.class);
     assertEquivalent("undefined", null, Double.class);
-    assertException("false", Double.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        Double.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_NUMBER
+    );
   }
 
   @Test
@@ -251,6 +411,11 @@ public class StandardTranslatorsTest {
     assertEquivalent("'str'", "str", String.class);
     assertEquivalent("null", null, String.class);
     assertEquivalent("undefined", null, String.class);
-    assertException("false", String.class, JSDataException.class, "Can't pickle the JSValue");
+    assertException(
+        "false",
+        String.class,
+        JSDataException.class,
+        "Unexpected js tag " + JSContext.TYPE_BOOLEAN + " for pickle flag " + Translator.PICKLE_FLAG_TYPE_STRING
+    );
   }
 }

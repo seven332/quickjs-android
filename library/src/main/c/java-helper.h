@@ -3,8 +3,10 @@
 
 #include <jni.h>
 
-#define CLASS_NAME_ILLEGAL_STATE_EXCEPTION "java/lang/IllegalStateException"
-#define CLASS_NAME_JS_DATA_EXCEPTION "com/hippo/quickjs/android/JSDataException"
+#define CLASS_NAME_ILLEGAL_ARGUMENT_EXCEPTION "java/lang/IllegalArgumentException"
+#define CLASS_NAME_ILLEGAL_STATE_EXCEPTION    "java/lang/IllegalStateException"
+#define CLASS_NAME_OUT_OF_MEMORY_ERROR        "java/lang/OutOfMemoryError"
+#define CLASS_NAME_JS_DATA_EXCEPTION          "com/hippo/quickjs/android/JSDataException"
 
 #define THROW_EXCEPTION(ENV, EXCEPTION_NAME, ...)                               \
     do {                                                                        \
@@ -18,11 +20,23 @@
         return 0;                                                               \
     } while (0)
 
+#define THROW_ILLEGAL_ARGUMENT_EXCEPTION(ENV, ...)                              \
+    THROW_EXCEPTION(ENV, CLASS_NAME_ILLEGAL_ARGUMENT_EXCEPTION, __VA_ARGS__)
+
+#define THROW_ILLEGAL_ARGUMENT_EXCEPTION_RET(ENV, ...)                          \
+    THROW_EXCEPTION_RET(ENV, CLASS_NAME_ILLEGAL_ARGUMENT_EXCEPTION, __VA_ARGS__)
+
 #define THROW_ILLEGAL_STATE_EXCEPTION(ENV, ...)                                 \
     THROW_EXCEPTION(ENV, CLASS_NAME_ILLEGAL_STATE_EXCEPTION, __VA_ARGS__)
 
 #define THROW_ILLEGAL_STATE_EXCEPTION_RET(ENV, ...)                             \
     THROW_EXCEPTION_RET(ENV, CLASS_NAME_ILLEGAL_STATE_EXCEPTION, __VA_ARGS__)
+
+#define THROW_OUT_OF_MEMORY_ERROR(ENV, ...)                                     \
+    THROW_EXCEPTION(ENV, CLASS_NAME_OUT_OF_MEMORY_ERROR, __VA_ARGS__)
+
+#define THROW_OUT_OF_MEMORY_ERROR_RET(ENV, ...)                                 \
+    THROW_EXCEPTION_RET(ENV, CLASS_NAME_OUT_OF_MEMORY_ERROR, __VA_ARGS__)
 
 #define THROW_JS_DATA_EXCEPTION(ENV, ...)                                       \
     THROW_EXCEPTION(ENV, CLASS_NAME_JS_DATA_EXCEPTION, __VA_ARGS__)

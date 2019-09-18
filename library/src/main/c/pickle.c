@@ -29,19 +29,35 @@ static int JS_GetArrayLength(JSContext *ctx, JSValue val) {
     return JS_VALUE_GET_INT(length);
 }
 
-#define GO_TO_FAIL_OOM        \
-do {                          \
-    JS_ThrowOutOfMemory(ctx); \
-    goto fail;                \
+#define GO_TO_FAIL_OOM              \
+do {                                \
+    *(error_type) = ERROR_TYPE_OOM; \
+    goto fail;                      \
 } while (0)
 
-#define GO_TO_FAIL_UNEXPECTED_TAG                                                     \
-do {                                                                                  \
-    JS_ThrowInternalError(ctx, "Unexpected js tag %d for pickle flag %d", tag, flag); \
-    goto fail;                                                                        \
+#define GO_TO_FAIL_UNEXPECTED_TAG                                                              \
+do {                                                                                           \
+    *(error_type) = ERROR_TYPE_JS_DATA;                                                        \
+    snprintf(error_msg, error_msg_size, "Unexpected js tag %d for pickle flag %d", tag, flag); \
+    goto fail;                                                                                 \
 } while (0)
 
-bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *command, BitSink *sink) {
+#define GO_TO_FAIL_JS_EXCEPTION               \
+do {                                          \
+    *(error_type) = ERROR_TYPE_JS_EVALUATION; \
+    goto fail;                                \
+} while (0)
+
+bool do_pickle(
+        JSContext *ctx,
+        JSValue val,
+        JSValueStack* stack,
+        BitSource *command,
+        BitSink *sink,
+        int *error_type,
+        char *error_msg,
+        size_t error_msg_size
+) {
     bool freed;
     while (true) {
         freed = false;
@@ -71,7 +87,7 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
             } else {
                 assert(false && "Unexpected pickle flag");
             }
-            if (JS_IsException(val)) goto fail;
+            if (JS_IsException(val)) GO_TO_FAIL_JS_EXCEPTION;
             flag = bit_source_next_int8(command);
         }
 
@@ -131,13 +147,14 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
                     for (int32_t i = 0; i < len; i++) {
                         bit_source_reconfig(command, segment_offset, segment_offset + segment_size);
                         JSValue element = JS_GetPropertyUint32(ctx, val, (uint32_t) i);
-                        if (JS_IsException(element)) goto fail;
+                        if (JS_IsException(element)) GO_TO_FAIL_JS_EXCEPTION;
 
                         size_t start = js_value_stack_mark(stack);
-                        bool pickled = do_pickle(ctx, element, stack, command, sink);
+                        bool pickled = do_pickle(ctx, element, stack, command, sink, error_type, error_msg, error_msg_size);
                         js_value_stack_reset(stack, start);
 
                         // No need to reconfig command if "goto fail"
+                        // Just goto fail, the error has been set
                         if (unlikely(!pickled)) goto fail;
                     }
                     bit_source_reconfig(command, segment_offset + segment_size, command_size);
@@ -148,10 +165,11 @@ bool do_pickle(JSContext *ctx, JSValue val, JSValueStack* stack, BitSource *comm
                     BitSource child_command = CREATE_COMMAND_BIT_SOURCE(child);
 
                     size_t start = js_value_stack_mark(stack);
-                    bool pickled = do_pickle(ctx, val, stack, &child_command, sink);
+                    bool pickled = do_pickle(ctx, val, stack, &child_command, sink, error_type, error_msg, error_msg_size);
                     freed = true;
                     js_value_stack_reset(stack, start);
 
+                    // Just goto fail, the error has been set
                     if (unlikely(!pickled)) goto fail;
                     break;
                 }
@@ -184,10 +202,21 @@ fail:
     return false;
 }
 
-bool pickle(JSContext *ctx, JSValue val, BitSource *source, BitSink *sink) {
+bool pickle(
+        JSContext *ctx,
+        JSValue val,
+        BitSource *source,
+        BitSink *sink,
+        int *error_type,
+        char *error_msg,
+        size_t error_msg_size
+) {
     JSValueStack stack;
-    if (unlikely(!create_js_value_stack(&stack, DEFAULT_STACK_SIZE))) return false;
-    bool result = do_pickle(ctx, val, &stack, source, sink);
+    if (unlikely(!create_js_value_stack(&stack, DEFAULT_STACK_SIZE))) {
+        *error_type = ERROR_TYPE_OOM;
+        return false;
+    }
+    bool result = do_pickle(ctx, val, &stack, source, sink, error_type, error_msg, error_msg_size);
     destroy_js_value_stack(&stack, ctx);
     return result;
 }
