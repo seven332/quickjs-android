@@ -27,10 +27,6 @@ public class JSEvaluationException extends RuntimeException {
   private String exception;
   private String stack;
 
-  JSEvaluationException(JSException jsException) {
-    this(jsException.isError(), jsException.getException(), jsException.getStack());
-  }
-
   private JSEvaluationException(boolean isError, String exception, String stack) {
     super(toMessage(isError, exception, stack));
     this.isError = isError;

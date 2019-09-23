@@ -207,37 +207,7 @@ public class QuickJS implements Translator.Depot, Closeable {
 
   static native void setContextValue(long context, String name, long unpickCommand, byte[] bytes, int byteSize);
 
-  static native long createValueUndefined(long context);
-  static native long createValueNull(long context);
-  static native long createValueBoolean(long context, boolean value);
-  static native long createValueInt(long context, int value);
-  static native long createValueFloat64(long context, double value);
-  static native long createValueString(long context, String value);
-  static native long createValueObject(long context);
-  static native long createValueArray(long context);
-  static native long createValueFunction(long context, JSContext jsContext, Object instance, String methodName, String methodSign, Type returnType, Type[] argTypes);
-  static native long createValueFunctionS(long context, JSContext jsContext, String className, String methodName, String methodSign, Type returnType, Type[] argTypes);
-  static native long createValueJavaObject(long context, Object object);
-
-  static native int getValueTag(long value);
-  static native boolean isValueArray(long context, long value);
-  static native boolean isValueFunction(long context, long value);
-  static native long getValueProperty(long context, long value, int index);
-  static native long getValueProperty(long context, long value, String name);
-  static native boolean setValueProperty(long context, long value, int index, long property);
-  static native boolean setValueProperty(long context, long value, String name, long property);
-  static native boolean getValueBoolean(long value);
-  static native int getValueInt(long value);
-  static native double getValueFloat64(long value);
-  static native String getValueString(long context, long value);
-  static native Object getValueJavaObject(long context, long value);
-  static native boolean defineValueProperty(long context, long value, int index, long property, int flags);
-  static native boolean defineValueProperty(long context, long value, String name, long property, int flags);
-  static native long invokeValueFunction(long context, long function, long thisObj, long[] args);
   static native void destroyValue(long context, long value);
-
-  static native JSException getException(long context);
-  static native long getGlobalObject(long context);
 
   static native byte[] evaluate(long context, String sourceCode, String fileName, int flags, long pickle);
 
