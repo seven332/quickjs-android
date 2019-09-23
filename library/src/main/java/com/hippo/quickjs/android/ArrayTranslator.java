@@ -46,22 +46,22 @@ class ArrayTranslator extends Translator<Object> {
   }
 
   @Override
-  protected Object unpickle(BitSource source) {
+  protected Object unpickle(JSContext context, BitSource source) {
     int length = source.readArrayLength();
     Object value = Array.newInstance(elementClass, length);
     for (int i = 0; i < length; i++) {
-      Array.set(value, i, elementTranslator.unpickle(source));
+      Array.set(value, i, elementTranslator.unpickle(context, source));
     }
     return value;
   }
 
   @Override
-  protected void pickle(Object value, BitSink sink) {
+  protected void pickle(JSContext context, Object value, BitSink sink) {
     int length = Array.getLength(value);
     sink.writeInt(length);
     for (int i = 0; i < length; i++) {
       Object element = Array.get(value, i);
-      elementTranslator.pickle(element, sink);
+      elementTranslator.pickle(context, element, sink);
     }
   }
 

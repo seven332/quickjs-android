@@ -44,6 +44,12 @@ public class BitSource {
     return result;
   }
 
+  private long nextLong() {
+    long result = Bits.readLong(bytes, offset);
+    offset += 8;
+    return result;
+  }
+
   private double nextDouble() {
     double result = Bits.readDouble(bytes, offset);
     offset += 8;
@@ -193,6 +199,13 @@ public class BitSource {
    */
   public int readArrayLength() {
     return nextInt();
+  }
+
+  /**
+   * Reads ptr.
+   */
+  public long readPtr() {
+    return nextLong();
   }
 
   void checkEOF() {

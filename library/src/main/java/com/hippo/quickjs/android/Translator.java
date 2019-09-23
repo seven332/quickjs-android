@@ -76,20 +76,20 @@ public abstract class Translator<T> {
     this.placeholders = placeholders;
   }
 
-  protected abstract T unpickle(BitSource source);
+  protected abstract T unpickle(JSContext context, BitSource source);
 
-  final T unpickle(byte[] bytes) {
+  final T unpickle(JSContext context, byte[] bytes) {
     BitSource source = new BitSource(bytes);
-    T value = unpickle(source);
+    T value = unpickle(context, source);
     source.checkEOF();
     return value;
   }
 
-  protected abstract void pickle(T value, BitSink sink);
+  protected abstract void pickle(JSContext context, T value, BitSink sink);
 
-  final BitSink pickle(T value) {
+  final BitSink pickle(JSContext context, T value) {
     BitSink sink = new BitSink();
-    pickle(value, sink);
+    pickle(context, value, sink);
     return sink;
   }
 

@@ -31,7 +31,7 @@ public class NativeCleanerTest {
   public void test() {
     int objectCount = 1234;
 
-    TestNativeCleaner<Object> cleaner = new TestNativeCleaner<>(objectCount);
+    TestNativeCleaner cleaner = new TestNativeCleaner(objectCount);
 
     for (int i = 0; i < objectCount; i++) {
       cleaner.register(new Object(), i);
@@ -45,7 +45,7 @@ public class NativeCleanerTest {
     cleaner.assertAllCleaned();
   }
 
-  private class TestNativeCleaner<T> extends NativeCleaner<T> {
+  private class TestNativeCleaner extends NativeCleaner {
 
     private BitSet bitSet;
 

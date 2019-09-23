@@ -39,9 +39,9 @@ class NullableTranslator<T> extends Translator<T> {
   }
 
   @Override
-  protected T unpickle(BitSource source) {
+  protected T unpickle(JSContext context, BitSource source) {
     if (source.readBoolean()) {
-      return delegate.unpickle(source);
+      return delegate.unpickle(context, source);
     } else {
       return null;
     }
@@ -49,12 +49,12 @@ class NullableTranslator<T> extends Translator<T> {
 
   @SuppressWarnings("unchecked")
   @Override
-  protected void pickle(Object value, BitSink sink) {
+  protected void pickle(JSContext context, Object value, BitSink sink) {
     if (value == null) {
       sink.writeBoolean(false);
     } else {
       sink.writeBoolean(true);
-      delegate.pickle((T) value, sink);
+      delegate.pickle(context, (T) value, sink);
     }
   }
 

@@ -35,6 +35,8 @@ static force_inline bool bit_sink_write_string(BitSink *sink, const char *value)
     return bit_sink_write_string_len(sink, value, strlen(value));
 }
 
+bool bit_sink_write_ptr(BitSink *sink, void *value);
+
 static force_inline size_t bit_sink_get_length(BitSink *sink) {
     return sink->offset;
 }

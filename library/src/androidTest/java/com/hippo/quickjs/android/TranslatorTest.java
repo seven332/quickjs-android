@@ -81,7 +81,7 @@ public class TranslatorTest {
     }
 
     @Override
-    protected TestEntry unpickle(BitSource source) {
+    protected TestEntry unpickle(JSContext context, BitSource source) {
       int length = source.readArrayLength();
       String[] strings = new String[length];
       for (int i = 0; i < length; i++) {
@@ -97,7 +97,7 @@ public class TranslatorTest {
     }
 
     @Override
-    protected void pickle(TestEntry value, BitSink sink) {
+    protected void pickle(JSContext context, TestEntry value, BitSink sink) {
       throw new IllegalStateException("TODO");
     }
   }

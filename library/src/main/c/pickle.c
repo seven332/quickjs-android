@@ -48,7 +48,7 @@ do {                                          \
     goto fail;                                \
 } while (0)
 
-bool do_pickle(
+static bool do_pickle(
         JSContext *ctx,
         JSValue val,
         JSValueStack* stack,
@@ -202,6 +202,78 @@ fail:
     return false;
 }
 
+static JSValue *copy_js_value(JSContext *ctx, JSValue val) {
+    JSValue *copy = (JSValue *) js_malloc_rt(JS_GetRuntime(ctx), sizeof(JSValue));
+    if (copy == NULL) return NULL;
+    *copy = val;
+    JS_DupValue(ctx, *copy);
+    return copy;
+}
+
+static void free_js_value_copy(JSContext *ctx, JSValue *copy) {
+    JS_FreeValue(ctx, *copy);
+    js_free_rt(JS_GetRuntime(ctx), copy);
+}
+
+static bool do_pickle_object(
+        JSContext *ctx,
+        JSValue val,
+        BitSink *sink,
+        int *error_type,
+        char *error_msg,
+        size_t error_msg_size
+) {
+    int tag = JS_VALUE_GET_TAG(val);
+    int flag = FLAG_TYPE_OBJECT;
+    if (unlikely(tag != JS_TAG_OBJECT)) GO_TO_FAIL_UNEXPECTED_TAG;
+    JSValue *copy = copy_js_value(ctx, val);
+    if (unlikely(copy == NULL)) GO_TO_FAIL_OOM;
+    if (unlikely(!bit_sink_write_ptr(sink, copy))) {
+        free_js_value_copy(ctx, copy);
+        GO_TO_FAIL_OOM;
+    }
+    JS_FreeValue(ctx, val);
+    return true;
+
+fail:
+    JS_FreeValue(ctx, val);
+    return false;
+}
+
+static bool do_pickle_nullable_object(
+        JSContext *ctx,
+        JSValue val,
+        BitSink *sink,
+        int *error_type,
+        char *error_msg,
+        size_t error_msg_size
+) {
+    int tag = JS_VALUE_GET_TAG(val);
+    if (tag == JS_TAG_NULL || tag == JS_TAG_UNDEFINED) {
+        if (unlikely(!bit_sink_write_boolean(sink, false))) GO_TO_FAIL_OOM;
+        JS_FreeValue(ctx, val);
+        return true;
+    } else {
+        if (unlikely(!bit_sink_write_boolean(sink, true))) GO_TO_FAIL_OOM;
+        return do_pickle_object(ctx, val, sink, error_type, error_msg, error_msg_size);
+    }
+
+fail:
+    JS_FreeValue(ctx, val);
+    return false;
+}
+
+static force_inline bool bit_source_is_object(BitSource *source) {
+    return source->size == 1 && *(int8_t *) source->data == FLAG_TYPE_OBJECT;
+}
+
+static force_inline bool bit_source_is_nullable_object(BitSource *source) {
+    return source->size == 6
+            && *(int8_t *) source->data == FLAG_ATTR_NULLABLE
+            && *(int32_t *) (source->data + 1) == 1
+            && *(int8_t *) (source->data + 5) == FLAG_TYPE_OBJECT;
+}
+
 bool pickle(
         JSContext *ctx,
         JSValue val,
@@ -211,12 +283,18 @@ bool pickle(
         char *error_msg,
         size_t error_msg_size
 ) {
-    JSValueStack stack;
-    if (unlikely(!create_js_value_stack(&stack, DEFAULT_STACK_SIZE))) {
-        *error_type = ERROR_TYPE_OOM;
-        return false;
+    if (bit_source_is_object(source)) {
+        return do_pickle_object(ctx, val, sink, error_type, error_msg, error_msg_size);
+    } else if (bit_source_is_nullable_object(source)) {
+        return do_pickle_nullable_object(ctx, val, sink, error_type, error_msg, error_msg_size);
+    } else {
+        JSValueStack stack;
+        if (unlikely(!create_js_value_stack(&stack, DEFAULT_STACK_SIZE))) {
+            *error_type = ERROR_TYPE_OOM;
+            return false;
+        }
+        bool result = do_pickle(ctx, val, &stack, source, sink, error_type, error_msg, error_msg_size);
+        destroy_js_value_stack(&stack, ctx);
+        return result;
     }
-    bool result = do_pickle(ctx, val, &stack, source, sink, error_type, error_msg, error_msg_size);
-    destroy_js_value_stack(&stack, ctx);
-    return result;
 }

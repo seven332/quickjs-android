@@ -31,12 +31,13 @@ import java.util.Stack;
  */
 public class QuickJS implements Translator.Depot, Closeable {
 
-  private static final List<Translator.Factory> BUILT_IN_FACTORIES = new ArrayList<>(3);
+  private static final List<Translator.Factory> BUILT_IN_FACTORIES = new ArrayList<>(4);
 
   static {
     BUILT_IN_FACTORIES.add(NullableTranslator.FACTORY);
     BUILT_IN_FACTORIES.add(StandardTranslators.FACTORY);
     BUILT_IN_FACTORIES.add(ArrayTranslator.FACTORY);
+    BUILT_IN_FACTORIES.add(InterfaceTranslator.FACTORY);
   }
 
   private final List<Translator.Factory> factories;

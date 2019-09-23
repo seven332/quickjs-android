@@ -71,7 +71,7 @@ public class JSContext implements Closeable, Translator.Context {
   long pointer;
   final QuickJS quickJS;
   final JSRuntime jsRuntime;
-  private final NativeCleaner<JSValue> cleaner;
+  private final NativeCleaner cleaner;
 
   JSContext(long pointer, QuickJS quickJS, JSRuntime jsRuntime) {
     this.pointer = pointer;
@@ -102,7 +102,7 @@ public class JSContext implements Closeable, Translator.Context {
   private <T> void setInternal(String name, Translator<T> translator, T object) {
     synchronized (jsRuntime) {
       checkClosed();
-      BitSink sink = translator.pickle(object);
+      BitSink sink = translator.pickle(this, object);
       QuickJS.setContextValue(pointer, name, translator.unpicklePointer, sink.getBytes(), sink.getSize());
     }
   }
@@ -162,7 +162,7 @@ public class JSContext implements Closeable, Translator.Context {
     return evaluateInternal(script, fileName, type, flags, quickJS.getTranslator(javaType.type));
   }
 
-  private <T> T evaluateInternal(String script, String fileName, int type, int flags, @Nullable Translator<T> adapter) {
+  private <T> T evaluateInternal(String script, String fileName, int type, int flags, @Nullable Translator<T> translator) {
     if (type != EVAL_TYPE_GLOBAL && type != EVAL_TYPE_MODULE) {
       throw new IllegalArgumentException("Invalid type: " + type);
     }
@@ -172,8 +172,8 @@ public class JSContext implements Closeable, Translator.Context {
 
     synchronized (jsRuntime) {
       checkClosed();
-      byte[] bytes = QuickJS.evaluate(pointer, script, fileName, type | flags, adapter != null ? adapter.picklePointer : 0);
-      return adapter != null ? adapter.unpickle(bytes) : null;
+      byte[] bytes = QuickJS.evaluate(pointer, script, fileName, type | flags, translator != null ? translator.picklePointer : 0);
+      return translator != null ? translator.unpickle(this, bytes) : null;
     }
   }
 
@@ -333,6 +333,10 @@ public class JSContext implements Closeable, Translator.Context {
     }
   }
 
+  void registerJSValue(Object object, long pointer) {
+    cleaner.register(object, pointer);
+  }
+
   // TODO No need to save c pointers of JSNull, JSUndefined, JSBoolean, JSNumber and JSString.
   //  Just save their types and values.
   /**
@@ -413,7 +417,7 @@ public class JSContext implements Closeable, Translator.Context {
     }
   }
 
-  private class JSValueCleaner extends NativeCleaner<JSValue> {
+  private class JSValueCleaner extends NativeCleaner {
 
     @Override
     public void onRemove(long pointer) {

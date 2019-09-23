@@ -67,3 +67,10 @@ bool bit_sink_write_string_len(BitSink *sink, const char *value, size_t length) 
     sink->offset += length;
     return true;
 }
+
+bool bit_sink_write_ptr(BitSink *sink, void *value) {
+    if (!ensure_size(sink, 8)) return false;
+    *((int64_t *) (sink->data + sink->offset)) = (int64_t) value;
+    sink->offset += 8;
+    return true;
+}

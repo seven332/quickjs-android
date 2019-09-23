@@ -24,11 +24,11 @@ import java.util.Set;
 /**
  * https://youtu.be/7_caITSjk1k
  */
-abstract class NativeCleaner<T> {
+abstract class NativeCleaner {
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private Set<NativeReference<T>> phantomReferences = new HashSet<>();
-  private ReferenceQueue<T> referenceQueue = new ReferenceQueue<>();
+  private Set<NativeReference> phantomReferences = new HashSet<>();
+  private ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
 
   /**
    * Returns the size of not removed objects.
@@ -43,8 +43,8 @@ abstract class NativeCleaner<T> {
    * @param referent the object
    * @param pointer the native pointer
    */
-  public void register(T referent, long pointer) {
-    phantomReferences.add(new NativeReference<>(referent, pointer, referenceQueue));
+  public void register(Object referent, long pointer) {
+    phantomReferences.add(new NativeReference(referent, pointer, referenceQueue));
   }
 
   /**
@@ -62,8 +62,8 @@ abstract class NativeCleaner<T> {
    */
   @SuppressWarnings("unchecked")
   public void clean() {
-    NativeReference<T> ref;
-    while ((ref = (NativeReference<T>) referenceQueue.poll()) != null) {
+    NativeReference ref;
+    while ((ref = (NativeReference) referenceQueue.poll()) != null) {
       if (phantomReferences.contains(ref)) {
         onRemove(ref.pointer);
         phantomReferences.remove(ref);
@@ -75,17 +75,17 @@ abstract class NativeCleaner<T> {
    * Calls {@link #onRemove(long)} on all objects.
    */
   public void forceClean() {
-    for (NativeReference<T> ref : phantomReferences) {
+    for (NativeReference ref : phantomReferences) {
       onRemove(ref.pointer);
     }
     phantomReferences.clear();
   }
 
-  private static class NativeReference<T> extends PhantomReference<T> {
+  private static class NativeReference extends PhantomReference<Object> {
 
     private long pointer;
 
-    private NativeReference(T referent, long pointer, ReferenceQueue<? super T> q) {
+    private NativeReference(Object referent, long pointer, ReferenceQueue<? super Object> q) {
       super(referent, q);
       this.pointer = pointer;
     }

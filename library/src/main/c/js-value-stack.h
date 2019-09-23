@@ -15,7 +15,7 @@ typedef struct JSValueStack {
     size_t size;
 } JSValueStack;
 
-static force_inline bool create_js_value_stack(JSValueStack * stack, size_t size) {
+static force_inline bool create_js_value_stack(JSValueStack *stack, size_t size) {
     stack->data = (JSValue *) malloc(size * sizeof(JSValue));
     if (stack->data == NULL) return false;
 

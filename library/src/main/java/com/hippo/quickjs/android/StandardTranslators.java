@@ -50,12 +50,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_NULL }
       ) {
         @Override
-        protected Void unpickle(BitSource source) {
+        protected Void unpickle(JSContext context, BitSource source) {
           return null;
         }
 
         @Override
-        protected void pickle(Void value, BitSink sink) { }
+        protected void pickle(JSContext context, Void value, BitSink sink) { }
       };
 
   private static final Translator<Boolean> BOOLEAN_TRANSLATOR =
@@ -64,12 +64,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_BOOLEAN }
       ) {
         @Override
-        protected Boolean unpickle(BitSource source) {
+        protected Boolean unpickle(JSContext context, BitSource source) {
           return source.readBoolean();
         }
 
         @Override
-        protected void pickle(Boolean value, BitSink sink) {
+        protected void pickle(JSContext context, Boolean value, BitSink sink) {
           sink.writeBoolean(value);
         }
       };
@@ -80,12 +80,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_BYTE }
       ) {
         @Override
-        protected Byte unpickle(BitSource source) {
+        protected Byte unpickle(JSContext context, BitSource source) {
           return source.readByte();
         }
 
         @Override
-        protected void pickle(Byte value, BitSink sink) {
+        protected void pickle(JSContext context, Byte value, BitSink sink) {
           sink.writeByte(value);
         }
       };
@@ -96,12 +96,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_STRING }
       ) {
         @Override
-        protected Character unpickle(BitSource source) {
+        protected Character unpickle(JSContext context, BitSource source) {
           return source.readChar();
         }
 
         @Override
-        protected void pickle(Character value, BitSink sink) {
+        protected void pickle(JSContext context, Character value, BitSink sink) {
           sink.writeString(value.toString());
         }
       };
@@ -112,12 +112,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_SHORT }
       ) {
         @Override
-        protected Short unpickle(BitSource source) {
+        protected Short unpickle(JSContext context, BitSource source) {
           return source.readShort();
         }
 
         @Override
-        protected void pickle(Short value, BitSink sink) {
+        protected void pickle(JSContext context, Short value, BitSink sink) {
           sink.writeShort(value);
         }
       };
@@ -128,12 +128,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_INT }
       ) {
         @Override
-        protected Integer unpickle(BitSource source) {
+        protected Integer unpickle(JSContext context, BitSource source) {
           return source.readInt();
         }
 
         @Override
-        protected void pickle(Integer value, BitSink sink) {
+        protected void pickle(JSContext context, Integer value, BitSink sink) {
           sink.writeInt(value);
         }
       };
@@ -144,12 +144,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_DOUBLE }
       ) {
         @Override
-        protected Long unpickle(BitSource source) {
+        protected Long unpickle(JSContext context, BitSource source) {
           return source.readLong();
         }
 
         @Override
-        protected void pickle(Long value, BitSink sink) {
+        protected void pickle(JSContext context, Long value, BitSink sink) {
           // TODO Loss of precision
           sink.writeDouble(value);
         }
@@ -161,12 +161,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_FLOAT }
       ) {
         @Override
-        protected Float unpickle(BitSource source) {
+        protected Float unpickle(JSContext context, BitSource source) {
           return source.readFloat();
         }
 
         @Override
-        protected void pickle(Float value, BitSink sink) {
+        protected void pickle(JSContext context, Float value, BitSink sink) {
           sink.writeFloat(value);
         }
       };
@@ -177,12 +177,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_DOUBLE }
       ) {
         @Override
-        protected Double unpickle(BitSource source) {
+        protected Double unpickle(JSContext context, BitSource source) {
           return source.readDouble();
         }
 
         @Override
-        protected void pickle(Double value, BitSink sink) {
+        protected void pickle(JSContext context, Double value, BitSink sink) {
           sink.writeDouble(value);
         }
       };
@@ -193,12 +193,12 @@ class StandardTranslators {
           new byte[] { Translator.UNPICKLE_FLAG_TYPE_STRING }
       ) {
         @Override
-        protected String unpickle(BitSource source) {
+        protected String unpickle(JSContext context, BitSource source) {
           return source.readString();
         }
 
         @Override
-        protected void pickle(String value, BitSink sink) {
+        protected void pickle(JSContext context, String value, BitSink sink) {
           sink.writeString(value);
         }
       };
