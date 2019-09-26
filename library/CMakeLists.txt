@@ -16,9 +16,9 @@ set(QUICKJS_ANDROID_SOURCES
         src/main/c/bit-sink.c
         src/main/c/pickle.c
         src/main/c/unpickle.c
+        src/main/c/java-exception.c
         src/main/c/java-method.c
         src/main/c/java-object.c
-        src/main/c/java-helper.c
 )
 
 if (LEAK_TRIGGER)

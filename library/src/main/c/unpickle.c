@@ -34,7 +34,7 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
         if (flag == FLAG_OPT_PUSH) {
             val = JS_NewObject(ctx);
             if (JS_IsException(val)) goto fail;
-            if (!js_value_stack_push(stack, val)) goto fail;
+            if (unlikely(!js_value_stack_push(stack, val))) goto fail;
             continue;
         }
 
@@ -94,8 +94,8 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
                         js_value_stack_reset(stack, start);
 
                         // No need to reconfig command if "goto fail"
-                        if (JS_IsException(element)) goto fail;
-                        if (JS_SetPropertyUint32(ctx, val, (uint32_t) i, element) == -1) goto fail;
+                        if (unlikely(JS_IsException(element))) goto fail;
+                        if (unlikely(JS_SetPropertyUint32(ctx, val, (uint32_t) i, element) == -1)) goto fail;
                     }
                     bit_source_reconfig(command, segment_offset + segment_size, command_size);
                     break;
@@ -133,7 +133,7 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
             case FLAG_PROP_INT: {
                 uint32_t index = (uint32_t) bit_source_next_int32(command);
                 JSValue parent = js_value_stack_peek(stack);
-                if (JS_SetPropertyUint32(ctx, parent, index, val) == -1) {
+                if (unlikely(JS_SetPropertyUint32(ctx, parent, index, val) == -1)) {
                     // Assign JS_EXCEPTION to val to avoid double free
                     val = JS_EXCEPTION;
                     goto fail;
@@ -143,7 +143,7 @@ static JSValue do_unpickle(JSContext *ctx, JSValueStack *stack, BitSource *comma
             case FLAG_PROP_STR: {
                 const char *name = bit_source_next_string(command);
                 JSValue parent = js_value_stack_peek(stack);
-                if (JS_SetPropertyStr(ctx, parent, name, val) == -1) {
+                if (unlikely(JS_SetPropertyStr(ctx, parent, name, val) == -1)) {
                     // Assign JS_EXCEPTION to val to avoid double free
                     val = JS_EXCEPTION;
                     goto fail;
@@ -162,9 +162,10 @@ fail:
     return JS_EXCEPTION;
 }
 
+// TODO Handle exception like pickle()
 JSValue unpickle(JSContext *ctx, BitSource *command, BitSource *source) {
     JSValueStack stack;
-    if (!create_js_value_stack(&stack, DEFAULT_STACK_SIZE)) return JS_ThrowOutOfMemory(ctx);
+    if (unlikely(!create_js_value_stack(&stack, DEFAULT_STACK_SIZE))) return JS_ThrowOutOfMemory(ctx);
     JSValue result = do_unpickle(ctx, &stack, command, source);
     // Source must be consumed
     assert(!bit_source_has_next(source));

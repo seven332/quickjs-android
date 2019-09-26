@@ -204,7 +204,7 @@ fail:
 
 static JSValue *copy_js_value(JSContext *ctx, JSValue val) {
     JSValue *copy = (JSValue *) js_malloc_rt(JS_GetRuntime(ctx), sizeof(JSValue));
-    if (copy == NULL) return NULL;
+    if (unlikely(copy == NULL)) return NULL;
     *copy = val;
     JS_DupValue(ctx, *copy);
     return copy;
