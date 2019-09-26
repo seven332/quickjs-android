@@ -31,15 +31,6 @@ public class QuickJSTest {
     QuickJS.destroyRuntime(runtime);
   }
 
-  @Test
-  public void testDestroyRuntime() {
-    assertException(
-        IllegalStateException.class,
-        "Null JSRuntime",
-        () -> QuickJS.destroyRuntime(0)
-    );
-  }
-
   private void withRuntime(WithRuntimeBlock block) {
     long runtime = QuickJS.createRuntime();
     assertNotEquals(0, runtime);
