@@ -1,5 +1,6 @@
 #include <malloc.h>
 #include <string.h>
+#include <limits.h>
 
 #include "bit-sink.h"
 
@@ -7,12 +8,18 @@
 #define TYPE_DOUBLE 1
 
 static bool ensure_size(BitSink *sink, size_t size) {
-    if (sink->offset + size <= sink->size) {
-        return true;
-    }
+    size_t min_size = sink->offset + size;
+    // Check overflow
+    if (unlikely(min_size < sink->offset)) return false;
 
-    // TODO overflow
-    size_t new_size = (sink->offset + size) << 1U;
+    // Enough
+    if (min_size <= sink->size) return true;
+
+    size_t new_size = sink->size * 2;
+    // Check overflow
+    if (unlikely(new_size < sink->size)) new_size = SIZE_T_MAX;
+
+    if (min_size > new_size) new_size = min_size;
 
     void *new_data = realloc(sink->data, new_size);
     if (unlikely(new_data == NULL)) return false;

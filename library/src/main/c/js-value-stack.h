@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <malloc.h>
+#include <limits.h>
 
 #include "common.h"
 
@@ -37,9 +38,17 @@ static force_inline JSValue js_value_stack_peek(JSValueStack *stack) {
 }
 
 static force_inline bool js_value_stack_push(JSValueStack *stack, JSValue val) {
-    if (stack->offset + 1 > stack->size) {
-        // TODO Overflow
-        size_t new_size = (stack->offset + 1) << 2U;
+    size_t min_size = stack->offset + 1;
+    // Check overflow
+    if (unlikely(min_size < stack->offset)) return false;
+
+    if (min_size > stack->size) {
+        size_t new_size = stack->size * 2;
+        // Check overflow
+        if (unlikely(new_size < stack->size)) new_size = SIZE_T_MAX;
+
+        if (min_size > new_size) new_size = min_size;
+
         JSValue *new_data = (JSValue *) realloc(stack->data, new_size * sizeof(JSValue));
         if (unlikely(new_data == NULL)) return false;
 
