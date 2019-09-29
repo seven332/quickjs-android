@@ -185,12 +185,12 @@ Java_com_hippo_quickjs_android_QuickJS_setContextValue(
         jclass clazz,
         jlong context,
         jstring name,
-        jlong unpick_command,
+        jlong unpickle_command,
         jbyteArray bytes,
         jint byte_size
 ) {
     JSContext *ctx = (JSContext *) context;
-    void *command_ptr = (void *) unpick_command;
+    void *command_ptr = (void *) unpickle_command;
 
     // Unpickle
     void *source_ptr = js_malloc_rt(JS_GetRuntime(ctx), (size_t) byte_size);
@@ -215,14 +215,6 @@ Java_com_hippo_quickjs_android_QuickJS_setContextValue(
     (*env)->ReleaseStringUTFChars(env, name, name_utf_8);
 }
 
-JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, jlong context, jlong value) {
-    JSContext *ctx = (JSContext *) context;
-    JSValue *val = (JSValue *) value;
-    JS_FreeValue(ctx, *val);
-    js_free_rt(JS_GetRuntime(ctx), val);
-}
-
 static jbyteArray bit_sink_to_jbyte_array(JNIEnv *env, BitSink *sink) {
     size_t length = bit_sink_get_length(sink);
     jbyteArray array = (*env)->NewByteArray(env, length);
@@ -230,6 +222,114 @@ static jbyteArray bit_sink_to_jbyte_array(JNIEnv *env, BitSink *sink) {
     void *data = bit_sink_get_data(sink);
     (*env)->SetByteArrayRegion(env, array, 0, length, data);
     return array;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(
+        JNIEnv *env,
+        jclass clazz,
+        jlong context,
+        jlong value,
+        jstring name,
+        jlongArray unpickle_commands,
+        jobjectArray arg_contexts,
+        jintArray arg_context_sizes,
+        jlong pickle_command,
+        jboolean required
+) {
+    JSContext *ctx = (JSContext *) context;
+    JSValue *val = (JSValue *) value;
+
+    // Get function
+    const char *name_utf8 = (*env)->GetStringUTFChars(env, name, NULL);
+    CHECK_NULL_OOM_RET_STH(env, name_utf8, NULL);
+    JSValue prop = JS_GetPropertyStr(ctx, *val, name_utf8);
+    (*env)->ReleaseStringUTFChars(env, name, name_utf8);
+    if (JS_IsException(prop)) THROW_JS_EVALUATION_EXCEPTION_RET_STH(env, ctx, NULL);
+    if (!JS_IsFunction(ctx, prop)) {
+        JS_FreeValue(ctx, prop);
+        if (required) THROW_ILLEGAL_ARGUMENT_EXCEPTION_RET_STH(env, NULL, "The property is not a function");
+        else return NULL;
+    }
+
+    // Convert to JSValue
+    jint arg_count = (*env)->GetArrayLength(env, unpickle_commands);
+    JSValue args[arg_count];
+    if (arg_count > 0) {
+        jint arg_context_size_array[arg_count];
+        (*env)->GetIntArrayRegion(env, arg_context_sizes, 0, arg_count, arg_context_size_array);
+
+        // Malloc arg context buffer
+        jint arg_context_max_size = 0;
+        for (jint i = 0; i < arg_count; i++) {
+            jint size = arg_context_size_array[i];
+            if (size > arg_context_max_size) arg_context_max_size = size;
+        }
+        void *arg_context_buffer = js_malloc_rt(JS_GetRuntime(ctx), (size_t) arg_context_max_size);
+        if (arg_context_buffer == NULL) {
+            JS_FreeValue(ctx, prop);
+            THROW_OUT_OF_MEMORY_ERROR_RET_STH(env, NULL);
+        }
+
+        jlong commands[arg_count];
+        (*env)->GetLongArrayRegion(env, unpickle_commands, 0, arg_count, commands);
+
+        jint index = 0;
+        for (; index < arg_count; index++) {
+            jbyteArray arg_context_bytes = (*env)->GetObjectArrayElement(env, arg_contexts, index);
+            (*env)->GetByteArrayRegion(env, arg_context_bytes, 0, arg_context_size_array[index], arg_context_buffer);
+            BitSource command = CREATE_COMMAND_BIT_SOURCE(commands[index]);
+            BitSource source = CREATE_BIT_SOURCE(arg_context_buffer, (size_t) arg_context_size_array[index]);
+            args[index] = unpickle(ctx, &command, &source);
+            if (JS_IsException(args[index])) break;
+        }
+
+        js_free_rt(JS_GetRuntime(ctx), arg_context_buffer);
+
+        // Catch JS exception
+        if (index != arg_count) {
+            // Free generated JSValues
+            for (jint i = 0; i <= index; i++) {
+                JS_FreeValue(ctx, args[i]);
+            }
+            JS_FreeValue(ctx, prop);
+            THROW_JS_EVALUATION_EXCEPTION_RET_STH(env, ctx, NULL);
+        }
+    }
+
+    JSValue ret = JS_Call(ctx, prop, *val, arg_count, args);
+
+    for (jint i = 0; i < arg_count; i++) {
+        JS_FreeValue(ctx, args[i]);
+    }
+    JS_FreeValue(ctx, prop);
+
+    if (JS_IsException(ret)) THROW_JS_EVALUATION_EXCEPTION_RET_STH(env, ctx, NULL);
+
+    // Pickle ret
+    BitSource source = CREATE_COMMAND_BIT_SOURCE(pickle_command);
+    BitSink sink;
+    if (!create_bit_sink(&sink, DEFAULT_SINK_SIZE)) {
+        JS_FreeValue(ctx, ret);
+        THROW_OUT_OF_MEMORY_ERROR_RET_STH(env, NULL);
+    }
+    int error_type = ERROR_TYPE_JS_EVALUATION;
+    char error_msg[ERROR_MSG_SIZE];
+    pickle(ctx, ret, &source, &sink, &error_type, error_msg, ERROR_MSG_SIZE);
+
+    jbyteArray result = bit_sink_to_jbyte_array(env, &sink);
+    destroy_bit_sink(&sink);
+
+    CHECK_NULL_OOM_RET_STH(env, result, NULL);
+    return result;
+}
+
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+    JSContext *ctx = (JSContext *) context;
+    JSValue *val = (JSValue *) value;
+    JS_FreeValue(ctx, *val);
+    js_free_rt(JS_GetRuntime(ctx), val);
 }
 
 JNIEXPORT jbyteArray JNICALL

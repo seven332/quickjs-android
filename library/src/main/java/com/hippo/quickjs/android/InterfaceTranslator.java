@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -58,13 +59,13 @@ class InterfaceTranslator extends Translator<Object> {
    * or any method is overloaded, or any type can't be resolved.
    */
   @Nullable
-  static Map<String, Method> getInterfaceMethods(Translator.Depot depot, Type type) {
+  static Map<String, RichMethod> getInterfaceRichMethods(Translator.Depot depot, Type type) {
     Class<?> rawType = Types.getRawType(type);
     if (!rawType.isInterface()) return null;
 
-    Map<String, Method> methods = new HashMap<>();
+    Map<String, RichMethod> richMethods = new HashMap<>();
 
-    for (java.lang.reflect.Method method : rawType.getMethods()) {
+    for (Method method : rawType.getMethods()) {
       // Return type and return type translator
       Type returnType = Types.resolve(type, rawType, method.getGenericReturnType());
       if (returnType instanceof TypeVariable) {
@@ -79,6 +80,7 @@ class InterfaceTranslator extends Translator<Object> {
       Type[] originParameterTypes = method.getGenericParameterTypes();
       int parameterTypeSize = originParameterTypes.length;
 
+      // close() must be from Closeable
       if (name.equals("close") && (parameterTypeSize != 0 || !Closeable.class.isAssignableFrom(rawType))) {
         throw new IllegalArgumentException("Only close() method declared from Closeable is accepted");
       }
@@ -92,13 +94,13 @@ class InterfaceTranslator extends Translator<Object> {
         parameterTypes[i] = nonNullOfIfNotPrimitive(parameterTypes[i]);
       }
 
-      Method oldMethod = methods.get(name);
-      if (oldMethod != null) {
-        if (!typeArrayEquals(oldMethod.parameterTypes, parameterTypes)) {
+      RichMethod oldRichMethod = richMethods.get(name);
+      if (oldRichMethod != null) {
+        if (!typeArrayEquals(oldRichMethod.parameterTypes, parameterTypes)) {
           throw new IllegalArgumentException("Overload is not supported");
         }
-        if (Types.equals(returnType, oldMethod.returnType)
-            || Types.getRawType(returnType).isAssignableFrom(Types.getRawType(oldMethod.returnType))) {
+        if (Types.equals(returnType, oldRichMethod.returnType)
+            || Types.getRawType(returnType).isAssignableFrom(Types.getRawType(oldRichMethod.returnType))) {
           // The new method is overridden
           continue;
         }
@@ -110,35 +112,35 @@ class InterfaceTranslator extends Translator<Object> {
         parameterTranslators[i] = depot.getTranslator(parameterTypes[i]);
       }
 
-      methods.put(name, new Method(returnType, returnTranslator, name, parameterTypes, parameterTranslators));
+      richMethods.put(name, new RichMethod(returnType, returnTranslator, name, parameterTypes, parameterTranslators));
     }
 
-    return methods;
+    return richMethods;
   }
 
   public static final Factory FACTORY = (depot, type) -> {
     if (!Types.isNonNull(type)) return null;
 
-    Map<String, Method> methods = getInterfaceMethods(depot, type);
-    if (methods == null) return null;
+    Map<String, RichMethod> richMethods = getInterfaceRichMethods(depot, type);
+    if (richMethods == null) return null;
 
-    return new InterfaceTranslator(Types.getRawType(type), methods);
+    return new InterfaceTranslator(Types.getRawType(type), richMethods);
   };
 
   private final Class<?> rawType;
-  private final Map<String, Method> methods;
+  private final Map<String, RichMethod> richMethods;
 
-  private InterfaceTranslator(Class<?> rawType, Map<String, Method> methods) {
+  private InterfaceTranslator(Class<?> rawType, Map<String, RichMethod> richMethods) {
     super(PICKLE_COMMAND, UNPICKLE_COMMAND);
     this.rawType = rawType;
-    this.methods = methods;
+    this.richMethods = richMethods;
   }
 
   @Override
   protected Object unpickle(JSContext context, BitSource source) {
     long valuePtr = source.readPtr();
 
-    InterfaceInvocationHandler handler = new InterfaceInvocationHandler(context, methods, valuePtr);
+    InterfaceInvocationHandler handler = new InterfaceInvocationHandler(context, richMethods, valuePtr);
     return Proxy.newProxyInstance(
         rawType.getClassLoader(),
         new Class<?>[]{ rawType, JSValueHolder.class, Closeable.class },
@@ -154,24 +156,99 @@ class InterfaceTranslator extends Translator<Object> {
   private static class InterfaceInvocationHandler implements InvocationHandler {
 
     private final JSContext context;
-    private final Map<String, Method> methods;
+    private final Map<String, RichMethod> richMethods;
     private long pointer;
 
-    InterfaceInvocationHandler(JSContext context, Map<String, Method> methods, long pointer) {
+    InterfaceInvocationHandler(JSContext context, Map<String, RichMethod> richMethods, long pointer) {
       this.context = context;
-      this.methods = methods;
+      this.richMethods = richMethods;
       this.pointer = pointer;
 
       context.registerJSValue(this, pointer);
     }
 
+    private void checkClosed() {
+      if (pointer == 0) throw new IllegalStateException("The JSValue is closed");
+    }
+
+    private Object invokeMethod(RichMethod richMethod, Object[] args, boolean required) {
+      synchronized (context.jsRuntime) {
+        checkClosed();
+
+        int length = richMethod.parameterTypes.length;
+        long[] unpicklePointers = new long[length];
+        byte[][] argContexts = new byte[length][];
+        int[] argContextSizes = new int[length];
+        for (int i = 0; i < length; i++) {
+          Translator<Object> translator = richMethod.parameterTranslators[i];
+          unpicklePointers[i] = translator.unpicklePointer;
+          BitSink sink = translator.pickle(context, args[i]);
+          argContexts[i] = sink.getBytes();
+          argContextSizes[i] = sink.getSize();
+        }
+
+        Translator<Object> translator = richMethod.returnTranslator;
+        byte[] bytes = QuickJS.invokeValueFunction(context.pointer, pointer, richMethod.name,
+            unpicklePointers, argContexts, argContextSizes, translator.picklePointer, required);
+        if (bytes != null) {
+          return translator.unpickle(context, bytes);
+        } else {
+          return null;
+        }
+      }
+    }
+
     @Override
-    public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
-      throw new IllegalStateException("TODO");
+    public Object invoke(Object proxy, Method method, @Nullable Object[] args) throws Throwable {
+      // If the method is a method from Object then defer to normal invocation.
+      if (method.getDeclaringClass() == Object.class) {
+        return method.invoke(this, args);
+      }
+
+      String name = method.getName();
+
+      // close()
+      if ("close".equals(name)) {
+        close();
+        return null;
+      }
+
+      // getJSValue()
+      if (args != null && args.length == 1 && args[0] == JS_VALUE_HOLDER_TAG) {
+        return getJSValue();
+      }
+
+      RichMethod richMethod = richMethods.get(name);
+      if (richMethod == null) throw new RuntimeException("Can't find method: " + name);
+
+      return invokeMethod(richMethod, args != null ? args : EMPTY_ARGS, true);
+    }
+
+    public long getJSValue() {
+      synchronized (context.jsRuntime) {
+        checkClosed();
+        return pointer;
+      }
+    }
+
+    public void close() {
+      synchronized (context.jsRuntime) {
+        if (pointer != 0) {
+          try {
+            RichMethod richMethod = richMethods.get("close");
+            if (richMethod != null) invokeMethod(richMethod, EMPTY_ARGS, false);
+          } finally {
+            long valueToClose = pointer;
+            pointer = 0;
+            QuickJS.destroyValue(context.pointer, valueToClose);
+            context.unregisterJSValue(valueToClose);
+          }
+        }
+      }
     }
   }
 
-  private final static class Method {
+  private final static class RichMethod {
 
     final Type returnType;
     final Translator<Object> returnTranslator;
@@ -179,7 +256,7 @@ class InterfaceTranslator extends Translator<Object> {
     final Type[] parameterTypes;
     final Translator<Object>[] parameterTranslators;
 
-    private Method(
+    private RichMethod(
         Type returnType,
         Translator<Object> returnTranslator,
         String name,
@@ -201,7 +278,6 @@ class InterfaceTranslator extends Translator<Object> {
     }
   }
 
-  private interface JSValueHolder { long getJSValue(JSValueHolderTag tag); }
-  private static class JSValueHolderTag { }
-  private static final JSValueHolderTag JS_VALUE_HOLDER_TAG = new JSValueHolderTag();
+  private interface JSValueHolder { long getJSValue(Object tag); }
+  private static final Object JS_VALUE_HOLDER_TAG = new Object();
 }

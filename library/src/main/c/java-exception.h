@@ -30,8 +30,17 @@
         return;                                                                 \
     } while (0)
 
+#define THROW_JS_EVALUATION_EXCEPTION_RET_STH(ENV, CTX, STH)                    \
+    do {                                                                        \
+        throw_JSEvaluationException((ENV), (CTX));                              \
+        return (STH);                                                           \
+    } while (0)
+
 #define THROW_ILLEGAL_ARGUMENT_EXCEPTION_RET(ENV, ...)                          \
     THROW_EXCEPTION_RET(ENV, CLASS_NAME_ILLEGAL_ARGUMENT_EXCEPTION, __VA_ARGS__)
+
+#define THROW_ILLEGAL_ARGUMENT_EXCEPTION_RET_STH(ENV, STH, ...)                 \
+    THROW_EXCEPTION_RET_STH(ENV, STH, CLASS_NAME_ILLEGAL_ARGUMENT_EXCEPTION, __VA_ARGS__)
 
 #define THROW_OUT_OF_MEMORY_ERROR_RET(ENV)                                      \
     THROW_EXCEPTION_RET(ENV, CLASS_NAME_OUT_OF_MEMORY_ERROR, "")

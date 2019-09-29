@@ -205,7 +205,9 @@ public class QuickJS implements Translator.Depot, Closeable {
   static native long createContext(long runtime);
   static native void destroyContext(long context);
 
-  static native void setContextValue(long context, String name, long unpickCommand, byte[] bytes, int byteSize);
+  static native void setContextValue(long context, String name, long unpickleCommand, byte[] bytes, int byteSize);
+
+  static native byte[] invokeValueFunction(long context, long value, String name, long[] unpickleCommands, byte[][] argContexts, int[] argContextSizes, long pickleCommand, boolean required);
 
   static native void destroyValue(long context, long value);
 
