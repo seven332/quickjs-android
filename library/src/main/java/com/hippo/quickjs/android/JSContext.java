@@ -181,6 +181,10 @@ public class JSContext implements Closeable {
     cleaner.register(object, pointer);
   }
 
+  void unregisterJSValue(long pointer) {
+    cleaner.unregister(pointer);
+  }
+
   int getNotRemovedJSValueCount() {
     synchronized (jsRuntime) {
       return cleaner.size();

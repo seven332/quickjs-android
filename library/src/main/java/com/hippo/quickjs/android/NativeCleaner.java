@@ -16,18 +16,21 @@
 
 package com.hippo.quickjs.android;
 
+import android.annotation.SuppressLint;
+
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * https://youtu.be/7_caITSjk1k
  */
 abstract class NativeCleaner {
 
+  @SuppressLint("UseSparseArrays")
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private Set<NativeReference> phantomReferences = new HashSet<>();
+  private Map<Long, NativeReference> phantomReferences = new HashMap<>();
   private ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
 
   /**
@@ -44,7 +47,14 @@ abstract class NativeCleaner {
    * @param pointer the native pointer
    */
   public void register(Object referent, long pointer) {
-    phantomReferences.add(new NativeReference(referent, pointer, referenceQueue));
+    phantomReferences.put(pointer, new NativeReference(referent, pointer, referenceQueue));
+  }
+
+  /**
+   * Unregister the native pointer and the object associated with it.
+   */
+  public void unregister(long pointer) {
+    phantomReferences.remove(pointer);
   }
 
   /**
@@ -60,13 +70,13 @@ abstract class NativeCleaner {
   /**
    * Calls {@link #onRemove(long)} on objects recycled by GC.
    */
-  @SuppressWarnings("unchecked")
   public void clean() {
     NativeReference ref;
     while ((ref = (NativeReference) referenceQueue.poll()) != null) {
-      if (phantomReferences.contains(ref)) {
-        onRemove(ref.pointer);
-        phantomReferences.remove(ref);
+      long pointer = ref.pointer;
+      if (phantomReferences.containsKey(pointer)) {
+        onRemove(pointer);
+        phantomReferences.remove(pointer);
       }
     }
   }
@@ -75,7 +85,7 @@ abstract class NativeCleaner {
    * Calls {@link #onRemove(long)} on all objects.
    */
   public void forceClean() {
-    for (NativeReference ref : phantomReferences) {
+    for (NativeReference ref : phantomReferences.values()) {
       onRemove(ref.pointer);
     }
     phantomReferences.clear();
