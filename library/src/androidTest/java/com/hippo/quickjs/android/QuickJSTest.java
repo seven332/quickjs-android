@@ -85,7 +85,7 @@ public class QuickJSTest {
         JSException jsException = QuickJS.getException(context);
         assertTrue(jsException.isError());
         assertEquals("InternalError: interrupted", jsException.getException());
-        assertNull(jsException.getStack());
+        assertEquals("", jsException.getStack());
       });
 
       withScript(context, "i=0;while(true){i++;}", value -> {

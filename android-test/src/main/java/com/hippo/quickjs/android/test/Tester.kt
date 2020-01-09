@@ -110,7 +110,6 @@ class Tester(
 
   private fun ensureExecutable() {
     ReLinker.loadLibrary(context, "qjs")
-    ReLinker.loadLibrary(context, "qjsbn")
   }
 
   private fun runTest(name: String, executable: String, parameter: String) {
@@ -128,8 +127,7 @@ class Tester(
 
   private fun js2c() {
     runTest("qjsc", "-c -o repl.c -m repl.js")
-    runTest("qjsbnc", "-c -o repl-bn.c -m repl.js")
-    runTest("qjsbnc", "-c -o qjscalc.c qjscalc.js")
+    runTest("qjsc", "-fbignum -c -o qjscalc.c qjscalc.js")
   }
 
   private fun test() {
@@ -139,13 +137,8 @@ class Tester(
     runTest("qjs", "tests/test_loop.js")
     // tmpfile returns null
     runTest("qjs", "tests/test_std.js")
-    runTest("qjsbn", "tests/test_closure.js")
-    runTest("qjsbn", "tests/test_op.js")
-    runTest("qjsbn", "tests/test_builtin.js")
-    runTest("qjsbn", "tests/test_loop.js")
-    // tmpfile returns null
-    runTest("qjsbn", "tests/test_std.js")
-    runTest("qjsbn", "--qjscalc tests/test_bignum.js")
+    runTest("qjs", "--bignum tests/test_bignum.js")
+    runTest("qjs", "--qjscalc tests/test_qjscalc.js")
   }
 
   private fun stats() {
@@ -153,7 +146,7 @@ class Tester(
   }
 
   private fun microbench() {
-    runTest("qjs", "--std tests/microbench.js")
+    runTest("qjs", "tests/microbench.js")
   }
 
   private fun runTest262() {
@@ -163,11 +156,6 @@ class Tester(
     runTest("run-test262", "-m -c test262.conf -a")
     runTest("run-test262", "-u -c test262.conf -a")
     runTest("run-test262", "-m -c test262.conf -E -a")
-  }
-
-  private fun runTest262bn() {
-    runTest("run-test262-bn", "-m -c test262bn.conf")
-    runTest("run-test262-bn", "-m -c test262bn.conf -a")
   }
 
   private fun benchV8() {
@@ -195,7 +183,6 @@ class Tester(
         stats()
         microbench()
         runTest262()
-        runTest262bn()
         benchV8()
 
         printer.print("********************************")
