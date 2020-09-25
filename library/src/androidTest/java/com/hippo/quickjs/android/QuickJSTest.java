@@ -450,7 +450,7 @@ public class QuickJSTest {
         withValue(context, QuickJS.createValueUndefined(context), value ->
             withValue(context, QuickJS.createValueObject(context), property -> {
               assertFalse(QuickJS.setValueProperty(context, value, 1, property));
-              assertEquals("TypeError: value has no property\n", QuickJS.getException(context).toString());
+              assertEquals("TypeError: cannot set property '1' of undefined\n", QuickJS.getException(context).toString());
             })
         )
     );
@@ -495,7 +495,7 @@ public class QuickJSTest {
         withValue(context, QuickJS.createValueUndefined(context), value ->
             withValue(context, QuickJS.createValueObject(context), property -> {
               assertFalse(QuickJS.setValueProperty(context, value, "prop", property));
-              assertEquals("TypeError: value has no property\n", QuickJS.getException(context).toString());
+              assertEquals("TypeError: cannot set property 'prop' of undefined\n", QuickJS.getException(context).toString());
             })
         )
     );

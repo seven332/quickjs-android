@@ -43,7 +43,7 @@ public class JSObjectTest {
         assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
         assertException(
             JSEvaluationException.class,
-            "TypeError: 23 is read-only\n",
+            "TypeError: '23' is read-only\n",
             () -> jo.setProperty(index, context.createJSNumber(value2))
         );
         assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
@@ -71,7 +71,7 @@ public class JSObjectTest {
         assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());
         assertException(
             JSEvaluationException.class,
-            "TypeError: name is read-only\n",
+            "TypeError: 'name' is read-only\n",
             () -> jo.setProperty(name, context.createJSNumber(value2))
         );
         assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());

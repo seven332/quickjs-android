@@ -132,11 +132,15 @@ class Tester(
 
   private fun test() {
     runTest("qjs", "tests/test_closure.js")
-    runTest("qjs", "tests/test_op.js")
+    runTest("qjs", "tests/test_language.js")
     runTest("qjs", "tests/test_builtin.js")
     runTest("qjs", "tests/test_loop.js")
     // tmpfile returns null
     runTest("qjs", "tests/test_std.js")
+    runTest("qjs", "tests/test_worker.js")
+    runTest("qjs", "--bignum tests/test_bjson.js")
+    runTest("qjs", "examples/test_point.js")
+    runTest("qjs", "--bignum tests/test_op_overloading.js")
     runTest("qjs", "--bignum tests/test_bignum.js")
     runTest("qjs", "--qjscalc tests/test_qjscalc.js")
   }
@@ -156,10 +160,6 @@ class Tester(
     runTest("run-test262", "-m -c test262.conf -a")
     runTest("run-test262", "-u -c test262.conf -a")
     runTest("run-test262", "-m -c test262.conf -E -a")
-  }
-
-  private fun benchV8() {
-    runTest("qjs", "-d tests/bench-v8/combined.js")
   }
 
   private fun printThrowable(e: Throwable) {
@@ -183,7 +183,6 @@ class Tester(
         stats()
         microbench()
         runTest262()
-        benchV8()
 
         printer.print("********************************")
         printer.print("********************************")
