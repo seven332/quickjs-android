@@ -70,6 +70,7 @@ public class JSObject extends JSValue {
   public void setProperty(int index, JSValue jsValue) {
     checkSameJSContext(jsValue);
     synchronized (jsContext.jsRuntime) {
+      jsContext.checkClosed();
       if (!QuickJS.setValueProperty(jsContext.pointer, pointer, index, jsValue.pointer)) {
         throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
       }
@@ -82,6 +83,7 @@ public class JSObject extends JSValue {
   public void setProperty(String name, JSValue jsValue) {
     checkSameJSContext(jsValue);
     synchronized (jsContext.jsRuntime) {
+      jsContext.checkClosed();
       if (!QuickJS.setValueProperty(jsContext.pointer, pointer, name, jsValue.pointer)) {
         throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
       }
@@ -96,6 +98,7 @@ public class JSObject extends JSValue {
       throw new IllegalArgumentException("Invalid flags: " + flags);
     }
     synchronized (jsContext.jsRuntime) {
+      jsContext.checkClosed();
       if (!QuickJS.defineValueProperty(jsContext.pointer, pointer, index, jsValue.pointer, flags)) {
         throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
       }
@@ -110,6 +113,7 @@ public class JSObject extends JSValue {
       throw new IllegalArgumentException("Invalid flags: " + flags);
     }
     synchronized (jsContext.jsRuntime) {
+      jsContext.checkClosed();
       if (!QuickJS.defineValueProperty(jsContext.pointer, pointer, name, jsValue.pointer, flags)) {
         throw new JSEvaluationException(QuickJS.getException(jsContext.pointer));
       }
