@@ -23,8 +23,8 @@ static void java_object_finalizer(JSRuntime *rt, JSValue val) {
 }
 
 static JSClassDef java_object_class = {
-        "JavaObject",
-        .finalizer = java_object_finalizer
+    "JavaObject",
+    .finalizer = java_object_finalizer
 };
 
 int java_object_init_context(JSContext *ctx) {
@@ -53,7 +53,7 @@ JSValue QJ_NewJavaObject(JSContext *ctx, JNIEnv *env, jobject object) {
     return value;
 }
 
-jobject QJ_GetJavaObject(JSContext *ctx, JSValueConst val) {
+jobject QJ_GetJavaObject(JSContext __unused *ctx, JSValueConst val) {
     JavaObjectData *data = JS_GetOpaque(val, java_object_class_id);
     return data != NULL ? data->object : NULL;
 }

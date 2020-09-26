@@ -25,7 +25,7 @@ typedef struct QJRuntime {
 } QJRuntime;
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) {
+Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass __unused clazz) {
     QJRuntime *qj_rt = malloc(sizeof(QJRuntime));
     CHECK_NULL_RET(env, qj_rt, MSG_OOM);
     JSRuntime *rt = JS_NewRuntime();
@@ -36,13 +36,18 @@ Java_com_hippo_quickjs_android_QuickJS_createRuntime(JNIEnv *env, jclass clazz) 
 }
 
 JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(JNIEnv *env, jclass clazz, jlong runtime, jint malloc_limit) {
+Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong runtime,
+    jint malloc_limit
+) {
     QJRuntime *qj_rt = (QJRuntime *) runtime;
     CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
     JS_SetMemoryLimit(qj_rt->rt, (size_t) malloc_limit);
 }
 
-static int on_interrupt(JSRuntime *rt, void *opaque) {
+static int on_interrupt(JSRuntime __unused *rt, void *opaque) {
     int result = 0;
 
     InterruptData *data = opaque;
@@ -64,7 +69,12 @@ static int on_interrupt(JSRuntime *rt, void *opaque) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_setRuntimeInterruptHandler(JNIEnv *env, jclass clazz, jlong runtime, jobject interrupt_handler) {
+Java_com_hippo_quickjs_android_QuickJS_setRuntimeInterruptHandler(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong runtime,
+    jobject interrupt_handler
+) {
     QJRuntime *qj_rt = (QJRuntime *) runtime;
     CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
 
@@ -112,7 +122,11 @@ int leak_trigger(const char* _, ...) {
 #endif
 
 JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz, jlong runtime) {
+Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong runtime
+) {
     QJRuntime *qj_rt = (QJRuntime *) runtime;
     CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
     JSRuntime *rt = qj_rt->rt;
@@ -134,7 +148,11 @@ Java_com_hippo_quickjs_android_QuickJS_destroyRuntime(JNIEnv *env, jclass clazz,
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, jlong runtime) {
+Java_com_hippo_quickjs_android_QuickJS_createContext(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong runtime
+) {
     QJRuntime *qj_rt = (QJRuntime *) runtime;
     CHECK_NULL_RET(env, qj_rt, MSG_NULL_JS_RUNTIME);
     JSRuntime *rt = qj_rt->rt;
@@ -149,7 +167,11 @@ Java_com_hippo_quickjs_android_QuickJS_createContext(JNIEnv *env, jclass clazz, 
 }
 
 JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_destroyContext(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL(env, ctx, MSG_NULL_JS_CONTEXT);
     JS_FreeContext(ctx);
@@ -167,7 +189,11 @@ Java_com_hippo_quickjs_android_QuickJS_destroyContext(JNIEnv *env, jclass clazz,
     } while (0)
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueUndefined(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_createValueUndefined(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -180,7 +206,11 @@ Java_com_hippo_quickjs_android_QuickJS_createValueUndefined(JNIEnv *env, jclass 
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueNull(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_createValueNull(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -193,7 +223,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueNull(JNIEnv *env, jclass clazz
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueBoolean(JNIEnv *env, jclass clazz, jlong context, jboolean value) {
+Java_com_hippo_quickjs_android_QuickJS_createValueBoolean(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jboolean value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -206,7 +241,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueBoolean(JNIEnv *env, jclass cl
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueInt(JNIEnv *env, jclass clazz, jlong context, jint value) {
+Java_com_hippo_quickjs_android_QuickJS_createValueInt(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jint value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -219,7 +259,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueInt(JNIEnv *env, jclass clazz,
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueFloat64(JNIEnv *env, jclass clazz, jlong context, jdouble value) {
+Java_com_hippo_quickjs_android_QuickJS_createValueFloat64(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jdouble value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -232,7 +277,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFloat64(JNIEnv *env, jclass cl
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueString(JNIEnv *env, jclass clazz, jlong context, jstring value) {
+Java_com_hippo_quickjs_android_QuickJS_createValueString(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jstring value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     CHECK_NULL_RET(env, value, "Null value");
@@ -252,7 +302,11 @@ Java_com_hippo_quickjs_android_QuickJS_createValueString(JNIEnv *env, jclass cla
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueObject(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_createValueObject(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -265,7 +319,11 @@ Java_com_hippo_quickjs_android_QuickJS_createValueObject(JNIEnv *env, jclass cla
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueArray(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_createValueArray(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -278,15 +336,15 @@ Java_com_hippo_quickjs_android_QuickJS_createValueArray(JNIEnv *env, jclass claz
 }
 
 static jlong createValueFunction(
-        JNIEnv *env,
-        jlong context,
-        jobject js_context,
-        jboolean is_static,
-        jobject callee,
-        jstring method_name,
-        jstring method_sign,
-        jobject return_type,
-        jobjectArray arg_types
+    JNIEnv *env,
+    jlong context,
+    jobject js_context,
+    jboolean is_static,
+    jobject callee,
+    jstring method_name,
+    jstring method_sign,
+    jobject return_type,
+    jobjectArray arg_types
 ) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
@@ -329,30 +387,30 @@ static jlong createValueFunction(
 
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
-        JNIEnv *env,
-        jclass clazz,
-        jlong context,
-        jobject js_context,
-        jobject instance,
-        jstring method_name,
-        jstring method_sign,
-        jobject return_type,
-        jobjectArray arg_types
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jobject js_context,
+    jobject instance,
+    jstring method_name,
+    jstring method_sign,
+    jobject return_type,
+    jobjectArray arg_types
 ) {
     return createValueFunction(env, context, js_context, JNI_FALSE, instance, method_name, method_sign, return_type, arg_types);
 }
 
 JNIEXPORT jlong JNICALL
 Java_com_hippo_quickjs_android_QuickJS_createValueFunctionS(
-        JNIEnv *env,
-        jclass clazz,
-        jlong context,
-        jobject js_context,
-        jstring class_name,
-        jstring method_name,
-        jstring method_sign,
-        jobject return_type,
-        jobjectArray arg_types
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jobject js_context,
+    jstring class_name,
+    jstring method_name,
+    jstring method_sign,
+    jobject return_type,
+    jobjectArray arg_types
 ) {
     const char *class_name_utf8 = (*env)->GetStringUTFChars(env, class_name, NULL);
     CHECK_NULL_RET(env, class_name_utf8, MSG_OOM);
@@ -366,7 +424,12 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunctionS(
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_createValueJavaObject(JNIEnv *env, jclass clazz, jlong context, jobject object) {
+Java_com_hippo_quickjs_android_QuickJS_createValueJavaObject(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jobject object
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -380,13 +443,13 @@ Java_com_hippo_quickjs_android_QuickJS_createValueJavaObject(JNIEnv *env, jclass
 
 JNIEXPORT jboolean JNICALL
 Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJIJI(
-        JNIEnv *env,
-        jclass clazz,
-        jlong context,
-        jlong value,
-        jint index,
-        jlong property,
-        jint flags
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value,
+    jint index,
+    jlong property,
+    jint flags
 ) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
@@ -402,13 +465,13 @@ Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJIJI(
 
 JNIEXPORT jboolean JNICALL
 Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJLjava_lang_String_2JI(
-        JNIEnv *env,
-        jclass clazz,
-        jlong context,
-        jlong value,
-        jstring name,
-        jlong property,
-        jint flags
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value,
+    jstring name,
+    jlong property,
+    jint flags
 ) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
@@ -430,14 +493,23 @@ Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJLjava_lang_String_
 }
 
 JNIEXPORT jint JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueTag(JNIEnv *env, jclass clazz, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueTag(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong value
+) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
     return JS_VALUE_GET_NORM_TAG(*val);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hippo_quickjs_android_QuickJS_isValueArray(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_isValueArray(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -446,7 +518,12 @@ Java_com_hippo_quickjs_android_QuickJS_isValueArray(JNIEnv *env, jclass clazz, j
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hippo_quickjs_android_QuickJS_isValueFunction(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_isValueFunction(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -455,14 +532,20 @@ Java_com_hippo_quickjs_android_QuickJS_isValueFunction(JNIEnv *env, jclass clazz
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(JNIEnv *env, jclass clazz,
-        jlong context, jlong function, jlong thisObj, jlongArray args) {
+Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong function,
+    jlong thisObj,
+    jlongArray args
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *func_obj = (JSValue *) function;
     CHECK_NULL_RET(env, func_obj, "Null function");
     JSValue *this_obj = (JSValue *) thisObj;
-    CHECK_NULL_RET(env, args, "Null arguments")
+    CHECK_NULL_RET(env, args, "Null arguments");
     jlong *elements = (*env)->GetLongArrayElements(env, args, NULL);
     CHECK_NULL_RET(env, elements, MSG_OOM);
 
@@ -486,7 +569,13 @@ Java_com_hippo_quickjs_android_QuickJS_invokeValueFunction(JNIEnv *env, jclass c
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(JNIEnv *env, jclass clazz, jlong context, jlong value, jint index) {
+Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value,
+    jint index
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -504,7 +593,13 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJI(JNIEnv *env, jclass
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(JNIEnv *env, jclass clazz, jlong context, jlong value, jstring name) {
+Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value,
+    jstring name
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -528,7 +623,14 @@ Java_com_hippo_quickjs_android_QuickJS_getValueProperty__JJLjava_lang_String_2(J
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJIJ(JNIEnv *env, jclass clazz, jlong context, jlong value, jint index, jlong property) {
+Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJIJ(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value,
+    jint index,
+    jlong property
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -544,7 +646,14 @@ Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJIJ(JNIEnv *env, jclas
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(JNIEnv *env, jclass clazz, jlong context, jlong value, jstring name, jlong property) {
+Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value,
+    jstring name,
+    jlong property
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -567,14 +676,20 @@ Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(
     return result;
 }
 
-#define CHECK_JS_TAG_RET(VAL, TARGET, TYPE)                                                    \
-    int32_t __tag__ = JS_VALUE_GET_NORM_TAG(VAL);                                              \
-    if (__tag__ != (TARGET)) {                                                                 \
-        THROW_JS_DATA_EXCEPTION_RET(env, "Invalid JSValue tag for %s: %d", (TYPE), __tag__);   \
-    }
+#define CHECK_JS_TAG_RET(VAL, TARGET, TYPE)                                                        \
+    do {                                                                                           \
+        int32_t __tag__ = JS_VALUE_GET_NORM_TAG(VAL);                                              \
+        if (__tag__ != (TARGET)) {                                                                 \
+            THROW_JS_DATA_EXCEPTION_RET(env, "Invalid JSValue tag for %s: %d", (TYPE), __tag__);   \
+        }                                                                                          \
+    } while (0)
 
 JNIEXPORT jboolean JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueBoolean(JNIEnv *env, jclass clazz, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueBoolean(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong value
+) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
     CHECK_JS_TAG_RET(*val, JS_TAG_BOOL, "boolean");
@@ -582,7 +697,11 @@ Java_com_hippo_quickjs_android_QuickJS_getValueBoolean(JNIEnv *env, jclass clazz
 }
 
 JNIEXPORT jint JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueInt(JNIEnv *env, jclass clazz, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueInt(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong value
+) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
     CHECK_JS_TAG_RET(*val, JS_TAG_INT, "int");
@@ -590,7 +709,11 @@ Java_com_hippo_quickjs_android_QuickJS_getValueInt(JNIEnv *env, jclass clazz, jl
 }
 
 JNIEXPORT jdouble JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueFloat64(JNIEnv *env, jclass clazz, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueFloat64(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong value
+) {
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
     CHECK_JS_TAG_RET(*val, JS_TAG_FLOAT64, "float64");
@@ -598,7 +721,12 @@ Java_com_hippo_quickjs_android_QuickJS_getValueFloat64(JNIEnv *env, jclass clazz
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueString(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueString(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -618,7 +746,12 @@ Java_com_hippo_quickjs_android_QuickJS_getValueString(JNIEnv *env, jclass clazz,
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getValueJavaObject(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_getValueJavaObject(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -627,7 +760,12 @@ Java_com_hippo_quickjs_android_QuickJS_getValueJavaObject(JNIEnv *env, jclass cl
 }
 
 JNIEXPORT void JNICALL
-Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, jlong context, jlong value) {
+Java_com_hippo_quickjs_android_QuickJS_destroyValue(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL(env, ctx, MSG_NULL_JS_CONTEXT);
     JSValue *val = (JSValue *) value;
@@ -637,7 +775,11 @@ Java_com_hippo_quickjs_android_QuickJS_destroyValue(JNIEnv *env, jclass clazz, j
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getException(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_getException(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -679,7 +821,11 @@ Java_com_hippo_quickjs_android_QuickJS_getException(JNIEnv *env, jclass clazz, j
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_getGlobalObject(JNIEnv *env, jclass clazz, jlong context) {
+Java_com_hippo_quickjs_android_QuickJS_getGlobalObject(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
 
@@ -694,8 +840,14 @@ Java_com_hippo_quickjs_android_QuickJS_getGlobalObject(JNIEnv *env, jclass clazz
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
-        jlong context, jstring source_code, jstring file_name, jint flags) {
+Java_com_hippo_quickjs_android_QuickJS_evaluate(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jstring source_code,
+    jstring file_name,
+    jint flags
+) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
     CHECK_NULL_RET(env, source_code, "Null source code");
@@ -729,7 +881,7 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(JNIEnv *env, jclass clazz,
 }
 
 JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM *vm, void* reserved) {
+JNI_OnLoad(JavaVM *vm, void __unused * reserved) {
     JNIEnv *env = NULL;
 
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {

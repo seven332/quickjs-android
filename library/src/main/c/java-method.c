@@ -4,28 +4,34 @@
 #include "java-helper.h"
 
 // TODO append the java exception to the js exception
-#define CHECK_JAVA_EXCEPTION_NO(ENV)      \
-    if ((*(ENV))->ExceptionCheck(ENV)) {  \
-        (*(ENV))->ExceptionDescribe(ENV); \
-        (*(ENV))->ExceptionClear(ENV);    \
-        return -1;                        \
-    }
+#define CHECK_JAVA_EXCEPTION_NO(ENV)                                 \
+    do {                                                             \
+        if ((*(ENV))->ExceptionCheck(ENV)) {                         \
+            (*(ENV))->ExceptionDescribe(ENV);                        \
+            (*(ENV))->ExceptionClear(ENV);                           \
+            return -1;                                               \
+        }                                                            \
+    } while (0)
 
 // TODO append the java exception to the js exception
-#define CHECK_JAVA_EXCEPTION_NULL(ENV)    \
-    if ((*(ENV))->ExceptionCheck(ENV)) {  \
-        (*(ENV))->ExceptionDescribe(ENV); \
-        (*(ENV))->ExceptionClear(ENV);    \
-        return NULL;                      \
-    }
+#define CHECK_JAVA_EXCEPTION_NULL(ENV)                               \
+    do {                                                             \
+        if ((*(ENV))->ExceptionCheck(ENV)) {                         \
+            (*(ENV))->ExceptionDescribe(ENV);                        \
+            (*(ENV))->ExceptionClear(ENV);                           \
+            return NULL;                                             \
+        }                                                            \
+    } while (0)
 
 // TODO append the java exception to the js exception
-#define CHECK_JAVA_EXCEPTION_JS_EXCEPTION(CTX, ENV)                  \
-    if ((*(ENV))->ExceptionCheck(ENV)) {                             \
-        (*(ENV))->ExceptionDescribe(ENV);                            \
-        (*(ENV))->ExceptionClear(ENV);                               \
-        return JS_ThrowInternalError((CTX), "Catch java exception"); \
-    }
+#define CHECK_JAVA_EXCEPTION_JS_EXCEPTION(CTX, ENV)                            \
+    do {                                                                       \
+        if ((*(ENV))->ExceptionCheck(ENV)) {                                   \
+            (*(ENV))->ExceptionDescribe(ENV);                                  \
+            (*(ENV))->ExceptionClear(ENV);                                     \
+            return JS_ThrowInternalError((CTX), "Catch java exception");       \
+        }                                                                      \
+    } while (0)
 
 static int js_value_to_java_value(JSContext *ctx, JNIEnv *env, jobject js_context, jobject type, JSValueConst value, jvalue *result);
 
@@ -44,7 +50,14 @@ typedef struct {
     JavaMethodCaller caller;
 } JavaMethodData;
 
-static JSValue java_method_call(JSContext *ctx, JSValueConst func_obj, JSValueConst this_val, int argc, JSValueConst *argv) {
+static JSValue java_method_call(
+    JSContext *ctx,
+    JSValueConst func_obj,
+    JSValueConst __unused this_val,
+    int argc,
+    JSValueConst *argv,
+    int __unused flags
+) {
     JavaMethodData *data = JS_GetOpaque(func_obj, java_method_class_id);
 
     if (argc != data->arg_count) {
@@ -93,9 +106,9 @@ static void java_method_finalizer(JSRuntime *rt, JSValue val) {
 }
 
 static JSClassDef java_method_class = {
-        "JavaMethod",
-        .call = java_method_call,
-        .finalizer = java_method_finalizer
+    "JavaMethod",
+    .call = java_method_call,
+    .finalizer = java_method_finalizer
 };
 
 int java_method_init_context(JSContext *ctx) {
@@ -140,9 +153,11 @@ int java_method_init(JNIEnv *env) {
     jni_helper_class = (*env)->NewGlobalRef(env, jni_helper_class);
     if (jni_helper_class == NULL) return -1;
 
-#define GET_STATIC_METHOD(RESULT, NAME, SIGN)                                    \
-    (RESULT) = (*env)->GetStaticMethodID(env, jni_helper_class, (NAME), (SIGN)); \
-    if ((RESULT) == NULL) return -1;
+#define GET_STATIC_METHOD(RESULT, NAME, SIGN)                                             \
+    do {                                                                                  \
+        (RESULT) = (*env)->GetStaticMethodID(env, jni_helper_class, (NAME), (SIGN));      \
+        if ((RESULT) == NULL) return -1;                                                  \
+    } while (0)
 
     GET_STATIC_METHOD(js_value_to_java_value_method, "jsValueToJavaValue", "(Lcom/hippo/quickjs/android/JSContext;Ljava/lang/reflect/Type;J)Ljava/lang/Object;");
     GET_STATIC_METHOD(java_boolean_to_js_value_method, "javaValueToJSValue", "(Lcom/hippo/quickjs/android/JSContext;Ljava/lang/reflect/Type;Z)J");
@@ -167,13 +182,14 @@ int java_method_init(JNIEnv *env) {
 
 #undef GET_STATIC_METHOD
 
-    jfieldID field_id;
-#define GET_PRIMITIVE_TYPE(RESULT, NAME)                                                            \
-    field_id = (*env)->GetStaticFieldID(env, jni_helper_class, (NAME), "Ljava/lang/reflect/Type;"); \
-    if (field_id == NULL) return -1;                                                                \
-    (RESULT) = (*env)->GetStaticObjectField(env, jni_helper_class, field_id);                       \
-    (RESULT) = (*env)->NewGlobalRef(env, (RESULT));                                                 \
-    if ((RESULT) == NULL) return -1;
+#define GET_PRIMITIVE_TYPE(RESULT, NAME)                                                                         \
+    do {                                                                                                         \
+        jfieldID field_id = (*env)->GetStaticFieldID(env, jni_helper_class, (NAME), "Ljava/lang/reflect/Type;"); \
+        if (field_id == NULL) return -1;                                                                         \
+        (RESULT) = (*env)->GetStaticObjectField(env, jni_helper_class, field_id);                                \
+        (RESULT) = (*env)->NewGlobalRef(env, (RESULT));                                                          \
+        if ((RESULT) == NULL) return -1;                                                                         \
+    } while (0)
 
     GET_PRIMITIVE_TYPE(void_primitive_type, "VOID_PRIMITIVE_TYPE");
     GET_PRIMITIVE_TYPE(char_primitive_type, "CHAR_PRIMITIVE_TYPE");
@@ -195,15 +211,16 @@ static int unbox_primitive_type(JNIEnv *env, jobject type, jvalue *value) {
     CHECK_JAVA_EXCEPTION_NO(env);
     if (!is_primitive_type) return 0;
 
-    jboolean is_the_type;
-#define UNBOX_PRIMITIVE_TYPE(TYPE, GETTER, CALLER, TARGET) \
-    is_the_type = (*env)->CallStaticBooleanMethod(env, jni_helper_class, is_same_type_method, type, (TYPE)); \
-    CHECK_JAVA_EXCEPTION_NO(env); \
-    if (is_the_type) { \
-        (TARGET) = (*env)->CALLER(env, jni_helper_class, GETTER, value->l);\
-        CHECK_JAVA_EXCEPTION_NO(env); \
-        return 0; \
-    }
+#define UNBOX_PRIMITIVE_TYPE(TYPE, GETTER, CALLER, TARGET)                                                                \
+    do {                                                                                                                  \
+        jboolean is_the_type = (*env)->CallStaticBooleanMethod(env, jni_helper_class, is_same_type_method, type, (TYPE)); \
+        CHECK_JAVA_EXCEPTION_NO(env);                                                                                     \
+        if (is_the_type) {                                                                                                \
+            (TARGET) = (*env)->CALLER(env, jni_helper_class, GETTER, value->l);                                           \
+            CHECK_JAVA_EXCEPTION_NO(env);                                                                                 \
+            return 0;                                                                                                     \
+        }                                                                                                                 \
+    } while (0)
 
     UNBOX_PRIMITIVE_TYPE(boolean_primitive_type, unbox_boolean_method, CallStaticBooleanMethod, value->z);
     UNBOX_PRIMITIVE_TYPE(char_primitive_type, unbox_char_method, CallStaticCharMethod, value->c);
@@ -232,12 +249,12 @@ static int unbox_primitive_type(JNIEnv *env, jobject type, jvalue *value) {
     } while (0)
 
 static int js_value_to_java_value(
-        JSContext *ctx,
-        JNIEnv *env,
-        jobject js_context,
-        jobject type,
-        JSValueConst value,
-        jvalue *result
+    JSContext *ctx,
+    JNIEnv *env,
+    jobject js_context,
+    jobject type,
+    JSValueConst value,
+    jvalue *result
 ) {
     JSValue *copy = NULL;
     // Duplication is required
@@ -251,13 +268,29 @@ static int js_value_to_java_value(
     return unbox_primitive_type(env, type, result);
 }
 
-static JSValue call_void_java_method(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject callee, jmethodID method, jvalue *argv) {
+static JSValue call_void_java_method(
+    JSContext *ctx,
+    JNIEnv *env,
+    jobject __unused js_context,
+    jobject __unused return_type,
+    jobject callee,
+    jmethodID method,
+    jvalue *argv
+) {
     (*env)->CallVoidMethodA(env, callee, method, argv);
     CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);
     return JS_UNDEFINED;
 }
 
-static JSValue call_void_java_static_method(JSContext *ctx, JNIEnv *env, jobject js_context, jobject return_type, jobject callee, jmethodID method, jvalue *argv) {
+static JSValue call_void_java_static_method(
+    JSContext *ctx,
+    JNIEnv *env,
+    jobject __unused js_context,
+    jobject __unused return_type,
+    jobject callee,
+    jmethodID method,
+    jvalue *argv
+) {
     (*env)->CallStaticVoidMethodA(env, callee, method, argv);
     CHECK_JAVA_EXCEPTION_JS_EXCEPTION(ctx, env);
     return JS_UNDEFINED;
@@ -298,11 +331,12 @@ static JavaMethodCaller select_java_method_caller(JNIEnv *env, jboolean is_stati
     CHECK_JAVA_EXCEPTION_NULL(env);
     if (!is_primitive_type) return is_static ? call_object_java_static_method : call_object_java_method;
 
-    jboolean is_the_type;
-#define CHECK_PRIMITIVE_TYPE(TYPE, METHOD, STATIC_METHOD)                                                    \
-    is_the_type = (*env)->CallStaticBooleanMethod(env, jni_helper_class, is_same_type_method, type, (TYPE)); \
-    CHECK_JAVA_EXCEPTION_NULL(env);                                                                          \
-    if (is_the_type) return is_static ? (STATIC_METHOD) : (METHOD);
+#define CHECK_PRIMITIVE_TYPE(TYPE, METHOD, STATIC_METHOD)                                                                \
+    do {                                                                                                                 \
+        jboolean is_the_type = (*env)->CallStaticBooleanMethod(env, jni_helper_class,is_same_type_method, type, (TYPE)); \
+        CHECK_JAVA_EXCEPTION_NULL(env);                                                                                  \
+        if (is_the_type) return is_static ? (STATIC_METHOD) : (METHOD);                                                  \
+    } while (0)
 
     CHECK_PRIMITIVE_TYPE(void_primitive_type, call_void_java_method, call_void_java_static_method);
     CHECK_PRIMITIVE_TYPE(boolean_primitive_type, call_boolean_java_method, call_boolean_java_static_method);
@@ -320,15 +354,15 @@ static JavaMethodCaller select_java_method_caller(JNIEnv *env, jboolean is_stati
 }
 
 JSValue QJ_NewJavaMethod(
-        JSContext *ctx,
-        JNIEnv *env,
-        jobject js_context,
-        jboolean is_static,
-        jobject callee,
-        jmethodID method,
-        jobject return_type,
-        int arg_count,
-        jobject *arg_types
+    JSContext *ctx,
+    JNIEnv *env,
+    jobject js_context,
+    jboolean is_static,
+    jobject callee,
+    jmethodID method,
+    jobject return_type,
+    int arg_count,
+    jobject *arg_types
 ) {
     JavaMethodCaller caller = select_java_method_caller(env, is_static, return_type);
     if (caller == NULL) return JS_EXCEPTION;
