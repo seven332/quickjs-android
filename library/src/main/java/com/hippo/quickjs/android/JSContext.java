@@ -177,6 +177,22 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   }
 
   /**
+   * Execute next pending job. Returns {@code false} if it has no pending job.
+   */
+  public boolean executePendingJob() {
+    synchronized (jsRuntime) {
+      checkClosed();
+
+      int code = QuickJS.executePendingJob(pointer);
+      if (code < 0) {
+        throw new JSEvaluationException(QuickJS.getException(pointer));
+      } else {
+        return code != 0;
+      }
+    }
+  }
+
+  /**
    * Returns the global object.
    */
   public JSObject getGlobalObject() {

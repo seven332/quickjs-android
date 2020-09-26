@@ -85,6 +85,29 @@ public class JSContextTest {
   }
 
   @Test
+  public void noPendingJob() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        context.evaluate("1", "unknown.js");
+        assertThat(context.executePendingJob()).isEqualTo(false);
+      }
+    }
+  }
+
+  @Test
+  public void hasPendingJob() {
+    QuickJS quickJS = new QuickJS.Builder().build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
+        context.evaluate("Promise.resolve().then(() => {})", "unknown.js");
+        assertThat(context.executePendingJob()).isEqualTo(true);
+        assertThat(context.executePendingJob()).isEqualTo(false);
+      }
+    }
+  }
+
+  @Test
   public void getGlobalObject() {
     QuickJS quickJS = new QuickJS.Builder().build();
     try (JSRuntime runtime = quickJS.createJSRuntime()) {

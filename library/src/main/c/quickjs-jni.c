@@ -881,6 +881,17 @@ Java_com_hippo_quickjs_android_QuickJS_evaluate(
 }
 
 JNIEXPORT jint JNICALL
+Java_com_hippo_quickjs_android_QuickJS_executePendingJob(JNIEnv *env, jclass clazz, jlong context) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+
+    // if the context has pending jobs，jobCtx will be ctx
+    // don't destroy it
+    JSContext *jobCtx;
+    return JS_ExecutePendingJob(JS_GetRuntime(ctx), &jobCtx);
+}
+
+JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void __unused * reserved) {
     JNIEnv *env = NULL;
 
