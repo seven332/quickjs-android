@@ -21,9 +21,9 @@ package com.hippo.quickjs.android;
  */
 public class JSObject extends JSValue {
 
-  public static int PROP_FLAG_CONFIGURABLE = 1 << 0;
-  public static int PROP_FLAG_WRITABLE = 1 << 1;
-  public static int PROP_FLAG_ENUMERABLE = 1 << 2;
+  public static int PROP_FLAG_CONFIGURABLE = 0b001;
+  public static int PROP_FLAG_WRITABLE = 0b010;
+  public static int PROP_FLAG_ENUMERABLE = 0b100;
 
   private static final int PROP_FLAG_MASK = 0b111;
 

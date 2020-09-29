@@ -41,22 +41,17 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Global code.
    */
-  public static final int EVAL_TYPE_GLOBAL = 0 << 0;
+  public static final int EVAL_TYPE_GLOBAL = 0;
 
   /**
    * Module code.
    */
-  public static final int EVAL_TYPE_MODULE = 1 << 0;
-
-  /**
-   * Skip first line beginning with '#!'.
-   */
-  public static final int EVAL_FLAG_SHEBANG = 1 << 2;
+  public static final int EVAL_TYPE_MODULE = 1;
 
   /**
    * Force 'strict' mode.
    */
-  public static final int EVAL_FLAG_STRICT = 1 << 3;
+  public static final int EVAL_FLAG_STRICT = 0b01000;
 
   /**
    * Force 'strip' mode.
@@ -64,9 +59,9 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Remove the debug information (including the source code
    * of the functions) to save memory.
    */
-  public static final int EVAL_FLAG_STRIP = 1 << 4;
+  public static final int EVAL_FLAG_STRIP = 0b10000;
 
-  private static final int EVAL_FLAG_MASK = 0b11100;
+  private static final int EVAL_FLAG_MASK = 0b11000;
 
   long pointer;
   final QuickJS quickJS;
@@ -102,7 +97,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Evaluates the script in this JSContext.
    *
    * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
-   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
+   * @param flags must be logic and of {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
    */
   public void evaluate(String script, String fileName, int type, int flags) {
     evaluateInternal(script, fileName, type, flags, null);
@@ -129,7 +124,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Returns the result as the java class.
    *
    * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
-   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
+   * @param flags must be logic and of {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
    */
   public <T> T evaluate(String script, String fileName, int type, int flags, Class<T> clazz) {
     return evaluateInternal(script, fileName, type, flags, quickJS.getAdapter(clazz));
@@ -140,7 +135,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Returns the result converted by the TypeAdapter.
    *
    * @param type must be one of {@link #EVAL_TYPE_GLOBAL} and {@link #EVAL_TYPE_MODULE}
-   * @param flags must be logic and of {@link #EVAL_FLAG_SHEBANG}, {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
+   * @param flags must be logic and of {@link #EVAL_FLAG_STRICT} and {@link #EVAL_FLAG_STRIP}
    */
   public <T> T evaluate(String script, String fileName, int type, int flags, TypeAdapter<T> adapter) {
     return evaluateInternal(script, fileName, type, flags, adapter);

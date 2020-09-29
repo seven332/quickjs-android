@@ -21,9 +21,15 @@ import androidx.annotation.Nullable;
 import java.lang.reflect.Type;
 
 public abstract class TypeAdapter<T> {
+  /**
+   * Converts the java value to {@code JSValue}.
+   * Throws {@link JSDataException} if the value can't be handled.
+   */
+  public abstract JSValue toJSValue(Depot depot, Context context, T value);
 
-  public abstract JSValue toJSValue(Depot depot, Context context, @Nullable T value);
-
+  /**
+   * Converts the {@code JSValue} to java value.
+   */
   public abstract T fromJSValue(Depot depot, Context context, JSValue value);
 
   /**

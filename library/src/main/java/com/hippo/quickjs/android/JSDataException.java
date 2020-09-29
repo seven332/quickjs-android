@@ -20,8 +20,7 @@ package com.hippo.quickjs.android;
  * This exception is raised if JSValue can't be convert to Java type.
  */
 public class JSDataException extends RuntimeException {
-
-  JSDataException(String message) {
+  public JSDataException(String message) {
     super(message);
   }
 }

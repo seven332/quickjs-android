@@ -32,18 +32,17 @@ class JNIHelper {
 
   private static Object jsValueToJavaValue(JSContext jsContext, Type type, long value) {
     synchronized (jsContext.jsRuntime) {
-      TypeAdapter<Object> adapter = null;
+      JSValue jsValue = null;
       try {
         jsContext.checkClosed();
-        adapter = jsContext.quickJS.getAdapter(type);
+        TypeAdapter<Object> adapter = jsContext.quickJS.getAdapter(type);
+        jsValue = jsContext.wrapAsJSValue(value);
+        return adapter.fromJSValue(jsContext.quickJS, jsContext, jsValue);
       } finally {
-        if (adapter == null) {
+        if (jsValue == null) {
           QuickJS.destroyValue(jsContext.pointer, value);
         }
       }
-
-      JSValue jsValue = jsContext.wrapAsJSValue(value);
-      return adapter.fromJSValue(jsContext.quickJS, jsContext, jsValue);
     }
   }
 
@@ -64,7 +63,7 @@ class JNIHelper {
   }
 
   private static boolean isPrimitiveType(Type type) {
-    return type instanceof Class && ((Class) type).isPrimitive();
+    return type instanceof Class && ((Class<?>) type).isPrimitive();
   }
 
   @SuppressWarnings("EqualsReplaceableByObjectsCall")

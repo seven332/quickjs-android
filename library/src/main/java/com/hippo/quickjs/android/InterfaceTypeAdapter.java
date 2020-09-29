@@ -128,12 +128,12 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       JSValue[] parameters = new JSValue[parameterNumber];
       for (int i = 0; i < parameterNumber; i++) {
         Type type = simpleMethod.parameterTypes[i];
-        TypeAdapter adapter = depot.getAdapter(type);
+        TypeAdapter<Object> adapter = depot.getAdapter(type);
         parameters[i] = adapter.toJSValue(depot, context, args[i]);
       }
 
       Type resultType = simpleMethod.returnType;
-      TypeAdapter resultAdapter = depot.getAdapter(resultType);
+      TypeAdapter<?> resultAdapter = depot.getAdapter(resultType);
 
       JSFunction function = jo.getProperty(name).cast(JSFunction.class);
 

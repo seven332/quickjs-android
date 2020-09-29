@@ -26,7 +26,6 @@ import java.util.Set;
  */
 abstract class NativeCleaner<T> {
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private Set<NativeReference<T>> phantomReferences = new HashSet<>();
   private ReferenceQueue<T> referenceQueue = new ReferenceQueue<>();
 
