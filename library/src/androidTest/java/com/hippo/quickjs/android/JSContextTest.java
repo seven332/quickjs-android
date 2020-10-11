@@ -27,109 +27,69 @@ import static com.hippo.quickjs.android.Utils.assertException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
-public class JSContextTest {
-
+public class JSContextTest extends TestsWithContext {
   @Ignore("There is no guarantee that this test will pass")
   @Test
   public void testJSValueGC() {
-    QuickJS quickJS = new QuickJS.Builder().build();
+    int jsValueCount = 3;
 
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        int jsValueCount = 3;
+    assertEquals(0, context.getNotRemovedJSValueCount());
 
-        assertEquals(0, context.getNotRemovedJSValueCount());
-
-        for (int i = 0; i < jsValueCount; i++) {
-          context.evaluate("1", "unknown.js", int.class);
-        }
-
-        assertEquals(jsValueCount, context.getNotRemovedJSValueCount());
-
-        Runtime.getRuntime().gc();
-        Runtime.getRuntime().gc();
-
-        context.evaluate("1", "unknown.js", int.class);
-
-        assertEquals(1, context.getNotRemovedJSValueCount());
-      }
+    for (int i = 0; i < jsValueCount; i++) {
+      context.evaluate("1", "unknown.js", int.class);
     }
+
+    assertEquals(jsValueCount, context.getNotRemovedJSValueCount());
+
+    Runtime.getRuntime().gc();
+    Runtime.getRuntime().gc();
+
+    context.evaluate("1", "unknown.js", int.class);
+
+    assertEquals(1, context.getNotRemovedJSValueCount());
   }
 
   @Test
-  public void throwException() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        assertException(
-            JSEvaluationException.class,
-            "Throw: 1\n",
-            () -> context.evaluate("throw 1", "unknown.js")
-        );
-      }
-    }
+  public void evaluate_throwException_error() {
+    assertException(
+      JSEvaluationException.class,
+      "Throw: 1\n",
+      () -> context.evaluate("throw 1", "unknown.js")
+    );
   }
 
   @Test
-  public void throwExceptionWithReturn() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        assertException(
-            JSEvaluationException.class,
-            "Throw: 1\n",
-            () -> context.evaluate("throw 1", "unknown.js", int.class)
-        );
-      }
-    }
+  public void evaluate_throwExceptionWithReturn_error() {
+    assertException(
+      JSEvaluationException.class,
+      "Throw: 1\n",
+      () -> context.evaluate("throw 1", "unknown.js", int.class)
+    );
   }
 
   @Test
-  public void noPendingJob() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        context.evaluate("1", "unknown.js");
-        assertThat(context.executePendingJob()).isEqualTo(false);
-      }
-    }
+  public void executePendingJob_noPendingJob_false() {
+    context.evaluate("1", "unknown.js");
+    assertThat(context.executePendingJob()).isEqualTo(false);
   }
 
   @Test
-  public void hasPendingJob() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        context.evaluate("Promise.resolve().then(() => {})", "unknown.js");
-        assertThat(context.executePendingJob()).isEqualTo(true);
-        assertThat(context.executePendingJob()).isEqualTo(false);
-      }
-    }
+  public void executePendingJob_hasPendingJob_true() {
+    context.evaluate("Promise.resolve().then(() => {})", "unknown.js");
+    assertThat(context.executePendingJob()).isEqualTo(true);
+    assertThat(context.executePendingJob()).isEqualTo(false);
   }
 
   @Test
-  public void getGlobalObject() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        context.evaluate("a = 1", "unknown.js", int.class);
-        assertEquals(1, context.getGlobalObject().getProperty("a").cast(JSNumber.class).getInt());
-
-        context.getGlobalObject().setProperty("b", context.createJSString("string"));
-        assertEquals("string", context.evaluate("b", "unknown.js", String.class));
-      }
-    }
+  public void getGlobalObject_getProperty() {
+    context.evaluate("a = 1", "unknown.js", int.class);
+    assertEquals(1, context.getGlobalObject().getProperty("a").cast(JSNumber.class).getInt());
   }
 
   @Test
-  public void evaluateWithoutReturn() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        context.evaluate("a = {}", "test.js");
-        assertThat(context.getGlobalObject().getProperty("a")).isInstanceOf(JSObject.class);
-      }
-    }
+  public void getGlobalObject_setProperty() {
+    context.getGlobalObject().setProperty("b", context.createJSString("string"));
+    assertEquals("string", context.evaluate("b", "unknown.js", String.class));
   }
 
   private static class StringHolder {
@@ -207,7 +167,7 @@ public class JSContextTest {
 
   private void invokeJavaStaticMethodInJS(
       JSContext context,
-      Class clazz,
+      Class<?> clazz,
       java.lang.reflect.Method rawMethod,
       Object[] args
   ) throws InvocationTargetException, IllegalAccessException {
@@ -231,10 +191,10 @@ public class JSContextTest {
   }
 
   @Test
-  public void createValueFunction() throws InvocationTargetException, IllegalAccessException {
+  public void createJSFunction() throws InvocationTargetException, IllegalAccessException {
     QuickJS quickJS = new QuickJS.Builder().registerTypeAdapter(StringHolder.class, new TypeAdapter<StringHolder>() {
       @Override
-      public JSValue toJSValue(Depot depot, Context context, @Nullable StringHolder value) {
+      public JSValue toJSValue(Depot depot, Context context, StringHolder value) {
         return context.createJSString(value.str);
       }
       @Override
@@ -270,7 +230,24 @@ public class JSContextTest {
             invokeJavaMethodInJS(context, a, rawMethod, args);
           }
         }
+      }
+    }
+  }
 
+  @Test
+  public void createJSFunctionS() throws InvocationTargetException, IllegalAccessException {
+    QuickJS quickJS = new QuickJS.Builder().registerTypeAdapter(StringHolder.class, new TypeAdapter<StringHolder>() {
+      @Override
+      public JSValue toJSValue(Depot depot, Context context, StringHolder value) {
+        return context.createJSString(value.str);
+      }
+      @Override
+      public StringHolder fromJSValue(Depot depot, Context context, JSValue value) {
+        return new StringHolder(value.cast(JSString.class).getString());
+      }
+    }).build();
+    try (JSRuntime runtime = quickJS.createJSRuntime()) {
+      try (JSContext context = runtime.createJSContext()) {
         JSFunction fun2 = context.createJSFunctionS(ClassA.class, new Method(void.class, "staticFunEmpty", new Type[] {}));
         context.getGlobalObject().setProperty("fun", fun2);
         ClassA.staticEmptyCalled = true;
@@ -300,56 +277,65 @@ public class JSContextTest {
   }
 
   @Test
-  public void createValueFunctionNoMethod() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        Method method = new Method(long.class, "atoi", new Type[] { String.class });
-        assertException(
-            NoSuchMethodError.class,
-            "no non-static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
-            () -> context.createJSFunction(1, method)
-        );
-        assertException(
-            NoSuchMethodError.class,
-            "no static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
-            () -> context.createJSFunctionS(Integer.class, method)
-        );
-      }
-    }
+  public void createJSFunction_noSuchMethod_error() {
+    Method method = new Method(long.class, "atoi", new Type[] { String.class });
+    assertException(
+      NoSuchMethodError.class,
+      "no non-static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
+      () -> context.createJSFunction(1, method)
+    );
+    assertException(
+      NoSuchMethodError.class,
+      "no static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
+      () -> context.createJSFunctionS(Integer.class, method)
+    );
   }
 
   @Test
-  public void createValueFunctionNull() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        Method method = new Method(int.class, "atoi", new Type[] { String.class });
+  public void createJSFunctionS_noSuchMethod_error() {
+    Method method = new Method(long.class, "atoi", new Type[] { String.class });
+    assertException(
+      NoSuchMethodError.class,
+      "no static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
+      () -> context.createJSFunctionS(Integer.class, method)
+    );
+  }
 
-        assertException(
-            NullPointerException.class,
-            "instance == null",
-            () -> context.createJSFunction(null, method)
-        );
+  @Test
+  public void createJSFunction_nullInstance_error() {
+    Method method = new Method(int.class, "atoi", new Type[] { String.class });
+    assertException(
+      NullPointerException.class,
+      "instance == null",
+      () -> context.createJSFunction(null, method)
+    );
+  }
 
-        assertException(
-            NullPointerException.class,
-            "method == null",
-            () -> context.createJSFunction(1, null)
-        );
+  @Test
+  public void createJSFunction_nullMethod_error() {
+    assertException(
+      NullPointerException.class,
+      "method == null",
+      () -> context.createJSFunction(1, null)
+    );
+  }
 
-        assertException(
-            NullPointerException.class,
-            "clazz == null",
-            () -> context.createJSFunctionS(null, method)
-        );
+  @Test
+  public void createJSFunctionS_nullClass_error() {
+    Method method = new Method(int.class, "atoi", new Type[] { String.class });
+    assertException(
+      NullPointerException.class,
+      "clazz == null",
+      () -> context.createJSFunctionS(null, method)
+    );
+  }
 
-        assertException(
-            NullPointerException.class,
-            "method == null",
-            () -> context.createJSFunctionS(Class.class, null)
-        );
-      }
-    }
+  @Test
+  public void createJSFunctionS_nullMethod_error() {
+    assertException(
+      NullPointerException.class,
+      "method == null",
+      () -> context.createJSFunctionS(Class.class, null)
+    );
   }
 }

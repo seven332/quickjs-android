@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 public class TypeAdapterTest {
 
   @Test
-  public void testRegisterTypeAdapter() {
+  public void registerTypeAdapter() {
     QuickJS quickJS = new QuickJS.Builder().registerTypeAdapter(AtomicInteger.class, new AtomicIntegerTypeAdapter()).build();
     try (JSRuntime runtime = quickJS.createJSRuntime()) {
       try (JSContext context = runtime.createJSContext()) {
@@ -38,7 +38,7 @@ public class TypeAdapterTest {
   }
 
   @Test
-  public void testRegisterTypeAdapterFactory() {
+  public void registerTypeAdapterFactory() {
     QuickJS quickJS = new QuickJS.Builder().registerTypeAdapterFactory(new AtomicIntegerTypeAdapterFactory()).build();
     try (JSRuntime runtime = quickJS.createJSRuntime()) {
       try (JSContext context = runtime.createJSContext()) {

@@ -20,8 +20,7 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PromiseTest {
-
+public class PromiseTest extends TestsWithContext {
   private static String sLog;
 
   public static void log(String log) {
@@ -30,41 +29,28 @@ public class PromiseTest {
 
   @Test
   public void testPromise() throws NoSuchMethodException {
-    QuickJS quickJS = new QuickJS.Builder().build();
+    Method method = Method.create(Void.class, PromiseTest.class.getMethod("log", String.class));
+    context.getGlobalObject().setProperty("log", context.createJSFunctionS(PromiseTest.class, method));
 
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
+    context.evaluate("log('before')\n" +
+      "Promise.resolve()\n" +
+      "  .then(() => { log('in promise 1') })\n" +
+      "  .then(() => { log('in promise 2') })", "test.js");
 
-        Method method = Method.create(Void.class, PromiseTest.class.getMethod("log", String.class));
-        context.getGlobalObject().setProperty("log", context.createJSFunctionS(PromiseTest.class, method));
+    assertThat(sLog).isEqualTo("before");
 
-        context.evaluate("log('before')\n" +
-          "Promise.resolve()\n" +
-          "  .then(() => { log('in promise 1') })\n" +
-          "  .then(() => { log('in promise 2') })", "test.js");
+    assertThat(context.executePendingJob()).isEqualTo(true);
+    assertThat(sLog).isEqualTo("in promise 1");
 
-        assertThat(sLog).isEqualTo("before");
+    assertThat(context.executePendingJob()).isEqualTo(true);
+    assertThat(sLog).isEqualTo("in promise 2");
 
-        assertThat(context.executePendingJob()).isEqualTo(true);
-        assertThat(sLog).isEqualTo("in promise 1");
-
-        assertThat(context.executePendingJob()).isEqualTo(true);
-        assertThat(sLog).isEqualTo("in promise 2");
-
-        assertThat(context.executePendingJob()).isEqualTo(false);
-      }
-    }
+    assertThat(context.executePendingJob()).isEqualTo(false);
   }
 
   @Test
   public void testDumbPromise() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        context.evaluate("new Promise((resolve, reject) => {}).then(() => {})\n", "test.js");
-        assertThat(context.executePendingJob()).isEqualTo(false);
-      }
-    }
+    context.evaluate("new Promise((resolve, reject) => {}).then(() => {})\n", "test.js");
+    assertThat(context.executePendingJob()).isEqualTo(false);
   }
 }

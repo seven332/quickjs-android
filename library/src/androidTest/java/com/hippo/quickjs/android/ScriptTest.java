@@ -20,22 +20,16 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class ScriptTest {
-
+public class ScriptTest extends TestsWithContext {
   @Test
   public void fibonacci() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        String script = "" +
-            "function fibonacci(n) {" +
-            "  if (n == 0 || n == 1) return n;" +
-            "  return fibonacci(n - 1) + fibonacci(n - 2);" +
-            "}" +
-            "fibonacci(10);";
-        int result = context.evaluate(script, "fibonacci.js", int.class);
-        assertEquals(55, result);
-      }
-    }
+    String script = "" +
+      "function fibonacci(n) {" +
+      "  if (n == 0 || n == 1) return n;" +
+      "  return fibonacci(n - 1) + fibonacci(n - 2);" +
+      "}" +
+      "fibonacci(10);";
+    int result = context.evaluate(script, "fibonacci.js", int.class);
+    assertEquals(55, result);
   }
 }

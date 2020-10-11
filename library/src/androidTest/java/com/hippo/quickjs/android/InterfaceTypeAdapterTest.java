@@ -26,32 +26,35 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
-public class InterfaceTypeAdapterTest {
-
+public class InterfaceTypeAdapterTest extends TestsWithContext {
   @Test
   public void getInterfaceMethods() {
     Map<String, Method> methods = InterfaceTypeAdapter.getInterfaceMethods(InterfaceC.class);
 
-    assertThat(methods).containsOnly(
-        MapEntry.entry("getValue",
-            new Method(NullPointerException.class, "getValue", new Type[]{})),
-        MapEntry.entry("setValue",
-            new Method(void.class, "setValue", new Type[]{ Throwable.class })),
-        MapEntry.entry("setValueResolve",
-            new Method(void.class, "setValueResolve", new Type[]{ Throwable.class })),
-        MapEntry.entry("fun1",
-            new Method(void.class, "fun1", new Type[]{})),
-        MapEntry.entry("fun2",
-            new Method(String.class, "fun2", new Type[]{ String[].class }))
+    assertThat(methods).containsOnly(MapEntry.entry("getValue",
+        new Method(NullPointerException.class, "getValue", new Type[]{})),
+      MapEntry.entry("setValue",
+        new Method(void.class, "setValue", new Type[]{ Throwable.class })),
+      MapEntry.entry("setValueResolve",
+        new Method(void.class, "setValueResolve", new Type[]{ Throwable.class })),
+      MapEntry.entry("fun1",
+        new Method(void.class, "fun1", new Type[]{})),
+      MapEntry.entry("fun2",
+        new Method(String.class, "fun2", new Type[]{ String[].class }))
     );
   }
 
   @Test
-  public void genericMethod() {
+  public void getInterfaceMethods_generic_null() {
     assertThat(InterfaceTypeAdapter.getInterfaceMethods(InterfaceD.class)).isNull();
   }
 
-  interface InterfaceA<T> {
+  @Test
+  public void getInterfaceMethods_overload_null() {
+    assertThat(InterfaceTypeAdapter.getInterfaceMethods(InterfaceE.class)).isNull();
+  }
+
+  private interface InterfaceA<T> {
     T getValue();
     void setValue(T value);
     void setValueResolve(T value);
@@ -59,19 +62,24 @@ public class InterfaceTypeAdapterTest {
     String fun2(String... args);
   }
 
-  interface InterfaceB {
+  private interface InterfaceB {
     RuntimeException getValue();
   }
 
-  interface InterfaceC extends InterfaceA<Throwable>, InterfaceB {
+  private interface InterfaceC extends InterfaceA<Throwable>, InterfaceB {
     @Override
     NullPointerException getValue();
     @Override
     void setValue(Throwable value);
   }
 
-  interface InterfaceD {
+  private interface InterfaceD {
     <T> T fun();
+  }
+
+  private interface InterfaceE {
+    void fun();
+    void fun(int value);
   }
 
   private static class CalculatorImpl implements Calculator {
@@ -89,97 +97,70 @@ public class InterfaceTypeAdapterTest {
 
   @Test
   public void toJSValue() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        JSValue calculator = quickJS.getAdapter(Calculator.class).toJSValue(quickJS, context, new CalculatorImpl());
-        context.getGlobalObject().setProperty("calculator", calculator);
+    JSValue calculator = quickJS.getAdapter(Calculator.class)
+      .toJSValue(quickJS, context, new CalculatorImpl());
+    context.getGlobalObject().setProperty("calculator", calculator);
 
-        double a = 3243.435;
-        double b = -6541.34;
+    double a = 3243.435;
+    double b = -6541.34;
 
-        assertEquals(a + b, context.evaluate("calculator.plus(" + a + ", " + b + ")", "test.js", double.class), 0.0);
-        assertEquals(a - b, context.evaluate("calculator.minus(" + a + ", " + b + ")", "test.js", double.class), 0.0);
-        assertEquals(a * b, context.evaluate("calculator.multiplies(" + a + ", " + b + ")", "test.js", double.class), 0.0);
-        assertEquals(a / b, context.evaluate("calculator.divides(" + a + ", " + b + ")", "test.js", double.class), 0.0);
-      }
-    }
+    assertEquals(a + b, context.evaluate("calculator.plus(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+    assertEquals(a - b, context.evaluate("calculator.minus(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+    assertEquals(a * b, context.evaluate("calculator.multiplies(" + a + ", " + b + ")", "test.js", double.class), 0.0);
+    assertEquals(a / b, context.evaluate("calculator.divides(" + a + ", " + b + ")", "test.js", double.class), 0.0);
   }
 
   @Test
   public void fromJSValue() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        Calculator calculator = context.evaluate("" +
-            "a = {\n" +
-            "  plus: function(a, b) { return a + b },\n" +
-            "  minus: function(a, b) { return a - b },\n" +
-            "  multiplies: function(a, b) { return a * b },\n" +
-            "  divides: function(a, b) { return a / b },\n" +
-            "  noop: function() { }\n" +
-            "}", "test.js", Calculator.class);
+    Calculator calculator = context.evaluate("" +
+      "a = {\n" +
+      "  plus: function(a, b) { return a + b },\n" +
+      "  minus: function(a, b) { return a - b },\n" +
+      "  multiplies: function(a, b) { return a * b },\n" +
+      "  divides: function(a, b) { return a / b },\n" +
+      "  noop: function() { }\n" +
+      "}", "test.js", Calculator.class);
 
-        double a = 3243.435;
-        double b = -6541.34;
+    double a = 3243.435;
+    double b = -6541.34;
 
-        assertEquals(a + b, calculator.plus(a, b), 0.0);
-        assertEquals(a - b, calculator.minus(a, b), 0.0);
-        assertEquals(a * b, calculator.multiplies(a, b), 0.0);
-        assertEquals(a / b, calculator.divides(a, b), 0.0);
-        calculator.noop();
-      }
-    }
+    assertEquals(a + b, calculator.plus(a, b), 0.0);
+    assertEquals(a - b, calculator.minus(a, b), 0.0);
+    assertEquals(a * b, calculator.multiplies(a, b), 0.0);
+    assertEquals(a / b, calculator.divides(a, b), 0.0);
+    calculator.noop();
   }
 
   @Test
-  public void fromJSValueNotJSObject() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        try {
-          context.evaluate("1", "test.js", Calculator.class);
-          fail();
-        } catch (JSDataException e) {
-          assertEquals("expected: JSObject, actual: JSInt", e.getMessage());
-        }
-      }
-    }
+  public void fromJSValue_notJSObject_error() {
+    Utils.assertException(
+      JSDataException.class,
+      "expected: JSObject, actual: JSInt",
+      () -> context.evaluate("1", "test.js", Calculator.class)
+    );
   }
 
   @Test
-  public void fromJSValueNotJSFunction() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        Calculator calculator = context.evaluate("a = {}", "test.js", Calculator.class);
-        try {
-          calculator.plus(0, 0);
-          fail();
-        } catch (JSDataException e) {
-          assertEquals("expected: JSFunction, actual: JSUndefined", e.getMessage());
-        }
-      }
-    }
+  public void fromJSValue_notJSFunction_error() {
+    Calculator calculator = context.evaluate("a = {}", "test.js", Calculator.class);
+    Utils.assertException(
+      JSDataException.class,
+      "expected: JSFunction, actual: JSUndefined",
+      () -> calculator.plus(0, 0)
+    );
   }
 
   @Test
-  public void fromJSValueWithUnknownType() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        AtomicIntegerHolder holder = context.evaluate("" +
-            "a = {\n" +
-            "  get: function() { return 0 }\n" +
-            "}", "test.js", AtomicIntegerHolder.class);
-        try {
-          holder.get();
-          fail();
-        } catch (IllegalArgumentException e) {
-          assertEquals("Can't find TypeAdapter for class java.util.concurrent.atomic.AtomicInteger", e.getMessage());
-        }
-      }
-    }
+  public void fromJSValue_unknownType_error() {
+    AtomicIntegerHolder holder = context.evaluate("" +
+      "a = {\n" +
+      "  get: function() { return 0 }\n" +
+      "}", "test.js", AtomicIntegerHolder.class);
+    Utils.assertException(
+      IllegalArgumentException.class,
+      "Can't find TypeAdapter for class java.util.concurrent.atomic.AtomicInteger",
+      holder::get
+    );
   }
 
   interface Calculator {
@@ -195,38 +176,28 @@ public class InterfaceTypeAdapterTest {
   }
 
   @Test
-  public void wrapWrappedJSValue() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        JSValue jsValue1 = context.evaluate("" +
-            "a = {\n" +
-            "  plus: function(a, b) { return a + b },\n" +
-            "  minus: function(a, b) { return a - b },\n" +
-            "  multiplies: function(a, b) { return a * b },\n" +
-            "  divides: function(a, b) { return a / b },\n" +
-            "  noop: function() { }\n" +
-            "}", "test.js", JSValue.class);
+  public void fromJSValueThenToJSValue_isSame() {
+    JSValue jsValue1 = context.evaluate("" +
+      "a = {\n" +
+      "  plus: function(a, b) { return a + b },\n" +
+      "  minus: function(a, b) { return a - b },\n" +
+      "  multiplies: function(a, b) { return a * b },\n" +
+      "  divides: function(a, b) { return a / b },\n" +
+      "  noop: function() { }\n" +
+      "}", "test.js", JSValue.class);
 
-        TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
-        Calculator calculator = adapter.fromJSValue(quickJS, context, jsValue1);
-        JSValue jsValue2 = adapter.toJSValue(quickJS, context, calculator);
-        assertSame(jsValue1, jsValue2);
-      }
-    }
+    TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
+    Calculator calculator = adapter.fromJSValue(quickJS, context, jsValue1);
+    JSValue jsValue2 = adapter.toJSValue(quickJS, context, calculator);
+    assertSame(jsValue1, jsValue2);
   }
 
   @Test
-  public void wrapWrappedJavaObject() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        Calculator calculator1 = new CalculatorImpl();
-        TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
-        JSValue jsValue = adapter.toJSValue(quickJS, context, calculator1);
-        Calculator calculator2 = adapter.fromJSValue(quickJS, context, jsValue);
-        assertSame(calculator1, calculator2);
-      }
-    }
+  public void toJSValueThenFromJSValue_isSame() {
+    Calculator calculator1 = new CalculatorImpl();
+    TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
+    JSValue jsValue = adapter.toJSValue(quickJS, context, calculator1);
+    Calculator calculator2 = adapter.fromJSValue(quickJS, context, jsValue);
+    assertSame(calculator1, calculator2);
   }
 }

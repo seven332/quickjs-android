@@ -21,61 +21,86 @@ import org.junit.Test;
 import static com.hippo.quickjs.android.Utils.assertException;
 import static org.junit.Assert.assertEquals;
 
-public class JSObjectTest {
-
+public class JSObjectTest extends TestsWithContext {
   @Test
-  public void definePropertyInt() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        JSObject jo = context.createJSObject();
+  public void definePropertyIndex() {
+    JSObject jo = context.createJSObject();
 
-        int index = 23;
-        int value1 = 12123;
-        int value2 = 32121;
+    int index = 23;
+    int value1 = 12123;
 
-        jo.defineProperty(index, context.createJSNumber(value1), JSObject.PROP_FLAG_WRITABLE);
-        assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
-        jo.setProperty(index, context.createJSNumber(value2));
-        assertEquals(value2, jo.getProperty(index).cast(JSNumber.class).getInt());
-
-        jo.defineProperty(index, context.createJSNumber(value1), 0);
-        assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
-        assertException(
-            JSEvaluationException.class,
-            "TypeError: '23' is read-only\n",
-            () -> jo.setProperty(index, context.createJSNumber(value2))
-        );
-        assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
-      }
-    }
+    jo.defineProperty(index, context.createJSNumber(value1), JSObject.PROP_FLAG_WRITABLE);
+    assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
   }
 
   @Test
-  public void definePropertyString() {
-    QuickJS quickJS = new QuickJS.Builder().build();
-    try (JSRuntime runtime = quickJS.createJSRuntime()) {
-      try (JSContext context = runtime.createJSContext()) {
-        JSObject jo = context.createJSObject();
+  public void definePropertyName() {
+    JSObject jo = context.createJSObject();
 
-        String name = "name";
-        int value1 = 12123;
-        int value2 = 32121;
+    String name = "name";
+    int value1 = 12123;
 
-        jo.defineProperty(name, context.createJSNumber(value1), JSObject.PROP_FLAG_WRITABLE);
-        assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());
-        jo.setProperty(name, context.createJSNumber(value2));
-        assertEquals(value2, jo.getProperty(name).cast(JSNumber.class).getInt());
+    jo.defineProperty(name, context.createJSNumber(value1), JSObject.PROP_FLAG_WRITABLE);
+    assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());
+  }
 
-        jo.defineProperty(name, context.createJSNumber(value1), 0);
-        assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());
-        assertException(
-            JSEvaluationException.class,
-            "TypeError: 'name' is read-only\n",
-            () -> jo.setProperty(name, context.createJSNumber(value2))
-        );
-        assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());
-      }
-    }
+  @Test
+  public void setPropertyIndex_writableInt() {
+    JSObject jo = context.createJSObject();
+
+    int index = 23;
+    int value1 = 12123;
+    int value2 = 32121;
+
+    jo.defineProperty(index, context.createJSNumber(value1), JSObject.PROP_FLAG_WRITABLE);
+    jo.setProperty(index, context.createJSNumber(value2));
+    assertEquals(value2, jo.getProperty(index).cast(JSNumber.class).getInt());
+  }
+
+  @Test
+  public void setPropertyIndex_WriteNotWritableInt_error() {
+    JSObject jo = context.createJSObject();
+
+    int index = 23;
+    int value1 = 12123;
+    int value2 = 32121;
+
+    jo.defineProperty(index, context.createJSNumber(value1), 0);
+    assertException(
+      JSEvaluationException.class,
+      "TypeError: '23' is read-only\n",
+      () -> jo.setProperty(index, context.createJSNumber(value2))
+    );
+    assertEquals(value1, jo.getProperty(index).cast(JSNumber.class).getInt());
+  }
+
+  @Test
+  public void setPropertyName_writableInt() {
+    JSObject jo = context.createJSObject();
+
+    String name = "name";
+    int value1 = 12123;
+    int value2 = 32121;
+
+    jo.defineProperty(name, context.createJSNumber(value1), JSObject.PROP_FLAG_WRITABLE);
+    jo.setProperty(name, context.createJSNumber(value2));
+    assertEquals(value2, jo.getProperty(name).cast(JSNumber.class).getInt());
+  }
+
+  @Test
+  public void setPropertyName_WriteNotWritableInt_error() {
+    JSObject jo = context.createJSObject();
+
+    String name = "name";
+    int value1 = 12123;
+    int value2 = 32121;
+
+    jo.defineProperty(name, context.createJSNumber(value1), 0);
+    assertException(
+      JSEvaluationException.class,
+      "TypeError: 'name' is read-only\n",
+      () -> jo.setProperty(name, context.createJSNumber(value2))
+    );
+    assertEquals(value1, jo.getProperty(name).cast(JSNumber.class).getInt());
   }
 }
