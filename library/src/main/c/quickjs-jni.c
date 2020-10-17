@@ -441,6 +441,52 @@ Java_com_hippo_quickjs_android_QuickJS_createValueJavaObject(
     return (jlong) result;
 }
 
+JNIEXPORT jlongArray JNICALL
+Java_com_hippo_quickjs_android_QuickJS_createValuePromise(
+    JNIEnv *env,
+    __unused jclass clazz,
+    jlong context
+) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+
+    jlongArray result = (*env)->NewLongArray(env, 3);
+    CHECK_NULL_RET(env, result, MSG_OOM);
+
+    JSValue functions[2] = { JS_UNDEFINED, JS_UNDEFINED };
+    JSValue promise = JS_NewPromiseCapability(ctx, functions);
+
+    JSValue *promise_result = NULL;
+    JSValue *function1_result = NULL;
+    JSValue *function2_result = NULL;
+    COPY_JS_VALUE(ctx, promise, promise_result);
+    if (promise_result == NULL) {
+        JS_FreeValue(ctx, functions[0]);
+        JS_FreeValue(ctx, functions[1]);
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+    }
+    COPY_JS_VALUE(ctx, functions[0], function1_result);
+    if (function1_result == NULL) {
+        JS_FreeValue(ctx, *promise_result);
+        js_free_rt(JS_GetRuntime(ctx), promise_result);
+        JS_FreeValue(ctx, functions[1]);
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+    }
+    COPY_JS_VALUE(ctx, functions[1], function2_result);
+    if (function2_result == NULL) {
+        JS_FreeValue(ctx, *promise_result);
+        js_free_rt(JS_GetRuntime(ctx), promise_result);
+        JS_FreeValue(ctx, *function1_result);
+        js_free_rt(JS_GetRuntime(ctx), function1_result);
+        THROW_ILLEGAL_STATE_EXCEPTION_RET(env, MSG_OOM);
+    }
+
+    (*env)->SetLongArrayRegion(env, result, 0, 1, (const jlong *) &promise_result);
+    (*env)->SetLongArrayRegion(env, result, 1, 1, (const jlong *) &function1_result);
+    (*env)->SetLongArrayRegion(env, result, 2, 1, (const jlong *) &function2_result);
+    return result;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_hippo_quickjs_android_QuickJS_defineValueProperty__JJIJI(
     JNIEnv *env,

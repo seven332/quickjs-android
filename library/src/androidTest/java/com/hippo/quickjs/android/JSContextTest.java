@@ -338,4 +338,16 @@ public class JSContextTest extends TestsWithContext {
       () -> context.createJSFunctionS(Class.class, null)
     );
   }
+
+  @Test
+  public void createJSPromise_resolve() {
+    JSObject promise = context.createJSPromise((resolve, reject) ->
+      resolve.invoke(null, new JSValue[]{ context.createJSString("hello") }));
+    context.getGlobalObject().setProperty("promise", promise);
+    context.evaluate("a = 1;promise.then(() => { a = 2 })", "test.js");
+    assertEquals(1, context.getGlobalObject().getProperty("a").cast(JSNumber.class).getInt());
+    assertTrue(context.executePendingJob());
+    assertEquals(2, context.getGlobalObject().getProperty("a").cast(JSNumber.class).getInt());
+    assertFalse(context.executePendingJob());
+  }
 }

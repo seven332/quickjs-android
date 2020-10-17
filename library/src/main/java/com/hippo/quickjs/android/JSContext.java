@@ -343,6 +343,35 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     }
   }
 
+  public JSObject createJSPromise(PromiseExecutor executor) {
+    JSValue promise, resolve, reject;
+
+    synchronized (jsRuntime) {
+      checkClosed();
+      long[] values = QuickJS.createValuePromise(pointer);
+      if (values == null) throw new NullPointerException("result == null");
+
+      // Check js exception
+      for (long value : values) {
+        int type = QuickJS.getValueTag(value);
+        if (type == TYPE_EXCEPTION) {
+          for (long v : values) {
+            QuickJS.destroyValue(pointer, v);
+          }
+          throw new JSEvaluationException(QuickJS.getException(pointer));
+        }
+      }
+
+      promise = wrapAsJSValue(values[0]);
+      resolve = wrapAsJSValue(values[1]);
+      reject = wrapAsJSValue(values[2]);
+    }
+
+    executor.execute(resolve.cast(JSFunction.class), reject.cast(JSFunction.class));
+
+    return promise.cast(JSObject.class);
+  }
+
   // TODO No need to save c pointers of JSNull, JSUndefined, JSBoolean, JSNumber and JSString.
   //  Just save their types and values.
   /**
