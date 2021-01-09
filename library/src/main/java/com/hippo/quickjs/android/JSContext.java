@@ -315,7 +315,21 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     if (method == null) throw new NullPointerException("method == null");
     synchronized (jsRuntime) {
       checkClosed();
-      long val = QuickJS.createValueFunction(pointer, this, instance, method.name, method.getSignature(), method.returnType, method.parameterTypes);
+      long val = QuickJS.createValueFunction(pointer, this, instance, method.name, method.getSignature(), method.returnType, method.parameterTypes, false);
+      return wrapAsJSValue(val).cast(JSFunction.class);
+    }
+  }
+
+  /**
+   * Create a JavaScript function from a function callback.
+   */
+  public JSFunction createJSFunction(JSFunctionCallback callback) {
+    if (callback == null) throw new NullPointerException("callback == null");
+    synchronized (jsRuntime) {
+      checkClosed();
+      String methodName = "invoke";
+      String methodSign = "(Lcom/hippo/quickjs/android/JSContext;[Lcom/hippo/quickjs/android/JSValue;)Lcom/hippo/quickjs/android/JSValue;";
+      long val = QuickJS.createValueFunction(pointer, this, callback, methodName, methodSign, JSValue.class, new Class[] { JSContext.class, JSValue[].class }, true);
       return wrapAsJSValue(val).cast(JSFunction.class);
     }
   }

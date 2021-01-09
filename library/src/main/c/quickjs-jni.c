@@ -344,7 +344,8 @@ static jlong createValueFunction(
     jstring method_name,
     jstring method_sign,
     jobject return_type,
-    jobjectArray arg_types
+    jobjectArray arg_types,
+    jboolean is_callback_method
 ) {
     JSContext *ctx = (JSContext *) context;
     CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
@@ -378,7 +379,7 @@ static jlong createValueFunction(
     }
 
     JSValue *result = NULL;
-    JSValue val = QJ_NewJavaMethod(ctx, env, js_context, is_static, callee, method, return_type, arg_count, arg_types_copy);
+    JSValue val = QJ_NewJavaMethod(ctx, env, js_context, is_static, callee, method, return_type, arg_count, arg_types_copy, is_callback_method);
     COPY_JS_VALUE(ctx, val, result);
     CHECK_NULL_RET(env, result, MSG_OOM);
 
@@ -395,9 +396,10 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunction(
     jstring method_name,
     jstring method_sign,
     jobject return_type,
-    jobjectArray arg_types
+    jobjectArray arg_types,
+    jboolean is_callback_method
 ) {
-    return createValueFunction(env, context, js_context, JNI_FALSE, instance, method_name, method_sign, return_type, arg_types);
+    return createValueFunction(env, context, js_context, JNI_FALSE, instance, method_name, method_sign, return_type, arg_types, is_callback_method);
 }
 
 JNIEXPORT jlong JNICALL
@@ -420,7 +422,7 @@ Java_com_hippo_quickjs_android_QuickJS_createValueFunctionS(
         if ((*env)->ExceptionCheck(env)) return 0;
         THROW_ILLEGAL_STATE_EXCEPTION_RET(env, "Can't find class");
     }
-    return createValueFunction(env, context, js_context, JNI_TRUE, callee, method_name, method_sign, return_type, arg_types);
+    return createValueFunction(env, context, js_context, JNI_TRUE, callee, method_name, method_sign, return_type, arg_types, JNI_FALSE);
 }
 
 JNIEXPORT jlong JNICALL

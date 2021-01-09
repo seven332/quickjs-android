@@ -48,18 +48,60 @@ typedef struct {
     int arg_count;
     jobject *arg_types;
     JavaMethodCaller caller;
+    jboolean is_callback_method;
 } JavaMethodData;
 
-static JSValue java_method_call(
+static JSValue java_callback_method_call(
     JSContext *ctx,
-    JSValueConst func_obj,
-    JSValueConst __unused this_val,
+    JavaMethodData *data,
     int argc,
-    JSValueConst *argv,
-    int __unused flags
+    JSValueConst *argv
 ) {
-    JavaMethodData *data = JS_GetOpaque(func_obj, java_method_class_id);
+    // Collect js arguments to an array
+    JSValue array = JS_NewArray(ctx);
+    for (int i = 0; i < argc; i++) {
+        JSValue val = argv[i];
+        JS_DupValue(ctx, val);
+        JS_SetPropertyUint32(ctx, array, (uint32_t) i, val);
+    }
 
+    // Set the array as the new argument
+    argc = 1;
+    JSValueConst new_argv[] = { array };
+    argv = new_argv;
+
+    OBTAIN_ENV(data->vm);
+
+    // The first argument is JSContext
+    // The second argument is the array
+    int arg_count = 2;
+    int arg_offset = 1;
+    jvalue java_argv[arg_count];
+    java_argv[0].l = data->js_context;
+    for (int i = 0; i < argc; i++) {
+        if (js_value_to_java_value(ctx, env, data->js_context, data->arg_types[arg_offset + i], argv[i], java_argv + arg_offset + i)) {
+            goto fail;
+        }
+    }
+
+    JSValue result = data->caller(ctx, env, data->js_context, data->return_type, data->callee, data->method, java_argv);
+
+    RELEASE_ENV(data->vm);
+    JS_FreeValue(ctx, array);
+    return result;
+
+fail:
+    RELEASE_ENV(data->vm);
+    JS_FreeValue(ctx, array);
+    return JS_ThrowInternalError(ctx, "Failed to convert js value to java value");
+}
+
+static JSValue java_normal_method_call(
+    JSContext *ctx,
+    JavaMethodData *data,
+    int argc,
+    JSValueConst *argv
+) {
     if (argc != data->arg_count) {
         // TODO it's not internal, it blames on the caller
         return JS_ThrowInternalError(ctx, "Inconsistent argument count, excepted: %d, actual: %d", data->arg_count, argc);
@@ -83,6 +125,22 @@ static JSValue java_method_call(
 fail:
     RELEASE_ENV(data->vm);
     return JS_ThrowInternalError(ctx, "Failed to convert js value to java value");
+}
+
+static JSValue java_method_call(
+    JSContext *ctx,
+    JSValueConst func_obj,
+    JSValueConst __unused this_val,
+    int argc,
+    JSValueConst *argv,
+    int __unused flags
+) {
+    JavaMethodData *data = JS_GetOpaque(func_obj, java_method_class_id);
+    if (data->is_callback_method) {
+        return java_callback_method_call(ctx, data, argc, argv);
+    } else {
+        return java_normal_method_call(ctx, data, argc, argv);
+    }
 }
 
 static void java_method_finalizer(JSRuntime *rt, JSValue val) {
@@ -362,7 +420,8 @@ JSValue QJ_NewJavaMethod(
     jmethodID method,
     jobject return_type,
     int arg_count,
-    jobject *arg_types
+    jobject *arg_types,
+    jboolean is_callback_method
 ) {
     JavaMethodCaller caller = select_java_method_caller(env, is_static, return_type);
     if (caller == NULL) return JS_EXCEPTION;
@@ -397,6 +456,7 @@ JSValue QJ_NewJavaMethod(
     data->arg_count = arg_count;
     data->arg_types = arg_types_copy;
     data->caller = caller;
+    data->is_callback_method = is_callback_method;
 
     JS_SetOpaque(value, data);
 
