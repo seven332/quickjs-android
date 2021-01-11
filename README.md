@@ -52,6 +52,31 @@ try (JSRuntime runtime = quickJS.createJSRuntime()) {
 }
 ```
 
+Or create a JSFunction with a callback.
+
+```Java
+QuickJS quickJS = new QuickJS.Builder().build();
+try (JSRuntime runtime = quickJS.createJSRuntime()) {
+  try (JSContext context = runtime.createJSContext()) {
+    // Create a JSFunction with a callback
+    JSValue plusFunction = context.createJSFunction((context, args) -> {
+      int a = args[0].cast(JSNumber.class).getInt();
+      int b = args[1].cast(JSNumber.class).getInt();
+      int sum = a + b;
+      return context.createJSNumber(sum);
+    });
+
+    context.getGlobalObject().setProperty("plus", plusFunction);
+    int result = context.evaluate("plus(1, 2)", "test.js", Integer.class);
+    assertThat(result).isEqualTo(3);
+  }
+}
+```
+
+### Call Javascript Methods in Java codes
+
+Just **evaluate** it. Or call `JSFunction.invoke()`.
+
 ### Promise
 
 Use `JSContext.executePendingJob()` to execute pending job of promises. You may call `JSContext.executePendingJob()` several times until it returns `false`.
