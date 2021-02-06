@@ -2,6 +2,35 @@
 
 [QuickJS](https://bellard.org/quickjs/) Android wrapper.
 
+## Build
+
+```
+git clone --recurse-submodules https://github.com/seven332/quickjs-android.git
+```
+
+Open the folder `quickjs-android` in Android Studio.
+
+## Download
+
+1. Add the JitPack repository to your root build.gradle.
+
+```gradle
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+
+2. Add quickjs-android dependency to your application build.gradle.
+
+```gradle
+dependencies {
+    implementation "com.github.seven332:quickjs-android:0.1.0"
+}
+```
+
 ## Usage
 
 ### Evaluate Javascript Scripts
