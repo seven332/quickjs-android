@@ -826,6 +826,117 @@ Java_com_hippo_quickjs_android_QuickJS_setValueProperty__JJLjava_lang_String_2J(
     return result;
 }
 
+#define TO_ARRAY(METHOD_NAME, JNI_ARRAY_TYPE, JNI_TYPE, TYPE_BYTES, NEW_METHOD, GET_METHOD, RELEASE_METHOD) \
+JNIEXPORT JNI_ARRAY_TYPE JNICALL                                                                            \
+METHOD_NAME(                                                                                                \
+    JNIEnv *env,                                                                                            \
+    jclass clazz,                                                                                           \
+    jlong context,                                                                                          \
+    jlong value                                                                                             \
+) {                                                                                                         \
+    JSContext *ctx = (JSContext *) context;                                                                 \
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);                                                          \
+    JSValue *val = (JSValue *) value;                                                                       \
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);                                                            \
+                                                                                                            \
+    size_t size = 0;                                                                                        \
+    uint8_t *buffer = JS_GetArrayBuffer(ctx, &size, *val);                                                  \
+    CHECK_NULL_RET(env, buffer, "No buffer");                                                               \
+    CHECK_FALSE_RET(env, size % (TYPE_BYTES) == 0, "Size not matched");                                     \
+                                                                                                            \
+    JNI_ARRAY_TYPE array = (*env)->NEW_METHOD(env, size / (TYPE_BYTES));                                    \
+    CHECK_NULL_RET(env, array, MSG_OOM);                                                                    \
+                                                                                                            \
+    JNI_TYPE *elements = (*env)->GET_METHOD(env, array, NULL);                                              \
+    CHECK_NULL_RET(env, elements, MSG_OOM);                                                                 \
+                                                                                                            \
+    memcpy(elements, buffer, size);                                                                         \
+                                                                                                            \
+    (*env)->RELEASE_METHOD(env, array, elements, JNI_COMMIT);                                               \
+                                                                                                            \
+    return array;                                                                                           \
+}
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toBooleanArray,
+    jbooleanArray,
+    jboolean,
+    1,
+    NewBooleanArray,
+    GetBooleanArrayElements,
+    ReleaseBooleanArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toByteArray,
+    jbyteArray,
+    jbyte,
+    1,
+    NewByteArray,
+    GetByteArrayElements,
+    ReleaseByteArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toCharArray,
+    jcharArray,
+    jchar,
+    2,
+    NewCharArray,
+    GetCharArrayElements,
+    ReleaseCharArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toShortArray,
+    jshortArray,
+    jshort,
+    2,
+    NewShortArray,
+    GetShortArrayElements,
+    ReleaseShortArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toIntArray,
+    jintArray,
+    jint,
+    4,
+    NewIntArray,
+    GetIntArrayElements,
+    ReleaseIntArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toLongArray,
+    jlongArray,
+    jlong,
+    8,
+    NewLongArray,
+    GetLongArrayElements,
+    ReleaseLongArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toFloatArray,
+    jfloatArray,
+    jfloat,
+    4,
+    NewFloatArray,
+    GetFloatArrayElements,
+    ReleaseFloatArrayElements
+)
+
+TO_ARRAY(
+    Java_com_hippo_quickjs_android_QuickJS_toDoubleArray,
+    jdoubleArray,
+    jdouble,
+    8,
+    NewDoubleArray,
+    GetDoubleArrayElements,
+    ReleaseDoubleArrayElements
+)
+
 #define CHECK_JS_TAG_RET(VAL, TARGET, TYPE)                                                        \
     do {                                                                                           \
         int32_t __tag__ = JS_VALUE_GET_NORM_TAG(VAL);                                              \

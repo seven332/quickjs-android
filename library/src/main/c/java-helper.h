@@ -44,6 +44,13 @@
         }                                                                       \
     } while (0)
 
+#define CHECK_FALSE_RET(ENV, STATEMENT, MESSAGE)                                \
+    do {                                                                        \
+        if (!(STATEMENT)) {                                                     \
+            THROW_ILLEGAL_STATE_EXCEPTION_RET((ENV), (MESSAGE));                \
+        }                                                                       \
+    } while (0)
+
 jint throw_exception(JNIEnv *env, const char *exception_name, const char *message, ...);
 
 #define OBTAIN_ENV(VM)                                                                                  \
