@@ -92,6 +92,146 @@ public class JSContextTest extends TestsWithContext {
     assertEquals("string", context.evaluate("b", "unknown.js", String.class));
   }
 
+  @Test
+  public void createJSArrayBuffer_boolean() {
+    boolean[] array = new boolean[20 * 1024 * 1024];
+    array[9999] = true;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      1,
+      (int) context.evaluate("new Uint8Array(buffer)[9999]", "test.js", int.class)
+    );
+    assertEquals(
+      0,
+      (int) context.evaluate("new Uint8Array(buffer)[10000]", "test.js", int.class)
+    );
+  }
+
+  @Test
+  public void createJSArrayBuffer_byte() {
+    byte[] array = new byte[20 * 1024 * 1024];
+    array[9999] = 123;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      123,
+      (int) context.evaluate("new Uint8Array(buffer)[9999]", "test.js", int.class)
+    );
+    assertEquals(
+      0,
+      (int) context.evaluate("new Uint8Array(buffer)[10000]", "test.js", int.class)
+    );
+  }
+
+  @Test
+  public void createJSArrayBuffer_char() {
+    char[] array = new char[20 * 1024 * 1024];
+    array[9999] = 1234;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 2 * 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      1234,
+      (int) context.evaluate("new Uint16Array(buffer)[9999]", "test.js", int.class)
+    );
+    assertEquals(
+      0,
+      (int) context.evaluate("new Uint16Array(buffer)[10000]", "test.js", int.class)
+    );
+  }
+
+  @Test
+  public void createJSArrayBuffer_short() {
+    short[] array = new short[20 * 1024 * 1024];
+    array[9999] = 1234;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 2 * 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      1234,
+      (int) context.evaluate("new Uint16Array(buffer)[9999]", "test.js", int.class)
+    );
+    assertEquals(
+      0,
+      (int) context.evaluate("new Uint16Array(buffer)[10000]", "test.js", int.class)
+    );
+  }
+
+  @Test
+  public void createJSArrayBuffer_int() {
+    int[] array = new int[20 * 1024 * 1024];
+    array[9999] = 12345;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 4 * 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      12345,
+      (int) context.evaluate("new Uint32Array(buffer)[9999]", "test.js", int.class)
+    );
+    assertEquals(
+      0,
+      (int) context.evaluate("new Uint32Array(buffer)[10000]", "test.js", int.class)
+    );
+  }
+
+  @Test
+  public void createJSArrayBuffer_long() {
+    long[] array = new long[20 * 1024 * 1024];
+    array[9999] = 123456;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 8 * 20 * 1024 * 1024);
+
+    // TODO: support BigInt
+  }
+
+  @Test
+  public void createJSArrayBuffer_float() {
+    float[] array = new float[20 * 1024 * 1024];
+    array[9999] = 12345.123f;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 4 * 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      12345.123f,
+      context.evaluate("new Float32Array(buffer)[9999]", "test.js", float.class),
+      0
+    );
+    assertEquals(
+      0,
+      context.evaluate("new Float32Array(buffer)[10000]", "test.js", float.class),
+      0
+    );
+  }
+
+  @Test
+  public void createJSArrayBuffer_double() {
+    double[] array = new double[20 * 1024 * 1024];
+    array[9999] = 12345.12345;
+    JSArrayBuffer buffer = context.createJSArrayBuffer(array);
+    assertEquals(buffer.getByteLength(), 8 * 20 * 1024 * 1024);
+
+    context.getGlobalObject().setProperty("buffer", buffer);
+    assertEquals(
+      12345.12345,
+      context.evaluate("new Float64Array(buffer)[9999]", "test.js", double.class),
+      0
+    );
+    assertEquals(
+      0,
+      context.evaluate("new Float64Array(buffer)[10000]", "test.js", double.class),
+      0
+    );
+  }
+
   private static class StringHolder {
     final String str;
 

@@ -124,6 +124,14 @@ public class QuickJS implements TypeAdapter.Depot {
   static native long createValueString(long context, String value);
   static native long createValueObject(long context);
   static native long createValueArray(long context);
+  static native long createValueArrayBufferZ(long context, boolean[] array, int start, int length);
+  static native long createValueArrayBufferB(long context, byte[] array, int start, int length);
+  static native long createValueArrayBufferC(long context, char[] array, int start, int length);
+  static native long createValueArrayBufferS(long context, short[] array, int start, int length);
+  static native long createValueArrayBufferI(long context, int[] array, int start, int length);
+  static native long createValueArrayBufferJ(long context, long[] array, int start, int length);
+  static native long createValueArrayBufferF(long context, float[] array, int start, int length);
+  static native long createValueArrayBufferD(long context, double[] array, int start, int length);
   static native long createValueFunction(long context, JSContext jsContext, Object instance, String methodName, String methodSign, Type returnType, Type[] argTypes, boolean isCallbackMethod);
   static native long createValueFunctionS(long context, JSContext jsContext, String className, String methodName, String methodSign, Type returnType, Type[] argTypes);
   static native long createValueJavaObject(long context, Object object);
@@ -131,6 +139,7 @@ public class QuickJS implements TypeAdapter.Depot {
 
   static native int getValueTag(long value);
   static native boolean isValueArray(long context, long value);
+  static native boolean isValueArrayBuffer(long context, long value);
   static native boolean isValueFunction(long context, long value);
   static native long getValueProperty(long context, long value, int index);
   static native long getValueProperty(long context, long value, String name);

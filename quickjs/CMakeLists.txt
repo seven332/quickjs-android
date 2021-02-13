@@ -17,7 +17,7 @@ endif()
 set(COMMON_FLAGS -D_GNU_SOURCE -DCONFIG_VERSION=\"${CONFIG_VERSION}\" -DCONFIG_CC=\"${CONFIG_CC}\" -DCONFIG_PREFIX=\"/usr/local\" -DCONFIG_BIGNUM)
 
 set(QUICKJS_LIB_SOURCES
-        quickjs/quickjs.c
+        quickjs-patch.c
         quickjs/libregexp.c
         quickjs/libunicode.c
         quickjs/libbf.c
@@ -61,4 +61,4 @@ set_target_properties(run-test262 PROPERTIES OUTPUT_NAME librun-test262.so)
 
 add_library(quickjs STATIC ${QUICKJS_LIB_SOURCES})
 target_compile_options(quickjs PRIVATE ${COMMON_FLAGS})
-target_include_directories(quickjs PUBLIC quickjs)
+target_include_directories(quickjs PUBLIC quickjs .)

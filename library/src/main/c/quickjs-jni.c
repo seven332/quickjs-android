@@ -1,5 +1,5 @@
 #include <jni.h>
-#include <quickjs.h>
+#include <quickjs-patch.h>
 #include <string.h>
 #include <malloc.h>
 
@@ -335,6 +335,94 @@ Java_com_hippo_quickjs_android_QuickJS_createValueArray(
     return (jlong) result;
 }
 
+#define CREATE_VALUE_ARRAY_BUFFER_METHOD(METHOD_NAME, JNI_ARRAY_TYPE, JNI_TYPE, COPY)     \
+JNIEXPORT jlong JNICALL                                                                   \
+METHOD_NAME(                                                                              \
+    JNIEnv *env,                                                                          \
+    jclass __unused clazz,                                                                \
+    jlong context,                                                                        \
+    JNI_ARRAY_TYPE array,                                                                 \
+    jint start,                                                                           \
+    jint length                                                                           \
+) {                                                                                       \
+    JSContext *ctx = (JSContext *) context;                                               \
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);                                        \
+                                                                                          \
+    size_t buffer_length = length * sizeof(JNI_TYPE);                                     \
+    JNI_TYPE *buffer = malloc(buffer_length);                                             \
+    CHECK_NULL_RET(env, buffer, MSG_OOM);                                                 \
+                                                                                          \
+    (*env)->COPY(env, array, start, length, buffer);                                      \
+    if ((*env)->ExceptionCheck(env)) {                                                    \
+        free(buffer);                                                                     \
+        return 0;                                                                         \
+    }                                                                                     \
+                                                                                          \
+    JSValue *result = NULL;                                                               \
+    JSValue val = JS_NewArrayBufferCopy(ctx, buffer, buffer_length);                      \
+    COPY_JS_VALUE(ctx, val, result);                                                      \
+    free(buffer);                                                                         \
+    CHECK_NULL_RET(env, result, MSG_OOM);                                                 \
+                                                                                          \
+    return (jlong) result;                                                                \
+}
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferZ,
+    jbooleanArray,
+    jboolean,
+    GetBooleanArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferB,
+    jbyteArray,
+    jbyte,
+    GetByteArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferC,
+    jcharArray,
+    jchar,
+    GetCharArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferS,
+    jshortArray,
+    jshort,
+    GetShortArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferI,
+    jintArray,
+    jint,
+    GetIntArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferJ,
+    jlongArray,
+    jlong,
+    GetLongArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferF,
+    jfloatArray,
+    jfloat,
+    GetFloatArrayRegion
+)
+
+CREATE_VALUE_ARRAY_BUFFER_METHOD(
+    Java_com_hippo_quickjs_android_QuickJS_createValueArrayBufferD,
+    jdoubleArray,
+    jdouble,
+    GetDoubleArrayRegion
+)
+
 static jlong createValueFunction(
     JNIEnv *env,
     jlong context,
@@ -563,6 +651,20 @@ Java_com_hippo_quickjs_android_QuickJS_isValueArray(
     JSValue *val = (JSValue *) value;
     CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
     return (jboolean) JS_IsArray(ctx, *val);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_hippo_quickjs_android_QuickJS_isValueArrayBuffer(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong context,
+    jlong value
+) {
+    JSContext *ctx = (JSContext *) context;
+    CHECK_NULL_RET(env, ctx, MSG_NULL_JS_CONTEXT);
+    JSValue *val = (JSValue *) value;
+    CHECK_NULL_RET(env, val, MSG_NULL_JS_VALUE);
+    return (jboolean) JS_IsArrayBuffer(ctx, *val);
 }
 
 JNIEXPORT jboolean JNICALL

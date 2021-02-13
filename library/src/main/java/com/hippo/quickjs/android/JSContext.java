@@ -306,6 +306,182 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     }
   }
 
+  private void checkArrayBounds(int arrayLength, int start, int length) {
+    if (start < 0 || length <= 0 || start + length > arrayLength) {
+      throw new IndexOutOfBoundsException(
+        "start = " + start + ", length = " + length + ", but array.length = " + arrayLength
+      );
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java boolean array.
+   * The size of Java boolean is one byte.
+   */
+  public JSArrayBuffer createJSArrayBuffer(boolean[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java boolean array.
+   * The size of Java boolean is one byte.
+   */
+  public JSArrayBuffer createJSArrayBuffer(boolean[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferZ(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java byte array.
+   * The size of Java byte is one byte.
+   */
+  public JSArrayBuffer createJSArrayBuffer(byte[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java byte array.
+   * The size of Java byte is one byte.
+   */
+  public JSArrayBuffer createJSArrayBuffer(byte[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferB(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java char array.
+   * The size of Java char is two bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(char[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java char array.
+   * The size of Java char is two bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(char[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferC(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java short array.
+   * The size of Java short is two bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(short[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java short array.
+   * The size of Java short is two bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(short[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferS(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java int array.
+   * The size of Java int is four bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(int[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java int array.
+   * The size of Java int is four bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(int[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferI(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java long array.
+   * The size of Java long is eight bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(long[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java long array.
+   * The size of Java long is eight bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(long[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferJ(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java float array.
+   * The size of Java float is four bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(float[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java float array.
+   * The size of Java float is four bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(float[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferF(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java double array.
+   * The size of Java double is eight bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(double[] array) {
+    return createJSArrayBuffer(array, 0, array.length);
+  }
+
+  /**
+   * Creates a JavaScript ArrayBuffer from a Java double array.
+   * The size of Java double is eight bytes.
+   */
+  public JSArrayBuffer createJSArrayBuffer(double[] array, int start, int length) {
+    checkArrayBounds(array.length, start, length);
+    synchronized (jsRuntime) {
+      checkClosed();
+      long val = QuickJS.createValueArrayBufferD(pointer, array, start, length);
+      return wrapAsJSValue(val).cast(JSArrayBuffer.class);
+    }
+  }
+
   /**
    * Create a JavaScript function from a java non-static method.
    */
@@ -413,6 +589,8 @@ public class JSContext implements Closeable, TypeAdapter.Context {
           jsValue = new JSFunction(value, this);
         } else if (QuickJS.isValueArray(pointer, value)) {
           jsValue = new JSArray(value, this);
+        } else if (QuickJS.isValueArrayBuffer(pointer, value)) {
+          jsValue = new JSArrayBuffer(value, this);
         } else {
           jsValue = new JSObject(value, this, QuickJS.getValueJavaObject(pointer, value));
         }
