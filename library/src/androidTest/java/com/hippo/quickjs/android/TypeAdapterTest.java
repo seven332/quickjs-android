@@ -50,12 +50,12 @@ public class TypeAdapterTest {
 
   private static class AtomicIntegerTypeAdapter extends TypeAdapter<AtomicInteger> {
     @Override
-    public JSValue toJSValue(Depot depot, Context context, AtomicInteger value) {
+    public JSValue toJSValue(JSContext context, AtomicInteger value) {
       return context.createJSNumber(value.get());
     }
 
     @Override
-    public AtomicInteger fromJSValue(Depot depot, Context context, JSValue value) {
+    public AtomicInteger fromJSValue(JSContext context, JSValue value) {
       return new AtomicInteger(value.cast(JSNumber.class).getInt());
     }
   }
@@ -63,7 +63,7 @@ public class TypeAdapterTest {
   private static class AtomicIntegerTypeAdapterFactory implements TypeAdapter.Factory {
     @Nullable
     @Override
-    public TypeAdapter<?> create(TypeAdapter.Depot depot, Type type) {
+    public TypeAdapter<?> create(QuickJS quickJS, Type type) {
       if (type == AtomicInteger.class) return new AtomicIntegerTypeAdapter();
       return null;
     }

@@ -89,7 +89,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
   }
 
   @Override
-  public JSValue toJSValue(Depot depot, Context context, Object value) {
+  public JSValue toJSValue(JSContext context, Object value) {
     if (value instanceof JSValueHolder) {
       return ((JSValueHolder) value).getJSValue(JS_VALUE_HOLDER_TAG);
     }
@@ -102,7 +102,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
   }
 
   @Override
-  public Object fromJSValue(Depot depot, Context context, JSValue value) {
+  public Object fromJSValue(JSContext context, JSValue value) {
     JSObject jo = value.cast(JSObject.class);
 
     Object object = jo.getJavaObject();
@@ -129,18 +129,18 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       JSValue[] parameters = new JSValue[parameterNumber];
       for (int i = 0; i < parameterNumber; i++) {
         Type type = simpleMethod.parameterTypes[i];
-        TypeAdapter<Object> adapter = depot.getAdapter(type);
-        parameters[i] = adapter.toJSValue(depot, context, args[i]);
+        TypeAdapter<Object> adapter = context.quickJS.getAdapter(type);
+        parameters[i] = adapter.toJSValue(context, args[i]);
       }
 
       Type resultType = simpleMethod.returnType;
-      TypeAdapter<?> resultAdapter = depot.getAdapter(resultType);
+      TypeAdapter<?> resultAdapter = context.quickJS.getAdapter(resultType);
 
       JSFunction function = jo.getProperty(name).cast(JSFunction.class);
 
       JSValue result = function.invoke(jo, parameters);
 
-      return resultAdapter.fromJSValue(depot, context, result);
+      return resultAdapter.fromJSValue(context, result);
     });
   }
 

@@ -25,12 +25,12 @@ public abstract class TypeAdapter<T> {
    * Converts the java value to {@code JSValue}.
    * Throws {@link JSDataException} if the value can't be handled.
    */
-  public abstract JSValue toJSValue(Depot depot, Context context, T value);
+  public abstract JSValue toJSValue(JSContext context, T value);
 
   /**
    * Converts the {@code JSValue} to java value.
    */
-  public abstract T fromJSValue(Depot depot, Context context, JSValue value);
+  public abstract T fromJSValue(JSContext context, JSValue value);
 
   /**
    * Returns a TypeAdapter equal to this TypeAdapter,
@@ -49,87 +49,20 @@ public abstract class TypeAdapter<T> {
     }
 
     @Override
-    public JSValue toJSValue(Depot depot, Context context, T value) {
+    public JSValue toJSValue(JSContext context, T value) {
       if (value == null) return context.createJSNull();
-      return delegate.toJSValue(depot, context, value);
+      return delegate.toJSValue(context, value);
     }
 
     @Override
-    public T fromJSValue(Depot depot, Context context, JSValue value) {
+    public T fromJSValue(JSContext context, JSValue value) {
       if (value instanceof JSNull || value instanceof JSUndefined) return null;
-      return delegate.fromJSValue(depot, context, value);
+      return delegate.fromJSValue(context, value);
     }
   }
 
   public interface Factory {
     @Nullable
-    TypeAdapter<?> create(Depot depot, Type type);
-  }
-
-  public interface Depot {
-    /**
-     * Returns a TypeAdapter for the type.
-     *
-     * @throws IllegalArgumentException if no TypeAdapter matched
-     */
-    <T> TypeAdapter<T> getAdapter(Type type);
-  }
-
-  public interface Context {
-
-    /**
-     * Creates a JavaScript undefined.
-     */
-    JSUndefined createJSUndefined();
-
-    /**
-     * Creates a JavaScript null.
-     */
-    JSNull createJSNull();
-
-    /**
-     * Creates a JavaScript boolean.
-     */
-    JSBoolean createJSBoolean(boolean value);
-
-    /**
-     * Creates a JavaScript number.
-     */
-    JSNumber createJSNumber(int value);
-
-    /**
-     * Creates a JavaScript number.
-     */
-    JSNumber createJSNumber(double value);
-
-    /**
-     * Creates a JavaScript string.
-     */
-    JSString createJSString(String value);
-
-    /**
-     * Creates a JavaScript object.
-     */
-    JSObject createJSObject();
-
-    /**
-     * Creates a JavaScript object holding a java object.
-     */
-    JSObject createJSObject(Object object);
-
-    /**
-     * Creates a JavaScript array.
-     */
-    JSArray createJSArray();
-
-    /**
-     * Create a JavaScript function from a java non-static method.
-     */
-    JSFunction createJSFunction(Object instance, JavaMethod method);
-
-    /**
-     * Create a JavaScript function from a java static method.
-     */
-    JSFunction createJSFunctionS(Class<?> clazz, JavaMethod method);
+    TypeAdapter<?> create(QuickJS quickJS, Type type);
   }
 }

@@ -26,7 +26,7 @@ class JSValueAdapter {
 
     @Nullable
     @Override
-    public TypeAdapter<?> create(TypeAdapter.Depot depot, Type type) {
+    public TypeAdapter<?> create(QuickJS quickJS, Type type) {
       if (type == JSValue.class) return JS_VALUE_TYPE_ADAPTER;
       return null;
     }
@@ -34,13 +34,13 @@ class JSValueAdapter {
 
   private static final TypeAdapter<JSValue> JS_VALUE_TYPE_ADAPTER = new TypeAdapter<JSValue>() {
     @Override
-    public JSValue toJSValue(Depot depot, Context context, JSValue value) {
+    public JSValue toJSValue(JSContext context, JSValue value) {
       if (value == null) throw new NullPointerException("value == null");
       return value;
     }
 
     @Override
-    public JSValue fromJSValue(Depot depot, Context context, JSValue value) {
+    public JSValue fromJSValue(JSContext context, JSValue value) {
       return value;
     }
   };

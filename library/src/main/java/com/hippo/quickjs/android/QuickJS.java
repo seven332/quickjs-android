@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * QuickJS is a resources container to create {@link JSRuntime}s.
  */
-public class QuickJS implements TypeAdapter.Depot {
+public class QuickJS {
 
   private static final List<TypeAdapter.Factory> BUILT_IN_FACTORIES = new ArrayList<>(4);
 
@@ -49,7 +49,6 @@ public class QuickJS implements TypeAdapter.Depot {
   }
 
   @SuppressWarnings("unchecked")
-  @Override
   public <T> TypeAdapter<T> getAdapter(Type type) {
     // Canonicalize type
     Type newType = JavaTypes.removeSubtypeWildcard(JavaTypes.canonicalize(type));

@@ -98,7 +98,7 @@ public class InterfaceTypeAdapterTest extends TestsWithContext {
   @Test
   public void toJSValue() {
     JSValue calculator = quickJS.getAdapter(Calculator.class)
-      .toJSValue(quickJS, context, new CalculatorImpl());
+        .toJSValue(context, new CalculatorImpl());
     context.getGlobalObject().setProperty("calculator", calculator);
 
     double a = 3243.435;
@@ -187,8 +187,8 @@ public class InterfaceTypeAdapterTest extends TestsWithContext {
       "}", "test.js", JSValue.class);
 
     TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
-    Calculator calculator = adapter.fromJSValue(quickJS, context, jsValue1);
-    JSValue jsValue2 = adapter.toJSValue(quickJS, context, calculator);
+    Calculator calculator = adapter.fromJSValue(context, jsValue1);
+    JSValue jsValue2 = adapter.toJSValue(context, calculator);
     assertSame(jsValue1, jsValue2);
   }
 
@@ -196,8 +196,8 @@ public class InterfaceTypeAdapterTest extends TestsWithContext {
   public void toJSValueThenFromJSValue_isSame() {
     Calculator calculator1 = new CalculatorImpl();
     TypeAdapter<Calculator> adapter = quickJS.getAdapter(Calculator.class);
-    JSValue jsValue = adapter.toJSValue(quickJS, context, calculator1);
-    Calculator calculator2 = adapter.fromJSValue(quickJS, context, jsValue);
+    JSValue jsValue = adapter.toJSValue(context, calculator1);
+    Calculator calculator2 = adapter.fromJSValue(context, jsValue);
     assertSame(calculator1, calculator2);
   }
 }

@@ -37,7 +37,7 @@ class JNIHelper {
         jsContext.checkClosed();
         TypeAdapter<Object> adapter = jsContext.quickJS.getAdapter(type);
         jsValue = jsContext.wrapAsJSValue(value);
-        return adapter.fromJSValue(jsContext.quickJS, jsContext, jsValue);
+        return adapter.fromJSValue(jsContext, jsValue);
       } finally {
         if (jsValue == null) {
           QuickJS.destroyValue(jsContext.pointer, value);
@@ -58,7 +58,7 @@ class JNIHelper {
     synchronized (jsContext.jsRuntime) {
       jsContext.checkClosed();
       TypeAdapter<Object> adapter = jsContext.quickJS.getAdapter(type);
-      return adapter.toJSValue(jsContext.quickJS, jsContext, value).pointer;
+      return adapter.toJSValue(jsContext, value).pointer;
     }
   }
 

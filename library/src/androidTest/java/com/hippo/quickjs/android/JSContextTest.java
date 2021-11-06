@@ -294,14 +294,14 @@ public class JSContextTest extends TestsWithContext {
 
     JSValue[] jsArgs = new JSValue[method.parameterTypes.length];
     for (int i = 0; i < method.parameterTypes.length; i++) {
-      jsArgs[i] = context.quickJS.getAdapter(method.parameterTypes[i]).toJSValue(context.quickJS, context, args[i]);
+      jsArgs[i] = context.quickJS.getAdapter(method.parameterTypes[i]).toJSValue(context, args[i]);
     }
 
     JSValue jsResult = fun.invoke(null, jsArgs);
 
     assertEquals(
         rawMethod.invoke(instance, args),
-        context.quickJS.getAdapter(method.returnType).fromJSValue(context.quickJS, context, jsResult)
+        context.quickJS.getAdapter(method.returnType).fromJSValue(context, jsResult)
     );
   }
 
@@ -319,14 +319,14 @@ public class JSContextTest extends TestsWithContext {
 
     JSValue[] jsArgs = new JSValue[method.parameterTypes.length];
     for (int i = 0; i < method.parameterTypes.length; i++) {
-      jsArgs[i] = context.quickJS.getAdapter(method.parameterTypes[i]).toJSValue(context.quickJS, context, args[i]);
+      jsArgs[i] = context.quickJS.getAdapter(method.parameterTypes[i]).toJSValue(context, args[i]);
     }
 
     JSValue jsResult = fun.invoke(null, jsArgs);
 
     assertEquals(
         rawMethod.invoke(null, args),
-        context.quickJS.getAdapter(method.returnType).fromJSValue(context.quickJS, context, jsResult)
+        context.quickJS.getAdapter(method.returnType).fromJSValue(context, jsResult)
     );
   }
 
@@ -334,11 +334,11 @@ public class JSContextTest extends TestsWithContext {
   public void createJSFunction() throws InvocationTargetException, IllegalAccessException {
     QuickJS quickJS = new QuickJS.Builder().registerTypeAdapter(StringHolder.class, new TypeAdapter<StringHolder>() {
       @Override
-      public JSValue toJSValue(Depot depot, Context context, StringHolder value) {
+      public JSValue toJSValue(JSContext context, StringHolder value) {
         return context.createJSString(value.str);
       }
       @Override
-      public StringHolder fromJSValue(Depot depot, Context context, JSValue value) {
+      public StringHolder fromJSValue(JSContext context, JSValue value) {
         return new StringHolder(value.cast(JSString.class).getString());
       }
     }).build();
@@ -378,11 +378,11 @@ public class JSContextTest extends TestsWithContext {
   public void createJSFunctionS() throws InvocationTargetException, IllegalAccessException {
     QuickJS quickJS = new QuickJS.Builder().registerTypeAdapter(StringHolder.class, new TypeAdapter<StringHolder>() {
       @Override
-      public JSValue toJSValue(Depot depot, Context context, StringHolder value) {
+      public JSValue toJSValue(JSContext context, StringHolder value) {
         return context.createJSString(value.str);
       }
       @Override
-      public StringHolder fromJSValue(Depot depot, Context context, JSValue value) {
+      public StringHolder fromJSValue(JSContext context, JSValue value) {
         return new StringHolder(value.cast(JSString.class).getString());
       }
     }).build();

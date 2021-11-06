@@ -38,21 +38,21 @@ class ArrayTypeAdapter extends TypeAdapter<Object> {
   }
 
   @Override
-  public JSValue toJSValue(Depot depot, Context context, Object value) {
+  public JSValue toJSValue(JSContext context, Object value) {
     JSArray result = context.createJSArray();
     for (int i = 0, length = Array.getLength(value); i < length; i++) {
-      result.setProperty(i, elementAdapter.toJSValue(depot, context, Array.get(value, i)));
+      result.setProperty(i, elementAdapter.toJSValue(context, Array.get(value, i)));
     }
     return result;
   }
 
   @Override
-  public Object fromJSValue(Depot depot, Context context, JSValue value) {
+  public Object fromJSValue(JSContext context, JSValue value) {
     JSArray array = value.cast(JSArray.class);
     int length = array.getLength();
     Object result = Array.newInstance(elementClass, length);
     for (int i = 0; i < length; i++) {
-      Array.set(result, i, elementAdapter.fromJSValue(depot, context, array.getProperty(i)));
+      Array.set(result, i, elementAdapter.fromJSValue(context, array.getProperty(i)));
     }
     return result;
   }

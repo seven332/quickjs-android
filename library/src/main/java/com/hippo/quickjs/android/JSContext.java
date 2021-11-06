@@ -27,7 +27,7 @@ import java.lang.reflect.Type;
  *
  * @see JSRuntime
  */
-public class JSContext implements Closeable, TypeAdapter.Context {
+public class JSContext implements Closeable {
 
   static final int TYPE_SYMBOL = -8;
   static final int TYPE_STRING = -7;
@@ -85,6 +85,10 @@ public class JSContext implements Closeable, TypeAdapter.Context {
     cleaner.clean();
 
     return pointer;
+  }
+
+  public QuickJS getQuickJS() {
+    return quickJS;
   }
 
   /**
@@ -165,7 +169,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
 
       if (adapter != null) {
         JSValue jsValue = wrapAsJSValue(value);
-        return adapter.fromJSValue(quickJS, this, jsValue);
+        return adapter.fromJSValue(this, jsValue);
       } else {
         // Only check exception
         try {
@@ -210,7 +214,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript undefined.
    */
-  @Override
   public JSUndefined createJSUndefined() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -222,7 +225,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript null.
    */
-  @Override
   public JSNull createJSNull() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -234,7 +236,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript boolean.
    */
-  @Override
   public JSBoolean createJSBoolean(boolean value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -246,7 +247,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript number.
    */
-  @Override
   public JSNumber createJSNumber(int value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -258,7 +258,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript number.
    */
-  @Override
   public JSNumber createJSNumber(double value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -270,7 +269,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript string.
    */
-  @Override
   public JSString createJSString(String value) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -282,7 +280,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript object.
    */
-  @Override
   public JSObject createJSObject() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -294,7 +291,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript object holding a java object.
    */
-  @Override
   public JSObject createJSObject(Object object) {
     synchronized (jsRuntime) {
       checkClosed();
@@ -306,7 +302,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Creates a JavaScript array.
    */
-  @Override
   public JSArray createJSArray() {
     synchronized (jsRuntime) {
       checkClosed();
@@ -494,7 +489,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Create a JavaScript function from a java non-static method.
    */
-  @Override
   public JSFunction createJSFunction(Object instance, JavaMethod method) {
     if (instance == null) throw new NullPointerException("instance == null");
     if (method == null) throw new NullPointerException("method == null");
@@ -522,7 +516,6 @@ public class JSContext implements Closeable, TypeAdapter.Context {
   /**
    * Create a JavaScript function from a java static method.
    */
-  @Override
   public JSFunction createJSFunctionS(Class<?> clazz, JavaMethod method) {
     if (clazz == null) throw new NullPointerException("clazz == null");
     if (method == null) throw new NullPointerException("method == null");
