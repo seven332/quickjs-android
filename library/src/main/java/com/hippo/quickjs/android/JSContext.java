@@ -19,6 +19,7 @@ package com.hippo.quickjs.android;
 import androidx.annotation.Nullable;
 
 import java.io.Closeable;
+import java.lang.reflect.Type;
 
 /**
  * JSContext is a JavaScript context with its own global objects.
@@ -109,6 +110,14 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    */
   public <T> T evaluate(String script, String fileName, Class<T> clazz) {
     return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getAdapter(clazz));
+  }
+
+  /**
+   * Evaluates the script in this JSContext.
+   * Returns the result as the java type.
+   */
+  public <T> T evaluate(String script, String fileName, Type type) {
+    return evaluateInternal(script, fileName, EVAL_TYPE_GLOBAL, 0, quickJS.getAdapter(type));
   }
 
   /**
