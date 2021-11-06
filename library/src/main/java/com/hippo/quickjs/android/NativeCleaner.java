@@ -26,8 +26,8 @@ import java.util.Set;
  */
 abstract class NativeCleaner<T> {
 
-  private Set<NativeReference<T>> phantomReferences = new HashSet<>();
-  private ReferenceQueue<T> referenceQueue = new ReferenceQueue<>();
+  private final Set<NativeReference<T>> phantomReferences = new HashSet<>();
+  private final ReferenceQueue<T> referenceQueue = new ReferenceQueue<>();
 
   /**
    * Returns the size of not removed objects.
@@ -82,7 +82,7 @@ abstract class NativeCleaner<T> {
 
   private static class NativeReference<T> extends PhantomReference<T> {
 
-    private long pointer;
+    private final long pointer;
 
     private NativeReference(T referent, long pointer, ReferenceQueue<? super T> q) {
       super(referent, q);

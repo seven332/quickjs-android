@@ -286,7 +286,7 @@ public class JSContextTest extends TestsWithContext {
       java.lang.reflect.Method rawMethod,
       Object[] args
   ) throws InvocationTargetException, IllegalAccessException {
-    Method method = Method.create(instance.getClass(), rawMethod);
+    JavaMethod method = JavaMethod.create(instance.getClass(), rawMethod);
     assertNotNull(method);
 
     JSFunction fun = context.createJSFunction(instance, method);
@@ -311,7 +311,7 @@ public class JSContextTest extends TestsWithContext {
       java.lang.reflect.Method rawMethod,
       Object[] args
   ) throws InvocationTargetException, IllegalAccessException {
-    Method method = Method.create(clazz, rawMethod);
+    JavaMethod method = JavaMethod.create(clazz, rawMethod);
     assertNotNull(method);
 
     JSFunction fun = context.createJSFunctionS(clazz, method);
@@ -346,7 +346,7 @@ public class JSContextTest extends TestsWithContext {
       try (JSContext context = runtime.createJSContext()) {
         ClassA a = new ClassA();
 
-        JSFunction fun1 = context.createJSFunction(a, new Method(void.class, "funEmpty", new Type[] {}));
+        JSFunction fun1 = context.createJSFunction(a, new JavaMethod(void.class, "funEmpty", new Type[] {}));
         context.getGlobalObject().setProperty("fun", fun1);
         a.emptyCalled = true;
         context.evaluate("fun()", "test.js");
@@ -388,7 +388,7 @@ public class JSContextTest extends TestsWithContext {
     }).build();
     try (JSRuntime runtime = quickJS.createJSRuntime()) {
       try (JSContext context = runtime.createJSContext()) {
-        JSFunction fun2 = context.createJSFunctionS(ClassA.class, new Method(void.class, "staticFunEmpty", new Type[] {}));
+        JSFunction fun2 = context.createJSFunctionS(ClassA.class, new JavaMethod(void.class, "staticFunEmpty", new Type[] {}));
         context.getGlobalObject().setProperty("fun", fun2);
         ClassA.staticEmptyCalled = true;
         context.evaluate("fun()", "test.js");
@@ -418,7 +418,7 @@ public class JSContextTest extends TestsWithContext {
 
   @Test
   public void createJSFunction_noSuchMethod_error() {
-    Method method = new Method(long.class, "atoi", new Type[] { String.class });
+    JavaMethod method = new JavaMethod(long.class, "atoi", new Type[] { String.class });
     assertException(
       NoSuchMethodError.class,
       "no non-static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
@@ -433,7 +433,7 @@ public class JSContextTest extends TestsWithContext {
 
   @Test
   public void createJSFunctionS_noSuchMethod_error() {
-    Method method = new Method(long.class, "atoi", new Type[] { String.class });
+    JavaMethod method = new JavaMethod(long.class, "atoi", new Type[] { String.class });
     assertException(
       NoSuchMethodError.class,
       "no static method \"Ljava/lang/Integer;.atoi(Ljava/lang/String;)J\"",
@@ -443,7 +443,7 @@ public class JSContextTest extends TestsWithContext {
 
   @Test
   public void createJSFunction_nullInstance_error() {
-    Method method = new Method(int.class, "atoi", new Type[] { String.class });
+    JavaMethod method = new JavaMethod(int.class, "atoi", new Type[] { String.class });
     assertException(
       NullPointerException.class,
       "instance == null",
@@ -462,7 +462,7 @@ public class JSContextTest extends TestsWithContext {
 
   @Test
   public void createJSFunctionS_nullClass_error() {
-    Method method = new Method(int.class, "atoi", new Type[] { String.class });
+    JavaMethod method = new JavaMethod(int.class, "atoi", new Type[] { String.class });
     assertException(
       NullPointerException.class,
       "clazz == null",

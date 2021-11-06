@@ -29,18 +29,18 @@ import static org.junit.Assert.*;
 public class InterfaceTypeAdapterTest extends TestsWithContext {
   @Test
   public void getInterfaceMethods() {
-    Map<String, Method> methods = InterfaceTypeAdapter.getInterfaceMethods(InterfaceC.class);
+    Map<String, JavaMethod> methods = InterfaceTypeAdapter.getInterfaceMethods(InterfaceC.class);
 
     assertThat(methods).containsOnly(MapEntry.entry("getValue",
-        new Method(NullPointerException.class, "getValue", new Type[]{})),
+        new JavaMethod(NullPointerException.class, "getValue", new Type[]{})),
       MapEntry.entry("setValue",
-        new Method(void.class, "setValue", new Type[]{ Throwable.class })),
+        new JavaMethod(void.class, "setValue", new Type[]{ Throwable.class })),
       MapEntry.entry("setValueResolve",
-        new Method(void.class, "setValueResolve", new Type[]{ Throwable.class })),
+        new JavaMethod(void.class, "setValueResolve", new Type[]{ Throwable.class })),
       MapEntry.entry("fun1",
-        new Method(void.class, "fun1", new Type[]{})),
+        new JavaMethod(void.class, "fun1", new Type[]{})),
       MapEntry.entry("fun2",
-        new Method(String.class, "fun2", new Type[]{ String[].class }))
+        new JavaMethod(String.class, "fun2", new Type[]{ String[].class }))
     );
   }
 

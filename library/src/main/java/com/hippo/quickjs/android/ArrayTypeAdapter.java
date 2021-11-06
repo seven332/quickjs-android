@@ -22,9 +22,9 @@ import java.lang.reflect.Type;
 class ArrayTypeAdapter extends TypeAdapter<Object> {
 
   public static final Factory FACTORY = (depot, type) -> {
-    Type elementType = Types.arrayComponentType(type);
+    Type elementType = JavaTypes.arrayComponentType(type);
     if (elementType == null) return null;
-    Class<?> elementClass = Types.getRawType(elementType);
+    Class<?> elementClass = JavaTypes.getRawType(elementType);
     TypeAdapter<Object> elementAdapter = depot.getAdapter(elementType);
     return new ArrayTypeAdapter(elementClass, elementAdapter).nullable();
   };

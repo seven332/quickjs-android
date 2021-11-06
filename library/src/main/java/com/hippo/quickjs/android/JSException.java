@@ -24,9 +24,9 @@ import androidx.annotation.Nullable;
  */
 public class JSException {
 
-  private boolean isError;
-  private String exception;
-  private String stack;
+  private final boolean isError;
+  private final String exception;
+  private final String stack;
 
   private JSException(boolean isError, String exception, String stack) {
     this.isError = isError;

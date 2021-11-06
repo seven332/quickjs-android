@@ -486,7 +486,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Create a JavaScript function from a java non-static method.
    */
   @Override
-  public JSFunction createJSFunction(Object instance, Method method) {
+  public JSFunction createJSFunction(Object instance, JavaMethod method) {
     if (instance == null) throw new NullPointerException("instance == null");
     if (method == null) throw new NullPointerException("method == null");
     synchronized (jsRuntime) {
@@ -514,7 +514,7 @@ public class JSContext implements Closeable, TypeAdapter.Context {
    * Create a JavaScript function from a java static method.
    */
   @Override
-  public JSFunction createJSFunctionS(Class clazz, Method method) {
+  public JSFunction createJSFunctionS(Class<?> clazz, JavaMethod method) {
     if (clazz == null) throw new NullPointerException("clazz == null");
     if (method == null) throw new NullPointerException("method == null");
 

@@ -18,6 +18,7 @@ package com.hippo.quickjs.android;
 
 import androidx.annotation.Nullable;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -33,14 +34,14 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
    * or any method is overloaded, or any type can't be resolved.
    */
   @Nullable
-  static Map<String, Method> getInterfaceMethods(Type type) {
-    Class<?> rawType = Types.getRawType(type);
+  static Map<String, JavaMethod> getInterfaceMethods(Type type) {
+    Class<?> rawType = JavaTypes.getRawType(type);
     if (!rawType.isInterface()) return null;
 
-    Map<String, Method> methods = new HashMap<>();
+    Map<String, JavaMethod> methods = new HashMap<>();
 
-    for (java.lang.reflect.Method method : rawType.getMethods()) {
-      Type returnType = Types.resolve(type, rawType, method.getGenericReturnType());
+    for (Method method : rawType.getMethods()) {
+      Type returnType = JavaTypes.resolve(type, rawType, method.getGenericReturnType());
       // It's not resolved
       if (returnType instanceof TypeVariable) return null;
 
@@ -49,40 +50,40 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       Type[] originParameterTypes = method.getGenericParameterTypes();
       Type[] parameterTypes = new Type[originParameterTypes.length];
       for (int i = 0; i < parameterTypes.length; i++) {
-        parameterTypes[i] = Types.resolve(type, rawType, originParameterTypes[i]);
+        parameterTypes[i] = JavaTypes.resolve(type, rawType, originParameterTypes[i]);
         // It's not resolved
         if (parameterTypes[i] instanceof TypeVariable) return null;
       }
 
-      Method oldMethod = methods.get(name);
+      JavaMethod oldMethod = methods.get(name);
       if (oldMethod != null) {
         if (!Arrays.equals(oldMethod.parameterTypes, parameterTypes)) {
           // overload is not supported
           return null;
         }
         if (returnType.equals(oldMethod.returnType)
-            || Types.getRawType(returnType).isAssignableFrom(Types.getRawType(oldMethod.returnType))) {
+            || JavaTypes.getRawType(returnType).isAssignableFrom(JavaTypes.getRawType(oldMethod.returnType))) {
           // The new method is overridden
           continue;
         }
       }
 
-      methods.put(name, new Method(returnType, name, parameterTypes));
+      methods.put(name, new JavaMethod(returnType, name, parameterTypes));
     }
 
     return methods;
   }
 
   static final Factory FACTORY = (depot, type) -> {
-    Map<String, Method> methods = getInterfaceMethods(type);
+    Map<String, JavaMethod> methods = getInterfaceMethods(type);
     if (methods == null) return null;
-    return new InterfaceTypeAdapter(Types.getRawType(type), methods).nullable();
+    return new InterfaceTypeAdapter(JavaTypes.getRawType(type), methods).nullable();
   };
 
   private final Class<?> rawType;
-  private final Map<String, Method> methods;
+  private final Map<String, JavaMethod> methods;
 
-  private InterfaceTypeAdapter(Class<?> rawType, Map<String, Method> methods) {
+  private InterfaceTypeAdapter(Class<?> rawType, Map<String, JavaMethod> methods) {
     this.rawType = rawType;
     this.methods = methods;
   }
@@ -94,7 +95,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
     }
 
     JSObject jo = context.createJSObject(value);
-    for (Method method : methods.values()) {
+    for (JavaMethod method : methods.values()) {
       jo.setProperty(method.name, context.createJSFunction(value, method));
     }
     return jo;
@@ -120,7 +121,7 @@ class InterfaceTypeAdapter extends TypeAdapter<Object> {
       }
 
       String name = method.getName();
-      Method simpleMethod = methods.get(name);
+      JavaMethod simpleMethod = methods.get(name);
       if (simpleMethod == null) throw new NoSuchMethodException("Can't find method: " + name);
 
       int parameterNumber = args != null ? args.length : 0;

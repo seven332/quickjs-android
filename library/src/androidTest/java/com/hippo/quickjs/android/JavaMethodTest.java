@@ -22,11 +22,11 @@ import java.lang.reflect.Type;
 
 import static org.junit.Assert.assertEquals;
 
-public class MethodTest {
+public class JavaMethodTest {
 
   @Test
   public void getSignature() {
-    Method method = new Method(Boolean.class, "box", new Type[]{ boolean.class });
+    JavaMethod method = new JavaMethod(Boolean.class, "box", new Type[]{ boolean.class });
     assertEquals("(Z)Ljava/lang/Boolean;", method.getSignature());
   }
 }

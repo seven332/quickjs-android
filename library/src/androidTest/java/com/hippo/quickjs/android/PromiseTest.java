@@ -29,7 +29,7 @@ public class PromiseTest extends TestsWithContext {
 
   @Test
   public void testPromise() throws NoSuchMethodException {
-    Method method = Method.create(Void.class, PromiseTest.class.getMethod("log", String.class));
+    JavaMethod method = JavaMethod.create(Void.class, PromiseTest.class.getMethod("log", String.class));
     context.getGlobalObject().setProperty("log", context.createJSFunctionS(PromiseTest.class, method));
 
     context.evaluate("log('before')\n" +

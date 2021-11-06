@@ -18,6 +18,8 @@ package com.hippo.quickjs.android;
 
 import androidx.annotation.Nullable;
 
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
@@ -25,12 +27,12 @@ import java.util.Arrays;
 /**
  * Represents a java method or a java static method.
  */
-public final class Method {
+public final class JavaMethod {
 
   @Nullable
-  public static Method create(Type type, java.lang.reflect.Method rawMethod) {
-    Class<?> rawType = Types.getRawType(type);
-    Type returnType = Types.resolve(type, rawType, rawMethod.getGenericReturnType());
+  public static JavaMethod create(Type type, Method rawMethod) {
+    Class<?> rawType = JavaTypes.getRawType(type);
+    Type returnType = JavaTypes.resolve(type, rawType, rawMethod.getGenericReturnType());
     // It's not resolved
     if (returnType instanceof TypeVariable) return null;
 
@@ -39,19 +41,19 @@ public final class Method {
     Type[] originParameterTypes = rawMethod.getGenericParameterTypes();
     Type[] parameterTypes = new Type[originParameterTypes.length];
     for (int i = 0; i < parameterTypes.length; i++) {
-      parameterTypes[i] = Types.resolve(type, rawType, originParameterTypes[i]);
+      parameterTypes[i] = JavaTypes.resolve(type, rawType, originParameterTypes[i]);
       // It's not resolved
       if (parameterTypes[i] instanceof TypeVariable) return null;
     }
 
-    return new Method(returnType, name, parameterTypes);
+    return new JavaMethod(returnType, name, parameterTypes);
   }
 
   final Type returnType;
   final String name;
   final Type[] parameterTypes;
 
-  public Method(Type returnType, String name, Type[] parameterTypes) {
+  public JavaMethod(Type returnType, String name, Type[] parameterTypes) {
     this.returnType = canonicalize(returnType);
     this.name = name;
     this.parameterTypes = new Type[parameterTypes.length];
@@ -61,13 +63,13 @@ public final class Method {
   }
 
   private static Type canonicalize(Type type) {
-    return Types.removeSubtypeWildcard(Types.canonicalize(type));
+    return JavaTypes.removeSubtypeWildcard(JavaTypes.canonicalize(type));
   }
 
   private static String getTypeSignature(Type type) {
     // Array
-    if (type instanceof Types.GenericArrayTypeImpl) {
-      return "[" + getTypeSignature(((Types.GenericArrayTypeImpl) type).getGenericComponentType());
+    if (type instanceof GenericArrayType) {
+      return "[" + getTypeSignature(((GenericArrayType) type).getGenericComponentType());
     }
 
     // Primitive
@@ -84,7 +86,7 @@ public final class Method {
     }
 
     // Class
-    Class<?> clazz = Types.getRawType(type);
+    Class<?> clazz = JavaTypes.getRawType(type);
     String name = clazz.getName();
     StringBuilder sb = new StringBuilder(name.length() + 2);
     sb.append("L");
@@ -127,7 +129,7 @@ public final class Method {
 
   @Override
   public int hashCode() {
-    int result = 1;
+    int result = 0;
     result = 31 * result + returnType.hashCode();
     result = 31 * result + name.hashCode();
     result = 31 * result + Arrays.hashCode(parameterTypes);
@@ -136,8 +138,8 @@ public final class Method {
 
   @Override
   public boolean equals(@Nullable Object obj) {
-    if (!(obj instanceof Method)) return false;
-    Method other = (Method) obj;
+    if (!(obj instanceof JavaMethod)) return false;
+    JavaMethod other = (JavaMethod) obj;
     return returnType.equals(other.returnType)
         && name.equals(other.name)
         && Arrays.equals(parameterTypes, other.parameterTypes);

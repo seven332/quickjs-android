@@ -16,6 +16,7 @@
 
 package com.hippo.quickjs.android;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.*;
@@ -24,9 +25,7 @@ import java.util.*;
 // https://github.com/square/moshi/blob/master/moshi/src/main/java/com/squareup/moshi/Types.java
 // https://github.com/square/moshi/blob/master/moshi/src/main/java/com/squareup/moshi/internal/Util.java
 
-class Types {
-
-  private static final Type[] EMPTY_TYPE_ARRAY = new Type[] {};
+class JavaTypes {
 
   /**
    * Returns a new parameterized type, applying {@code typeArguments} to {@code rawType}. Use this
@@ -57,7 +56,7 @@ class Types {
    * ? extends Object}.
    */
   public static WildcardType subtypeOf(Type bound) {
-    return new WildcardTypeImpl(new Type[] { bound }, EMPTY_TYPE_ARRAY);
+    return new WildcardTypeImpl(new Type[] { bound }, new Type[0]);
   }
 
   /**
@@ -100,30 +99,14 @@ class Types {
     }
   }
 
-  /**
-   * Returns the element type of this collection type.
-   * @throws IllegalArgumentException if this type is not a collection.
-   */
-  public static Type collectionElementType(Type context, Class<?> contextRawType) {
-    Type collectionType = getSupertype(context, contextRawType, Collection.class);
-
-    if (collectionType instanceof WildcardType) {
-      collectionType = ((WildcardType) collectionType).getUpperBounds()[0];
-    }
-    if (collectionType instanceof ParameterizedType) {
-      return ((ParameterizedType) collectionType).getActualTypeArguments()[0];
-    }
-    return Object.class;
-  }
-
   /** Returns true if {@code a} and {@code b} are equal. */
-  public static boolean equals(@Nullable Type a, @Nullable Type b) {
+  static boolean equals(@Nullable Type a, @Nullable Type b) {
     if (a == b) {
       return true; // Also handles (a == null && b == null).
 
     } else if (a instanceof Class) {
       if (b instanceof GenericArrayType) {
-        return equals(((Class) a).getComponentType(),
+        return equals(((Class<?>) a).getComponentType(),
             ((GenericArrayType) b).getGenericComponentType());
       }
       return a.equals(b); // Class already specifies equals().
@@ -144,7 +127,7 @@ class Types {
 
     } else if (a instanceof GenericArrayType) {
       if (b instanceof Class) {
-        return equals(((Class) b).getComponentType(),
+        return equals(((Class<?>) b).getComponentType(),
             ((GenericArrayType) a).getGenericComponentType());
       }
       if (!(b instanceof GenericArrayType)) return false;
@@ -173,51 +156,6 @@ class Types {
   }
 
   /**
-   * Returns a two element array containing this map's key and value types in positions 0 and 1
-   * respectively.
-   */
-  static Type[] mapKeyAndValueTypes(Type context, Class<?> contextRawType) {
-    // Work around a problem with the declaration of java.util.Properties. That class should extend
-    // Hashtable<String, String>, but it's declared to extend Hashtable<Object, Object>.
-    if (context == Properties.class) return new Type[] { String.class, String.class };
-
-    Type mapType = getSupertype(context, contextRawType, Map.class);
-    if (mapType instanceof ParameterizedType) {
-      ParameterizedType mapParameterizedType = (ParameterizedType) mapType;
-      return mapParameterizedType.getActualTypeArguments();
-    }
-    return new Type[] { Object.class, Object.class };
-  }
-
-  /**
-   * Returns the generic form of {@code supertype}. For example, if this is {@code
-   * ArrayList<String>}, this returns {@code Iterable<String>} given the input {@code
-   * Iterable.class}.
-   *
-   * @param supertype a superclass of, or interface implemented by, this.
-   */
-  static Type getSupertype(Type context, Class<?> contextRawType, Class<?> supertype) {
-    if (!supertype.isAssignableFrom(contextRawType)) throw new IllegalArgumentException();
-    return resolve(context, contextRawType,
-        getGenericSupertype(context, contextRawType, supertype));
-  }
-
-  static Type getGenericSuperclass(Type type) {
-    Class<?> rawType = Types.getRawType(type);
-    return resolve(type, rawType, rawType.getGenericSuperclass());
-  }
-
-  static Type[] getGenericInterfaces(Type type) {
-    Class<?> rawType = Types.getRawType(type);
-    Type[] interfaces = rawType.getGenericInterfaces();
-    Type[] result = new Type[interfaces.length];
-    for (int i = 0; i < interfaces.length; i++) {
-      result[i] = resolve(type, rawType, interfaces[i]);
-    }
-    return result;
-  }
-
-  /**
    * Returns the element type of {@code type} if it is an array type, or null if it is not an
    * array type.
    */
@@ -232,32 +170,10 @@ class Types {
   }
 
   /**
-   * Returns true if {@code rawType} is built in. We don't reflect on private fields of platform
-   * types because they're unspecified and likely to be different on Java vs. Android.
-   */
-  public static boolean isPlatformType(Class<?> rawType) {
-    String name = rawType.getName();
-    return name.startsWith("android.")
-        || name.startsWith("androidx.")
-        || name.startsWith("java.")
-        || name.startsWith("javax.")
-        || name.startsWith("kotlin.")
-        || name.startsWith("scala.");
-  }
-
-  /** Throws the cause of {@code e}, wrapping it if it is checked. */
-  public static RuntimeException rethrowCause(InvocationTargetException e) {
-    Throwable cause = e.getTargetException();
-    if (cause instanceof RuntimeException) throw (RuntimeException) cause;
-    if (cause instanceof Error) throw (Error) cause;
-    throw new RuntimeException(cause);
-  }
-
-  /**
    * Returns a type that is functionally equal but not necessarily equal according to {@link
    * Object#equals(Object) Object.equals()}.
    */
-  public static Type canonicalize(Type type) {
+  static Type canonicalize(Type type) {
     if (type instanceof Class) {
       Class<?> c = (Class<?>) type;
       return c.isArray() ? new GenericArrayTypeImpl(canonicalize(c.getComponentType())) : c;
@@ -312,7 +228,7 @@ class Types {
         Type newComponentType = resolve(context, contextRawType, componentType);
         return componentType == newComponentType
             ? original
-            : arrayOf(newComponentType);
+            : new GenericArrayTypeImpl(newComponentType);
 
       } else if (toResolve instanceof GenericArrayType) {
         GenericArrayType original = (GenericArrayType) toResolve;
@@ -320,7 +236,7 @@ class Types {
         Type newComponentType = resolve(context, contextRawType, componentType);
         return componentType == newComponentType
             ? original
-            : arrayOf(newComponentType);
+            : new GenericArrayTypeImpl(newComponentType);
 
       } else if (toResolve instanceof ParameterizedType) {
         ParameterizedType original = (ParameterizedType) toResolve;
@@ -352,12 +268,12 @@ class Types {
         if (originalLowerBound.length == 1) {
           Type lowerBound = resolve(context, contextRawType, originalLowerBound[0]);
           if (lowerBound != originalLowerBound[0]) {
-            return supertypeOf(lowerBound);
+            return new WildcardTypeImpl(new Type[] { Object.class }, new Type[] { lowerBound });
           }
         } else if (originalUpperBound.length == 1) {
           Type upperBound = resolve(context, contextRawType, originalUpperBound[0]);
           if (upperBound != originalUpperBound[0]) {
-            return subtypeOf(upperBound);
+            return new WildcardTypeImpl(new Type[] { upperBound }, new Type[0]);
           }
         }
         return original;
@@ -411,7 +327,7 @@ class Types {
         Class<?> rawSupertype = rawType.getSuperclass();
         if (rawSupertype == toResolve) {
           return rawType.getGenericSuperclass();
-        } else if (toResolve.isAssignableFrom(rawSupertype)) {
+        } else if (rawSupertype != null && toResolve.isAssignableFrom(rawSupertype)) {
           return getGenericSupertype(rawType.getGenericSuperclass(), rawSupertype, toResolve);
         }
         rawType = rawSupertype;
@@ -453,7 +369,7 @@ class Types {
     }
   }
 
-  static final class ParameterizedTypeImpl implements ParameterizedType {
+  private static final class ParameterizedTypeImpl implements ParameterizedType {
     @Nullable
     private final Type ownerType;
     private final Type rawType;
@@ -464,7 +380,7 @@ class Types {
       if (rawType instanceof Class<?>) {
         Class<?> enclosingClass = ((Class<?>) rawType).getEnclosingClass();
         if (ownerType != null) {
-          if (enclosingClass == null || Types.getRawType(ownerType) != enclosingClass) {
+          if (enclosingClass == null || JavaTypes.getRawType(ownerType) != enclosingClass) {
             throw new IllegalArgumentException(
                 "unexpected owner type for " + rawType + ": " + ownerType);
           }
@@ -484,11 +400,13 @@ class Types {
       }
     }
 
+    @NonNull
     @Override
     public Type[] getActualTypeArguments() {
       return typeArguments.clone();
     }
 
+    @NonNull
     @Override
     public Type getRawType() {
       return rawType;
@@ -502,7 +420,7 @@ class Types {
     @Override
     public boolean equals(Object other) {
       return other instanceof ParameterizedType
-          && Types.equals(this, (ParameterizedType) other);
+          && JavaTypes.equals(this, (ParameterizedType) other);
     }
 
     @Override
@@ -528,13 +446,14 @@ class Types {
     }
   }
 
-  static final class GenericArrayTypeImpl implements GenericArrayType {
+  private static final class GenericArrayTypeImpl implements GenericArrayType {
     private final Type componentType;
 
     GenericArrayTypeImpl(Type componentType) {
       this.componentType = canonicalize(componentType);
     }
 
+    @NonNull
     @Override
     public Type getGenericComponentType() {
       return componentType;
@@ -543,7 +462,7 @@ class Types {
     @Override
     public boolean equals(Object o) {
       return o instanceof GenericArrayType
-          && Types.equals(this, (GenericArrayType) o);
+          && JavaTypes.equals(this, (GenericArrayType) o);
     }
 
     @Override
@@ -562,7 +481,7 @@ class Types {
    * support what the Java 6 language needs - at most one bound. If a lower bound is set, the upper
    * bound must be Object.class.
    */
-  static final class WildcardTypeImpl implements WildcardType {
+  private static final class WildcardTypeImpl implements WildcardType {
     private final Type upperBound;
     @Nullable
     private final Type lowerBound;
@@ -591,15 +510,16 @@ class Types {
       return new Type[] { upperBound };
     }
 
+    @NonNull
     @Override
     public Type[] getLowerBounds() {
-      return lowerBound != null ? new Type[] { lowerBound } : EMPTY_TYPE_ARRAY;
+      return lowerBound != null ? new Type[] { lowerBound } : new Type[0];
     }
 
     @Override
     public boolean equals(Object other) {
       return other instanceof WildcardType
-          && Types.equals(this, (WildcardType) other);
+          && JavaTypes.equals(this, (WildcardType) other);
     }
 
     @Override

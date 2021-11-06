@@ -52,7 +52,7 @@ public class QuickJS implements TypeAdapter.Depot {
   @Override
   public <T> TypeAdapter<T> getAdapter(Type type) {
     // Canonicalize type
-    Type newType = Types.removeSubtypeWildcard(Types.canonicalize(type));
+    Type newType = JavaTypes.removeSubtypeWildcard(JavaTypes.canonicalize(type));
 
     TypeAdapter<?> adapter = adapterCache.get(newType);
     if (adapter != null) {
@@ -83,11 +83,11 @@ public class QuickJS implements TypeAdapter.Depot {
 
   public static class Builder {
 
-    private List<TypeAdapter.Factory> factories = new ArrayList<>();
+    private final List<TypeAdapter.Factory> factories = new ArrayList<>();
 
     public <T> Builder registerTypeAdapter(final Type type, final TypeAdapter<T> adapter) {
       return registerTypeAdapterFactory((depot, targetType) -> {
-        if (Types.equals(type, targetType)) {
+        if (JavaTypes.equals(type, targetType)) {
           return adapter;
         }
         return null;
