@@ -26,7 +26,9 @@
         android:label="quickjs android test"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
 
-        <activity android:name="com.hippo.quickjs.android.test.TestActivity">
+        <activity
+            android:name="com.hippo.quickjs.android.test.TestActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
