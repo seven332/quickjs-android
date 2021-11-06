@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import java.util.regex.Pattern
 import java.util.zip.CRC32
-import org.ajoberstar.grgit.Grgit
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
@@ -75,35 +73,13 @@ android {
     }
 }
 
-void cloneTest262(String name, String dirname) {
-    println("Start cloning $name")
-    def text = new File("${rootProject.projectDir}/quickjs/quickjs/TODO").readLines().join(" ")
-    def pattern = Pattern.compile("$name commit: ([0-9a-f]+)")
-    def matcher = pattern.matcher(text)
-    matcher.find()
-    def commit = matcher.group(1)
-    def dir = "$buildDir/test262/$dirname"
-    def grgit
-    try {
-        grgit = Grgit.open(dir: dir)
-    } catch (ignored) {
-        delete(dir)
-        grgit = Grgit.clone(dir: dir, uri: 'https://github.com/tc39/test262.git')
-    }
-    grgit.checkout(branch: commit)
-    println("End cloning $name")
-}
-
 task bundleTestAssets(type: Zip) {
     doFirst {
         delete "${projectDir}/testassets"
         file("${projectDir}/testassets").mkdirs()
-
-        cloneTest262("Test262o", "test262o")
-        cloneTest262("Test262", "test262")
     }
 
-    from "${rootProject.projectDir}/quickjs/quickjs", "$buildDir/test262"
+    from "${rootProject.projectDir}/quickjs/quickjs"
     exclude '**/*.c', '**/*.h'
     archiveName "testassets.zip"
     destinationDir file("${projectDir}/testassets")

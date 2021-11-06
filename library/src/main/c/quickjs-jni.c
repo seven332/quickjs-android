@@ -1,5 +1,5 @@
 #include <jni.h>
-#include <quickjs-patch.h>
+#include <quickjs.h>
 #include <string.h>
 #include <malloc.h>
 

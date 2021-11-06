@@ -17,7 +17,7 @@ endif()
 set(COMMON_FLAGS -D_GNU_SOURCE -DCONFIG_VERSION=\"${CONFIG_VERSION}\" -DCONFIG_CC=\"${CONFIG_CC}\" -DCONFIG_PREFIX=\"/usr/local\" -DCONFIG_BIGNUM)
 
 set(QUICKJS_LIB_SOURCES
-        quickjs-patch.c
+        quickjs/quickjs.c
         quickjs/libregexp.c
         quickjs/libunicode.c
         quickjs/libbf.c
