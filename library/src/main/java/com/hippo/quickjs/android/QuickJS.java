@@ -109,6 +109,7 @@ public class QuickJS {
 
   static native long createRuntime();
   static native void setRuntimeMallocLimit(long runtime, int mallocLimit);
+  static native void setRuntimeMaxStackSize(long runtime, int stackSize);
   static native void setRuntimeInterruptHandler(long runtime, JSRuntime.InterruptHandler interruptHandler);
   static native void destroyRuntime(long runtime);
 

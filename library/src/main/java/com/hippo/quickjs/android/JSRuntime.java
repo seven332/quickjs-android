@@ -60,6 +60,21 @@ public class JSRuntime implements Closeable {
   }
 
   /**
+   * Set max stack size for this JSRuntime.
+   * Only positive number and {@code 0} are accepted.
+   * {@code 0} for no stack size check.
+   */
+  public synchronized void setMaxStackSize(int stackSize) {
+    checkClosed();
+
+    if (stackSize < 0) {
+      throw new IllegalArgumentException("Only positive number and 0 are accepted as max stack size");
+    }
+
+    QuickJS.setRuntimeMaxStackSize(pointer, stackSize);
+  }
+
+  /**
    * Set the InterruptHandler for this JSRuntime.
    * {@link InterruptHandler#onInterrupt()} is called every 10000 js instructions.
    */
