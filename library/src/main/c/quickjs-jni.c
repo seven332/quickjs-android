@@ -47,6 +47,18 @@ Java_com_hippo_quickjs_android_QuickJS_setRuntimeMallocLimit(
     JS_SetMemoryLimit(qj_rt->rt, (size_t) malloc_limit);
 }
 
+JNIEXPORT void JNICALL
+Java_com_hippo_quickjs_android_QuickJS_setRuntimeMaxStackSize(
+    JNIEnv *env,
+    jclass __unused clazz,
+    jlong runtime,
+    jint stack_size
+) {
+    QJRuntime *qj_rt = (QJRuntime *) runtime;
+    CHECK_NULL(env, qj_rt, MSG_NULL_JS_RUNTIME);
+    JS_SetMaxStackSize(qj_rt->rt, (size_t) stack_size);
+}
+
 static int on_interrupt(JSRuntime __unused *rt, void *opaque) {
     int result = 0;
 
